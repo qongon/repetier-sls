@@ -518,36 +518,14 @@ void Leveling::reportDistortionStatus() {
     Com::printFLN(PSTR(" Bed Temp:"), gridTemp, 1);
 }
 
-void Leveling::showMatrix(fast8_t mode) {
- 
-    if (!mode)
-    {
-	//Repetier Format
-        for (int iy = 0; iy < GRID_SIZE; iy++) {
-            for (int ix = 0; ix < GRID_SIZE; ix++) {
-                Com::printF(PSTR("G33 X"), xPosFor(ix), 2);
-                Com::printF(Com::tY, yPosFor(iy), 2);
-                Com::printFLN(Com::tZ, grid[ix][iy], 3);
-            }
+void Leveling::showMatrix() {
+    for (int iy = 0; iy < GRID_SIZE; iy++) {
+        for (int ix = 0; ix < GRID_SIZE; ix++) {
+            Com::printF(PSTR("G33 X"), xPosFor(ix), 2);
+            Com::printF(PSTR(" Y"), yPosFor(iy), 2);
+            Com::printFLN(PSTR(" Z"), grid[ix][iy], 3);
         }
     }
-    else
-    {
-	//UBL Format
-        for (int i = 0; i < GRID_SIZE; i++) {
-            Com::printF(Com::tSpace, i);
-        }
-        Com::println(); 
-
-        for (int iy = 0; iy < GRID_SIZE; iy++) { 
-            Com::printF(Com::tSpace, iy);
-            for (int ix = 0; ix < GRID_SIZE; ix++) { 
-                Com::printF(grid[ix][iy] > 0 ? PSTR(" +") : Com::tSpace, grid[ix][iy], 4);
-            } 
-            Com::println();
-        }  
-    } 
-    Com::printFLN(PSTR("Use the following regex in a text editor to strip timestamps: (.*:\\s+)")); 
 }
 
 void Leveling::set(float x, float y, float z) {
@@ -897,15 +875,9 @@ bool Leveling::execute_G32(GCode* com) {
 }
 void Leveling::execute_G33(GCode* com) {
 #if ENABLE_BUMP_CORRECTION
-    if (com->hasL()) { 
-        // G33 - List distortion matrix
-        // Check if we actually have a matrix.
-        if (!xMin && !xMax && !yMin && !yMax) {
-            Com::printFLN(PSTR("No distortion matrix data stored!"));
-            return;
-        }
+    if (com->hasL()) { // G33 L0 - List distortion matrix
         reportDistortionStatus();
-        showMatrix(static_cast<fast8_t>(com->L));
+        showMatrix();
     } else if (com->hasR()) { // G33 R0 - Reset distortion matrix
         Com::printInfoFLN(PSTR("Resetting Z bump correction"));
         for (int y = 0; y < GRID_SIZE; y++) {

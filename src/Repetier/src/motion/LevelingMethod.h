@@ -91,7 +91,7 @@ class Leveling {
     }
     static bool gridIndexForDir(int dir, int dist, int& x, int& y);
 #if ENABLE_BUMP_CORRECTION
-    static void showMatrix(fast8_t mode);
+    static void showMatrix();
     static void set(float x, float y, float z);
 #endif
 public:
