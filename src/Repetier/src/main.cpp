@@ -55,7 +55,7 @@ Implemented Codes
 - G32 S<0..2> P<0..1> - Autolevel print bed. S = 1 measure zLength, S = 2 Measure and store new zLength
 - G33 - Measure distortion map
 - G33 R0 - delete distortion map
-- G33 L0 - List distortion map
+- G33 L<0/1> - List distortion map. L = 0 List output in GCode format, L = 1 List output in UBL Marlin-like format
 - G33 X<xpos> Y<ypos> Z<newdistortioncorrection> - Set new distortion for nearest distortion point.
 - G90 - Use absolute coordinates
 - G91 - Use relative coordinates
