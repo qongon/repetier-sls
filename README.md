@@ -1,3 +1,47 @@
+# Catalyst's V2 Repo
+
+Hey! I made this repository for some smaall potentially useful features/updates/etc I created for Repetier V2. 
+This codebase *should* compile exactly the same as the latest release of the main Repetier dev2 repository as of 11/5/19.
+
+My current main changes: 
+- Added support for Due-Based (SAM3X8E) Hardware Timer PWM in our HAL.
+- Added support for TMC2209 UART drivers. 
+- Added a M300 tone queue + concurrent tone support.
+- G33 L<0/1> UBL-like data output and regex hint, for [Mesh Bed Visualizers such as this](http://lokspace.eu/3d-printer-auto-bed-leveling-mesh-visualizer/)
+- Added on support for PWM fading/animated lights to the new lights_io module. M355 Px Dimming.
+
+... and some other small but not noteworthy changes. Check the commits for more info.
+I still have some more planned that I'll be commiting as time goes on.
+
+I'll be trying to stick closely to the syntax/programming style/ideology of the main repetier v2 branch for compatibility, 
+but may change things here and there.
+
+## Todo:
+- Add support for TMC Stepper driver diagnostic pins for immediate stall/error detection.
+- Add HSCMI SDCard support. 
+- Create custom tone event system for UI/triggers/etc using a layout similar to the lights_io module. 
+- Allow dynamic timer reassignments to prioritize the user's Timer PWM outputs. (Eg. User overwrites TC0? Push the motion2 timer to TC2)
+- Allow importing of G33 L0 bump correction maps via repetier-server macros.
+- Setup TMC2209 coolStep configuration options. 
+
+### FYI My Current printer environment:
+- Classic Cartesian motion system. 
+- SAM3X8E 32-Bit based controller board.
+- TMC2209 stepper drivers running with UART.
+- - Boosted to 24V.
+- SDCard EEPROM.
+- Bondtech BMG extruder w/custom full Tungsten Carbide nozzle. 
+- - 50W Heater
+- - ~~PT100 @ 3.3V~~ broke it again :) 
+- - E3D Semitec 104GT Thermistor.
+- - BLTouch Probe V3.1.
+- - - Grid based leveling, grid size of 20.
+- - Air-Pump based cooling "fan" (a la' Berd Air).
+- 220W Silicone bed heater.
+- - Borosilicate Glass Plate w/[Damaged](https://imgur.com/NocVeaU) PEI sheet. 
+- 1100W FlexATX 12V power supply. 
+- Enclosed and insulated chamber. Chamber heaters not currently installed yet.
+
 # Repetier-Firmware - the fast and user friendly firmware
 
 ## Configuration and Installation
