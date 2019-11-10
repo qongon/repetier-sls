@@ -74,8 +74,10 @@ void HeatManager::update() {
     lastUpdate = time;
     if (error != HeaterError::NO_ERROR) {
         if (input->isDefect()) {
+            Printer::setAnyTempsensorDefect();
             return; // do nothing in error state
         } else {
+            Printer::unsetAnyTempsensorDefect();
             error = HeaterError::NO_ERROR;
         }
     }
@@ -250,6 +252,7 @@ void HeatManager::reportTemperature(char c, int idx) {
 }
 
 void HeatManager::resetAllErrorStates() {
+    Printer::unsetAnyTempsensorDefect();
     for (uint8_t i = 0; i < NUM_HEATERS; i++) {
         heaters[i]->resetError();
     }
