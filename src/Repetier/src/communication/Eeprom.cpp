@@ -185,11 +185,39 @@ void EEPROM::storeDataIntoEEPROM(uint8_t corrupted) {
     HAL::eprSetByte(EPR_VARIATION1, static_cast<uint8_t>(variation1)); // Make data change permanent
     HAL::eprSetByte(EPR_VARIATION2, static_cast<uint8_t>(variation2)); // Make data change permanent
     HAL::eprSetByte(EPR_INTEGRITY_BYTE, computeChecksum());
+
+    //Store the compile time
+#ifdef NUKE_EEPROM_ON_COMPILE
+    HAL::eprSetInt32(EPR_COMPILE_TIME, static_cast<uint32_t>(__DATE_TIME_UNIX__)); 
+#endif
+ 
 #endif
 }
 
 void EEPROM::readDataFromEEPROM() {
 #if EEPROM_MODE != 0
+
+#ifdef NUKE_EEPROM_ON_COMPILE      
+    int time = __DATE_TIME_UNIX__; 
+    if(HAL::eprGetInt32(EPR_COMPILE_TIME) != time)
+    {
+        Com::printFLN(PSTR("Fresh compile detected! Nuking previous EEPROM!"));
+
+#if EEPROM_AVAILABLE == EEPROM_SDCARD 
+        // Occasionally adding new EEPROM attributes can REALLY corrupt some 
+	// offsets and values of other attributes that were already in the .bin 
+	// file, and restoreEEPROMSettingsFromConfiguration alone sometimes doesn't 
+	// fully reset the eeprom properly, leading to some funky issues.
+        // The best decision would be to delete the binary file and start fresh.
+        sd.fat.chdir();
+        sd.deleteFile((char*)PSTR("eeprom.bin")); 
+#endif 
+
+        EEPROM::restoreEEPROMSettingsFromConfiguration();     
+        return;  
+    }
+#endif  
+
     Com::printFLN(PSTR("Reading data from eeprom"));
     mode = 3;
     callHandle();

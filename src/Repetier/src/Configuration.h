@@ -415,6 +415,9 @@ CONFIG_VARIABLE_EQ(EndstopDriver, *ZProbe, ZPROBE_ADDRESS)
 
 // ################# Misc. settings ##################
 
+//Nuke the eeprom every time we compile and flash, but only then and never again.
+#define NUKE_EEPROM_ON_COMPILE 
+
 #define BAUDRATE 115200
 #define ENABLE_POWER_ON_STARTUP 1
 #define POWER_INVERTING 0

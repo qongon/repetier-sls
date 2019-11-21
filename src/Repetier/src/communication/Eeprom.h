@@ -47,6 +47,10 @@
 #define EPR_TONES_ENABLED 27         // Tones/sounds currently enabled
 #define EEPROM_PROTOCOL_VERSION 1    // Protocol version
 
+#ifdef NUKE_EEPROM_ON_COMPILE
+#define EPR_COMPILE_TIME 28
+#endif
+
 #define EPR_START_RESERVE 40
 
 union EEPROMVar {
