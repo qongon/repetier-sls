@@ -187,10 +187,6 @@ Custom M Codes
 - M668 - set line number 0 without notice to simulate error
 - M669 - Measure time for a LCD display refresh
 - M900 K<advance> R<ratio> W<extrusion width> H<layer height> D<filament diameter> - set advance parameter.
-- M904 P<unixtime> S<offset> - Sets the printer's clock to P<unixtimestamp> with optional S<offset> in minutes for timezones.  
-                                (Reports the current time if no parameters given.) (Only functions if RTC support is enabled.) 
-- M905 P<date> S<time> - Sets the printer's clock to P<YYYY-MM-DD> date and S<HH:MM:SS> time.  
-                                (Reports the current time if no parameters given.) (Only functions if RTC support is enabled.) 
 - M908 P<address> S<value> : Set stepper current for digipot (RAMBO board)
 - M999 - Continue from fatal error. M999 S1 will create a fatal error for testing.
 */

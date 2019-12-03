@@ -45,10 +45,6 @@
 #include "Print.h"
 #include "fastio.h"
 
-#ifdef HAS_XTAL_RTC
-#include "RTCDue.h" 
-#endif
-
 // Which I2C port to use?
 #ifndef WIRE_PORT
 #define WIRE_PORT Wire
@@ -314,21 +310,6 @@ extern millis_t eprSyncTime;
 extern void FEUpdateChanges(void);
 extern void FEInit(void);
 #endif
-
-class HALRTC {  
-private:
-#ifdef HAS_XTAL_RTC
-    static int RTCOffset;
-    static RTCDue RTCSource; 
-#endif 
-public: 
-    static bool isTimeSet; 
-    static void setRTCTime(uint32_t unixtime, int offset);
-    static void setRTCTime(char* textTime); 
-    static char* getRTCTimeStr();  
-    static char* getRTCDateStr();  
-    static void setupRTC(bool type);
-};
 
 class HAL {
 public:

@@ -186,8 +186,6 @@ void MCode_606(GCode* com);
 void MCode_669(GCode* com);
 void MCode_890(GCode* com);
 void MCode_900(GCode* com);
-void MCode_904(GCode* com);
-void MCode_905(GCode* com);
 void MCode_907(GCode* com);
 void MCode_908(GCode* com);
 void MCode_909(GCode* com);

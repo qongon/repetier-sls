@@ -1337,34 +1337,6 @@ void MCode_532(GCode* com) {
         Printer::currentLayer = static_cast<int>(com->L);
 }
 
-void MCode_904(GCode* com) {  
-    if (com->hasP() || com->hasS()) { 
-        HALRTC::setRTCTime(com->hasP() ? static_cast<unsigned long>(com->P) : 1, com->hasS() ? static_cast<int32_t>(com->S) : 1);
-    }
-    else {
-        char* time = HALRTC::getRTCTimeStr();
-        if(time == nullptr) {
-            Com::printFLN(PSTR("Current time not set!"));
-            return;
-        } 
-        Com::printF(time);
-        Com::printFLN(" | ", HALRTC::getRTCDateStr());
-    }
-}
-void MCode_905(GCode* com) {   
-    if (com->hasString()) {
-        HALRTC::setRTCTime(com->text);
-    }
-    else { 
-        char* time = HALRTC::getRTCTimeStr();
-        if(time == nullptr) {
-            Com::printFLN(PSTR("Current time not set!"));
-            return;
-        } 
-        Com::printF(time);
-        Com::printFLN(" | ", HALRTC::getRTCDateStr());
-    }
-}
 void MCode_539(GCode* com) {
     if (com->hasS()) {
         Printer::setSupportStartStop(com->S != 0);
