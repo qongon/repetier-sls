@@ -21,7 +21,7 @@ but may change things here and there.
 - Add HSCMI SDCard support. 
 - Create custom tone event system for UI/triggers/etc using a layout similar to the lights_io module. 
 - Allow dynamic timer reassignments to prioritize the user's Timer PWM outputs. (Eg. User overwrites TC0? Push the motion2 timer to TC2)
-- Allow importing of G33 L0 bump correction maps via repetier-server macros.
+- ~~Fix importing of G33 L0 bump correction points.~~
 - Setup TMC2209 coolStep configuration options. 
 
 ### FYI My Current printer environment:
