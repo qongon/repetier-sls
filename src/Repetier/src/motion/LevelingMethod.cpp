@@ -524,6 +524,10 @@ void Leveling::showMatrix(fast8_t mode) {
 }
 
 void Leveling::set(float x, float y, float z) {
+    if(!xMin && !xMax && !yMin && !yMax) {
+        PrinterType::getBedRectangle(xMin, xMax, yMin, yMax);
+        updateDerived(); 
+    }
     int32_t ix = lroundf((x - xMin) * invDx);
     int32_t iy = lroundf((y - yMin) * invDy);
     if (validGridIndex(ix, iy)) {
