@@ -81,6 +81,9 @@ Early stage version for Stacke X2 printer - use with care
 #define BUMP_CORRECTION_END_HEIGHT 1.5
 #define BUMP_LIMIT_TO 0
 
+
+//#define HAS_XTAL_RTC 		     // Uncomment if motherboard has a built in RTC and external crystal (Due-Based controllers only, for now.) 
+
 // 0 = Cartesian, 1 = CoreXYZ, 2 = delta, 3 = Dual X-Axis
 #define PRINTER_TYPE PRINTER_TYPE_DELTA
 // steps to include as babysteps per 1/BLOCK_FREQUENCY seconds. Must be lower then STEPPER_FREQUENCY/BLOCK_FREQUENCY and be low enough to not loose steps.
