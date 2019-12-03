@@ -1,7 +1,6 @@
 # Catalyst's V2 Repo
 
-Hey! I made this repository for some smaall potentially useful features/updates/etc I created for Repetier V2. 
-This codebase *should* compile exactly the same as the latest release of the main Repetier dev2 repository as of 11/5/19.
+Hey! I've made this repository for a personal version of Repetier V2 firmware I'm running with some small features/updates/additions. (The main purpose of this repository is mostly documenting.)<br/>This codebase *should* compile exactly the same as the latest release of the main Repetier dev2 repository as of 11/5/19.
 
 My current main changes: 
 - Added support for Due-Based (SAM3X8E) Hardware Timer PWM in our HAL.
@@ -13,10 +12,10 @@ My current main changes:
 - Added a M106 O&lt;delay/timeout&gt; parameter for a delay in seconds before updating a fan's speed. Useful for leaving fans turned on after a print, which then shut off later.
 - Added a NUKE_EEPROM_ON_COMPILE configuration option that erases the EEPROM on every compile and flash/upload, but not on reboots/power cycles.
 
-... and some other small but not noteworthy changes. Check the commits for more info.
-I still have some more planned that I'll be commiting as time goes on.
+... and some other small but not noteworthy changes. Check the commits for more info.<br/>
+I still have some more planned that I should be uploading as time goes on.
 
-I'll be trying to stick closely to the syntax/programming style/ideology of the main repetier v2 branch for compatibility, 
+I'll be trying to stick closely to the syntax/programming style/ideology of the main repetier v2 branch for compatibility,
 but may change things here and there.
 
 ## Todo:
@@ -47,7 +46,7 @@ but may change things here and there.
 - 220W Silicone bed heater.
 - - Borosilicate Glass Plate w/[Damaged](https://imgur.com/NocVeaU) PEI sheet. 
 - 1100W FlexATX 12V power supply. 
-- Enclosed and insulated chamber. Chamber heaters not currently installed yet.
+- Enclosed and insulated chamber. Chamber heaters not yet installed.
 
 # Repetier-Firmware - the fast and user friendly firmware
 
