@@ -331,6 +331,21 @@ extern void FEUpdateChanges(void);
 extern void FEInit(void);
 #endif
 
+class HALRTC {  
+private:
+#ifdef HAS_XTAL_RTC
+    static int RTCOffset;
+    //static RTCDue RTCSource;  
+#endif 
+public: 
+    static bool isTimeSet; 
+    static void setRTCTime(uint32_t unixtime, int offset);
+    static void setRTCTime(char* textTime); 
+    static u_int32_t getRTCUnix();
+    static char* getRTCTimeStr();  
+    static char* getRTCDateStr();  
+    static void setupRTC(bool type);
+};
 class HAL {
 public:
     // we use ram instead of eeprom, so reads are faster and safer. Writes store in real eeprom as well

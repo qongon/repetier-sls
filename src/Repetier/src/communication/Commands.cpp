@@ -723,6 +723,12 @@ void Commands::processMCode(GCode* com) {
     case 900: // M233 now use M900 like Marlin
         MCode_900(com);
         break;
+    case 904: // M904 Set RTC time in UNIX + Offset
+        MCode_904(com);
+        break;
+    case 905: // M905 Set RTC time in time + date 
+        MCode_905(com);
+        break;
     case 907: // M907 Set digital trimpot/DAC motor current using axis codes.
         MCode_907(com);
         break;

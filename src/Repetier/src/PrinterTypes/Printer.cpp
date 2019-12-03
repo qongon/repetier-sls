@@ -501,6 +501,7 @@ void Printer::setup() {
     // HAL::serialSetBaudrate(115200);
     // Start serial
     HAL::hwSetup();
+    HALRTC::setupRTC(1);
 
     EEPROM::initBaudrate();
     HAL::serialSetBaudrate(baudrate);
