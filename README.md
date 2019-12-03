@@ -8,7 +8,10 @@ My current main changes:
 - Added support for TMC2209 UART drivers. 
 - Added a M300 tone queue + concurrent tone support.
 - G33 L<0/1> UBL-like data output and regex hint, for [Mesh Bed Visualizers such as this](http://lokspace.eu/3d-printer-auto-bed-leveling-mesh-visualizer/)
-- Added on support for PWM fading/animated lights to the new lights_io module. M355 Px Dimming.
+- Added on support for PWM fading/animated lights to the new lights_io module. Also M355 P&lt;brightness-value&gt; to set a default brightness.
+- Added basic real time clock support (M904/M905) for SAM3X8E processors. (See commit "Due - Basic Real Time Clock support" for important notes on this!) 
+- Added a M106 O&lt;delay/timeout&gt; parameter for a delay in seconds before updating a fan's speed. Useful for leaving fans turned on after a print, which then shut off later.
+- Added a NUKE_EEPROM_ON_COMPILE configuration option that erases the EEPROM on every compile and flash/upload, but not on reboots/power cycles.
 
 ... and some other small but not noteworthy changes. Check the commits for more info.
 I still have some more planned that I'll be commiting as time goes on.
@@ -23,6 +26,10 @@ but may change things here and there.
 - Allow dynamic timer reassignments to prioritize the user's Timer PWM outputs. (Eg. User overwrites TC0? Push the motion2 timer to TC2)
 - ~~Fix importing of G33 L0 bump correction points.~~
 - Setup TMC2209 coolStep configuration options. 
+- lights_io RGB PWM support? 
+- Add additional support for older LCD controllers with buttons instead of encoders.
+- Commit some pending small GUI additions
+- Eliminate HALRTC::setupRTC(1)'s busy wait as it checks for the external crystal to be ready. A little annoying since it can take up to 1-2 seconds.
 
 ### FYI My Current printer environment:
 - Classic Cartesian motion system. 
