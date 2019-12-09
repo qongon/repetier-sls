@@ -1,9 +1,10 @@
 # Catalyst's V2 Repo
 
-Hey! I've made this repository for a personal version of Repetier V2 firmware I'm running with some small features/updates/additions. (The main purpose of this repository is mostly documenting.)<br/>This codebase *should* compile exactly the same as the latest release of the main Repetier dev2 repository as of 11/5/19.
+Hey! I've made this repository for a personal version of Repetier V2 firmware I'm running with some small features/updates/additions. (The main purpose of this repository is mostly documenting.)<br/>This codebase *should* compile exactly the same as the latest release of the main Repetier dev2 repository as of 11/5/19.<br/><br/>
+I rebase this often, beware!
 
 My current main changes: 
-- Added support for Due-Based (SAM3X8E) Hardware Timer PWM in our HAL.
+- Added support for Due-Based (SAM3X8E) Hardware "Timer PWM" capable pins.
 - Added support for TMC2209 UART drivers. 
 - Added a M300 tone queue + concurrent tone support.
 - G33 L<0/1> UBL-like data output and regex hint, for [Mesh Bed Visualizers such as this](http://lokspace.eu/3d-printer-auto-bed-leveling-mesh-visualizer/)
@@ -21,7 +22,7 @@ but may change things here and there.
 ## Todo:
 - Add support for TMC Stepper driver diagnostic pins for immediate stall/error detection.
 - Add HSCMI SDCard support. 
-- Create custom tone event system for UI/triggers/etc using a layout similar to the lights_io module. 
+- Create custom tone event system for UI/triggers/etc similar to the lights_io module. 
 - Allow dynamic timer reassignments to prioritize the user's Timer PWM outputs. (Eg. User overwrites TC0? Push the motion2 timer to TC2)
 - ~~Fix importing of G33 L0 bump correction points.~~
 - Setup TMC2209 coolStep configuration options. 
@@ -47,6 +48,8 @@ but may change things here and there.
 - - Borosilicate Glass Plate w/[Damaged](https://imgur.com/NocVeaU) PEI sheet. 
 - 1100W FlexATX 12V power supply. 
 - Enclosed and insulated chamber. Chamber heaters not yet installed.
+
+### (Original Repetier-Firmware Doc below) 
 
 # Repetier-Firmware - the fast and user friendly firmware
 
