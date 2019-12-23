@@ -1,27 +1,24 @@
-# Catalyst's V2 Repo
 
-Hey! I've made this repository for a personal version of Repetier V2 firmware I'm running with some small features/updates/additions. (The main purpose of this repository is mostly documenting.)<br/>This codebase *should* compile exactly the same as the latest release of the main Repetier dev2 repository as of 11/5/19.<br/><br/>
-I rebase this often, beware!
+I rebase often, beware.
 
-My current main changes: 
-- Added support for Due-Based (SAM3X8E) Hardware "Timer PWM" capable pins.
-- Added support for TMC2209 UART drivers. 
-- Added a M300 tone queue + concurrent tone support.
+Current main changes vs original branch: 
+- ~~Added support for Due-Based (SAM3X8E) Hardware "Timer PWM" capable pins.~~ Merged
+- HAL::setFreq for dynamic PWM frequency changes on the fly.
+- ~~Added support for TMC2209 UART drivers.~~ Merged
+- ~~Added a M300 tone queue + concurrent tone support.~~ Merged
+- Added M374/M375 bump-map exporting/importing.
 - G33 L<0/1> UBL-like data output and regex hint, for [Mesh Bed Visualizers such as this](http://lokspace.eu/3d-printer-auto-bed-leveling-mesh-visualizer/)
 - Added on support for PWM fading/animated lights to the new lights_io module. Also M355 P&lt;brightness-value&gt; to set a default brightness.
 - Added basic real time clock support (M904/M905) for SAM3X8E processors. (See commit "Due - Basic Real Time Clock support" for important notes on this!) 
-- Added a M106 O&lt;delay/timeout&gt; parameter for a delay in seconds before updating a fan's speed. Useful for leaving fans turned on after a print, which then shut off later.
+- ~~Added a M106 O&lt;delay/timeout&gt; parameter for a delay in seconds before updating a fan's speed. Useful for leaving fans turned on after a print, which then shut off later.~~ Merged
 - Added a NUKE_EEPROM_ON_COMPILE configuration option that erases the EEPROM on every compile and flash/upload, but not on reboots/power cycles.
 
-... and some other small but not noteworthy changes. Check the commits for more info.<br/>
-I still have some more planned that I should be uploading as time goes on.
-
-I'll be trying to stick closely to the syntax/programming style/ideology of the main repetier v2 branch for compatibility,
-but may change things here and there.
+... and a bunch of other small but un-noteworthy changes. Check the commits for more info.<br/>
 
 ## Todo:
 - Add support for TMC Stepper driver diagnostic pins for immediate stall/error detection.
-- Add HSCMI SDCard support. 
+- Add HSCMI SDCard support.  (Almost complete.)
+- Allow beepers and servos to use hardware PWM by default if possible, and use HAL::setFreq.
 - Create custom tone event system for UI/triggers/etc similar to the lights_io module. 
 - Allow dynamic timer reassignments to prioritize the user's Timer PWM outputs. (Eg. User overwrites TC0? Push the motion2 timer to TC2)
 - ~~Fix importing of G33 L0 bump correction points.~~
