@@ -332,6 +332,8 @@ public:
     FSTRINGVAR(tAutolevelReset)
     FSTRINGVAR(tAutolevelEnabled)
     FSTRINGVAR(tAutolevelDisabled)
+    FSTRINGVAR(tErrorImportBump)
+    FSTRINGVAR(tErrorExportBump)
     FSTRINGVAR(tTransformationMatrix)
     FSTRINGVAR(tZProbeFailed)
     FSTRINGVAR(tZProbeMax)

@@ -648,6 +648,12 @@ void Commands::processMCode(GCode* com) {
     case 360: // M360 - show configuration
         MCode_360(com);
         break;
+    case 374: // M374 - export bumpmap/autolevel matrix
+        MCode_374(com);
+        break;
+    case 375: // M375 - import bumpmap
+        MCode_375(com);
+        break;
     case 400: // M400 Finish all moves
         MCode_400(com);
         break;

@@ -158,6 +158,8 @@ Custom M Codes
 - M355 S<0/1/2/3/4> - Turn case light on/off/burst/blink fast/blink slow , no S = report status
 - M355 P<0..255>   - Change case light brightness if it's configured as a pwm light source.
 - M360 - show configuration
+- M374 <filename> - Saves the currently loaded bed bump/distorion map to the SD card in binary.
+- M375 <filename> - Imports a binary bed bump/distortion map from the SD card and saves it to EEPROM. 
 - M400 - Wait until move buffers empty.
 - M401 - Store x, y and z position.
 - M402 - Go to stored position. If X, Y or Z is specified, only these coordinates are used. F changes feedrate for that move.

@@ -143,6 +143,7 @@ void LevelingCorrector::correct(Plane* plane) {
 
 #if LEVELING_METHOD == LEVELING_METHOD_GRID // Grid
 
+FatFile bumpMapFile;
 float Leveling::grid[GRID_SIZE][GRID_SIZE];
 uint16_t Leveling::eprStart;
 float Leveling::xMin, Leveling::xMax, Leveling::yMin, Leveling::yMax;
@@ -554,6 +555,139 @@ void Leveling::execute_M323(GCode* com) {
         }
     }
     reportDistortionStatus();
+}
+void Leveling::importBumpmap(const char* filename) {
+    if (!sd.sdactive) {
+        Com::printF(Com::tErrorImportBump);
+        Com::printFLN(PSTR(" No SD Card mounted."));
+        return;
+    }
+
+    if (bumpMapFile.isOpen()) {
+        bumpMapFile.close();
+    }
+
+    if (!bumpMapFile.open(filename, O_RDWR | O_SYNC)) {
+        Com::printFLN(Com::tOpenFailedFile, filename);
+    } else {
+        if (!bumpMapFile.fileSize()) {
+            Com::printF(Com::tErrorImportBump);
+            Com::printFLN(PSTR(" Empty bump-map file!"));
+            return;
+        }
+
+        char sanityCheck[5];
+        bumpMapFile.read(&sanityCheck, 5);
+        if (strncmp_P(sanityCheck, "rBump", 5)) {
+            Com::printF(Com::tErrorImportBump);
+            Com::printFLN(PSTR(" Not a valid bump-map file!"));
+            return;
+        }
+
+        uint8_t fileGridSize = 0;
+        bumpMapFile.read(&fileGridSize, 1);
+
+        // We could just compare the file size against our needed bytes to find out if this bump map fits,
+        // but comparing the saved grid size vs current might be better in case we decide to do something
+        // such as interpolating a large bump map to a lower resolution (with HD zones) or etc in the future.
+        if (fileGridSize != GRID_SIZE) {
+            Com::printF(Com::tErrorImportBump);
+            Com::printF(PSTR(" File's grid size is: "), fileGridSize);
+            Com::printFLN(PSTR(" vs ours at "), GRID_SIZE);
+            return;
+        }
+
+        const int gridByteSize = ((GRID_SIZE * GRID_SIZE) * 4);
+        const int neededBytes = 16 + gridByteSize + sizeof(curLevelingPlane);
+
+        int success = 0;
+        success += bumpMapFile.read(&curLevelingPlane, sizeof(curLevelingPlane));
+        success += bumpMapFile.read(&xMin, 4);
+        success += bumpMapFile.read(&xMax, 4);
+        success += bumpMapFile.read(&yMin, 4);
+        success += bumpMapFile.read(&yMax, 4);
+        success += bumpMapFile.read(grid, gridByteSize);
+
+        if (success != neededBytes) {
+            Com::printF(Com::tErrorImportBump);
+            Com::printF(PSTR(" Missing bytes! "), success);
+            Com::printFLN(PSTR("/"), neededBytes);
+            return;
+        }
+
+        updateDerived();
+        LevelingCorrector::correct(&curLevelingPlane);
+
+        setDistortionEnabled(true);
+        reportDistortionStatus();
+
+        Com::printFLN(PSTR("Bump map succesfully imported!"));
+        bumpMapFile.close();
+    }
+}
+void Leveling::exportBumpmap(const char* filename) {
+    if (!sd.sdactive) {
+        Com::printF(Com::tErrorExportBump);
+        Com::printFLN(PSTR(" No SD Card mounted."));
+        return;
+    }
+
+    if (strncmp_P(filename, "eeprom.bin", 10) == 0) {
+        return;
+    }
+    // User added their own .bin
+    bool addExt = (strstr_P(filename, ".bin") == nullptr);
+    if (strchr_P(filename, '.') && addExt) {
+        Com::printF(Com::tErrorExportBump);
+        Com::printFLN(PSTR(" Invalid filename."));
+        return;
+    }
+
+    char newFile[addExt ? sizeof(filename) + 4 : 1];
+    if (addExt) {
+        strcpy_P(newFile, filename);
+        strcat_P(newFile, ".bin");
+    }
+
+    if (bumpMapFile.isOpen()) {
+        bumpMapFile.close();
+    }
+
+    // Will truncate older bump files!
+    if (!bumpMapFile.open(addExt ? newFile : filename, O_RDWR | O_CREAT | O_SYNC | O_TRUNC)) {
+        Com::printF(Com::tErrorExportBump);
+        Com::printFLN(PSTR(" Can't open/create bump-map file!"));
+        return;
+    }
+
+    const int gridByteSize = ((GRID_SIZE * GRID_SIZE) * 4);
+    const int neededBytes = 16 + gridByteSize + sizeof(curLevelingPlane) + 1 + 5; // +5 Sanity
+                                                                                             // +1 Grid size
+
+    bumpMapFile.rewind();
+
+    int success = 0;
+    int curSize = GRID_SIZE;
+    success += bumpMapFile.write("rBump", 5);
+    success += bumpMapFile.write(&curSize, 1);
+    success += bumpMapFile.write(&curLevelingPlane, sizeof(curLevelingPlane));
+    success += bumpMapFile.write(&xMin, 4);
+    success += bumpMapFile.write(&xMax, 4);
+    success += bumpMapFile.write(&yMin, 4);
+    success += bumpMapFile.write(&yMax, 4);
+    success += bumpMapFile.write(grid, gridByteSize);
+
+    if (success != neededBytes) {
+        Com::printF(Com::tErrorExportBump);
+        Com::printF(PSTR(" Missing bytes! "), success);
+        Com::printFLN(PSTR("/"), neededBytes);
+        return;
+    }
+    Com::printF(PSTR("Bump-map succesfully written to SD Card. ("), addExt ? newFile : filename);
+    Com::printF(" / ", neededBytes);
+    Com::printFLN(" Bytes)");
+
+    bumpMapFile.close();
 }
 #else
 void Leveling::reportDistortionStatus() {
