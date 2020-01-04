@@ -511,7 +511,10 @@ void Com::config(FSTRINGPARAM(text)) {
     printFLN(text);
 }
 
- 
+void Com::config(FSTRINGPARAM(text), int value) {
+    printF(tConfig);
+    printFLN(text, value);
+}
 
 void Com::config(FSTRINGPARAM(text), const char* msg) {
     printF(tConfig);
@@ -519,7 +522,17 @@ void Com::config(FSTRINGPARAM(text), const char* msg) {
     print(msg);
     println();
 }
- 
+
+void Com::config(FSTRINGPARAM(text), int32_t value) {
+    printF(tConfig);
+    printFLN(text, value);
+}
+
+void Com::config(FSTRINGPARAM(text), uint32_t value) {
+    printF(tConfig);
+    printFLN(text, value);
+}
+
 void Com::config(FSTRINGPARAM(text), float value, uint8_t digits) {
     printF(tConfig);
     printFLN(text, value, digits);
@@ -581,7 +594,7 @@ void Com::printF(FSTRINGPARAM(ptr)) {
     while ((c = HAL::readFlashByte(ptr++)) != 0)
         GCodeSource::writeToAll(c);
 }
- 
+
 void Com::printF(FSTRINGPARAM(text), const char* msg) {
     printF(text);
     print(msg);
@@ -590,6 +603,39 @@ void Com::printF(FSTRINGPARAM(text), const char* msg) {
 void Com::printF(FSTRINGPARAM(text), bool value, BoolFormat format) {
     printF(text);
     print(value, format);
+}
+
+void Com::printF(FSTRINGPARAM(text), int value) {
+    printF(text);
+    print(value);
+}
+
+void Com::printF(FSTRINGPARAM(text), int32_t value) {
+    printF(text);
+    print(value);
+}
+
+void Com::printF(FSTRINGPARAM(text), uint32_t value) {
+    printF(text);
+    printNumber(value);
+}
+
+void Com::printFLN(FSTRINGPARAM(text), int value) {
+    printF(text);
+    print(value);
+    println();
+}
+
+void Com::printFLN(FSTRINGPARAM(text), int32_t value) {
+    printF(text);
+    print(value);
+    println();
+}
+
+void Com::printFLN(FSTRINGPARAM(text), uint32_t value) {
+    printF(text);
+    printNumber(value);
+    println();
 }
 
 void Com::printFLN(FSTRINGPARAM(text), bool value, BoolFormat format) {
@@ -646,11 +692,28 @@ void Com::print(bool value, BoolFormat format) {
         break;
     }
 }
+void Com::printNumber(uint32_t n) {
+    char buf[11]; // Assumes 8-bit chars plus zero byte.
+    char* str = &buf[10];
+    *str = '\0';
+    do {
+        unsigned long m = n;
+        n /= 10;
+        *--str = '0' + (m - 10 * n);
+    } while (n);
 
+    print(str);
+}
 void Com::printArrayFLN(FSTRINGPARAM(text), float* arr, uint8_t n, uint8_t digits) {
     printF(text);
     for (uint8_t i = 0; i < n; i++)
         printF(Com::tSpace, arr[i], digits);
+    println();
+}
+void Com::printArrayFLN(FSTRINGPARAM(text), int32_t* arr, uint8_t n) {
+    printF(text);
+    for (uint8_t i = 0; i < n; i++)
+        printF(Com::tSpace, arr[i]);
     println();
 }
 
