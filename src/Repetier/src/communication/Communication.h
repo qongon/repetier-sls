@@ -479,12 +479,6 @@ public:
 
     static void cap(FSTRINGPARAM(text));
     static void config(FSTRINGPARAM(text));
-    static void config(FSTRINGPARAM(text), int value);
-    static void config(FSTRINGPARAM(text), const char* msg);
-    static void config(FSTRINGPARAM(text), int32_t value);
-    static void config(FSTRINGPARAM(text), uint32_t value);
-    static void config(FSTRINGPARAM(text), float value, uint8_t digits = 2);
-    static void printNumber(uint32_t n);
     static void printWarningF(FSTRINGPARAM(text));
     static void printInfoF(FSTRINGPARAM(text));
     static void printErrorF(FSTRINGPARAM(text));
@@ -495,20 +489,41 @@ public:
     static void printLogF(FSTRINGPARAM(text));
     static void printFLN(FSTRINGPARAM(text));
     static void printF(FSTRINGPARAM(text));
+    
+    template <typename T>
+    static void config(FSTRINGPARAM(text), T value);
+
+    template <typename T>
+    static void printF(FSTRINGPARAM(text), T value);
+
+    template <typename T>
+    static void printFLN(FSTRINGPARAM(text), T value);
+
+    template <typename T>
+    static void printArrayFLN(FSTRINGPARAM(text), const T arr[], size_t n);  
+
+    template <typename T>
+    static void printBinary(const char* msg, T n);
+
+    template <typename T>
+    static void printBinary(T n);
+
+    template <typename T>
+    static void printNumber(T n); 
+    
     static void printF(FSTRINGPARAM(text), bool value, BoolFormat format = BoolFormat::TRUEFALSE);
-    static void printF(FSTRINGPARAM(text), int value);
     static void printF(FSTRINGPARAM(text), const char* msg);
-    static void printF(FSTRINGPARAM(text), int32_t value);
-    static void printF(FSTRINGPARAM(text), uint32_t value);
     static void printF(FSTRINGPARAM(text), float value, uint8_t digits = 2);
+
     static void printFLN(FSTRINGPARAM(text), bool value, BoolFormat format = BoolFormat::TRUEFALSE);
-    static void printFLN(FSTRINGPARAM(text), int value);
-    static void printFLN(FSTRINGPARAM(text), int32_t value);
-    static void printFLN(FSTRINGPARAM(text), uint32_t value);
     static void printFLN(FSTRINGPARAM(text), const char* msg);
     static void printFLN(FSTRINGPARAM(text), float value, uint8_t digits = 2);
-    static void printArrayFLN(FSTRINGPARAM(text), float* arr, uint8_t n = 4, uint8_t digits = 2);
-    static void printArrayFLN(FSTRINGPARAM(text), long* arr, uint8_t n = 4);
+
+    static void printArrayFLN(FSTRINGPARAM(text), float* arr, uint8_t n = 4, uint8_t digits = 2); 
+
+    static void config(FSTRINGPARAM(text), const char* msg);
+    static void config(FSTRINGPARAM(text), float value, uint8_t digits = 2);
+
     static void print(bool value, BoolFormat format = BoolFormat::TRUEFALSE);
     static void print(long value);
     static inline void print(uint32_t value) { printNumber(value); }
@@ -530,6 +545,63 @@ public:
 protected:
 private:
 };
+
+template <typename T>
+void Com::printF(FSTRINGPARAM(text), T value) {
+    printF(text);
+    print(value);
+}
+
+template <typename T>
+void Com::printFLN(FSTRINGPARAM(text), T value) {
+    printF(text);
+    print(value);
+    println();
+}
+
+template <typename T>
+void Com::printArrayFLN(FSTRINGPARAM(text), const T arr[], size_t n) {
+    printF(text);
+    for (uint8_t i = 0; i < n; i++)
+        printF(Com::tSpace, arr[i]);
+    println();
+}
+
+
+template <typename T>
+void Com::printBinary(T n) {
+    for (uint64_t t = (1ULL << ((sizeof(n) * 8) - 1)); t; t >>= 1) {
+        print(n & t ? "1" : "0");
+    }
+    println();
+}
+
+template <typename T>
+void Com::printBinary(const char* msg, T n) {
+    print(msg);
+    printBinary(n);
+    println();
+}
+
+template <typename T>
+void Com::config(FSTRINGPARAM(text), T value) {
+    printF(tConfig);
+    printFLN(text, value);
+}
+
+template <typename T>
+void Com::printNumber(T n) {
+    char buf[sizeof(n) > 4 ? 21 : 11]; // 64-Bit or 32-Bit character count + \0.
+    char* str = &buf[sizeof(n) > 4 ? 20 : 10];
+    *str = '\0';
+    do {
+        T m = n;
+        n /= 10;
+        *--str = '0' + (m - 10 * n);
+    } while (n);
+
+    print(str);
+}
 
 #ifdef DEBUG
 #define SHOW(x) \
