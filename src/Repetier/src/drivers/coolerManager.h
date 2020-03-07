@@ -99,3 +99,30 @@ public:
     }
     void update();
 };
+
+class CoolerManagerMoving {
+    PWMHandler* pwm;
+    fast8_t axis;
+    fast8_t offPWM;
+    fast8_t onPWM;
+    int postCooling;
+    int onCount;
+    
+public:
+
+    CoolerManagerMoving(PWMHandler* _pwm,
+                        fast8_t _axis,
+                        fast8_t _offPWM,
+                        fast8_t _onPWM,
+                        int postCoolingSeconds
+                        )
+        : pwm(_pwm)
+        , axis(_axis)
+        , offPWM(_offPWM)
+        , onPWM(_onPWM) {
+        postCooling = 2 * postCoolingSeconds;
+        onCount = -1;
+        pwm->set(offPWM);
+    }
+    void update();
+};
