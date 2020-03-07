@@ -59,19 +59,3 @@ void CoolerManagerMotors::update() {
         onCount = postCooling;
     }
 }
-
-void CoolerManagerMoving::update() {
-    if (Motion1::length && (Motion1::buffers[Motion1::last].isAxisMoving(axis))) {
-        if (onCount < 0) {
-            pwm->set(onPWM); 
-        }
-        onCount = postCooling; 
-    } else { 
-        if (onCount >= 0) {
-            onCount--;
-            if (onCount == -1) {
-                pwm->set(offPWM);
-            }
-        }
-    }
-}
