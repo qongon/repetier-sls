@@ -1142,20 +1142,30 @@ void __attribute__((weak)) startScreen(GUIAction action, void* data) {
         } else if (tool->getToolType() == ToolTypes::MILL) {
         }
         GUI::bufAddStringP(PSTR(" Z:"));
-        if (Motion1::getShowPosition(Z_AXIS) < 1000) {
-            GUI::bufAddFloat(Motion1::getShowPosition(Z_AXIS), 3, 2);
+        if (Motion1::isAxisHomed(Z_AXIS)) {
+            if (Motion1::getShowPosition(Z_AXIS) < 1000) {
+                GUI::bufAddFloat(Motion1::getShowPosition(Z_AXIS), 3, 2);
+            } else {
+                GUI::bufAddFloat(Motion1::getShowPosition(Z_AXIS), 4, 1);
+            }
         } else {
-            GUI::bufAddFloat(Motion1::getShowPosition(Z_AXIS), 4, 1);
+            if (refresh_counter & 1) {
+                GUI::bufAddChar('?');
+                GUI::bufAddChar('?');
+                GUI::bufAddChar('?');
+                GUI::bufAddChar('.');
+                GUI::bufAddChar('?');
+            }
         }
         printRow(0, GUI::buf);
 
         GUI::bufClear();
 
 #if NUM_HEATED_BEDS > 0 || NUM_HEATED_CHAMBERS > 0
-        static int count = 0, auxHeaterIndex = 0; 
+        static fast8_t auxHeaterIndex = 0;
         if (auxHeaterIndex < NUM_HEATED_BEDS) {
             GUI::bufAddChar('B');
-            if (NUM_HEATED_BEDS > 1) { 
+            if (NUM_HEATED_BEDS > 1) {
                 GUI::bufAddInt(heatedBeds[auxHeaterIndex]->getIndex() + 1, 1);
             } else {
                 GUI::bufAddChar(' ');
@@ -1174,7 +1184,7 @@ void __attribute__((weak)) startScreen(GUIAction action, void* data) {
         }
         GUI::bufAddChar(' ');
         // change every four seconds.
-        if (!(count++ % 4)) {
+        if (!(refresh_counter % 4)) {
             if (++auxHeaterIndex > (NUM_HEATED_BEDS + NUM_HEATED_CHAMBERS) - 1) {
                 auxHeaterIndex = 0;
             }
