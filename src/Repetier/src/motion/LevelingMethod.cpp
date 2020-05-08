@@ -556,6 +556,58 @@ void Leveling::set(float x, float y, float z) {
 void Leveling::execute_M323(GCode* com) {
     if (com->hasS()) {
         if (com->hasS() > 0) {
+// Auto import bed mesh
+#if NUM_HEATED_BEDS > 0 && SDSUPPORT
+            if (com->S == 2) {
+                if (!heatedBeds[0]->isEnabled()) {
+                    Com::printF(Com::tErrorImportBump);
+                    Com::printFLN(PSTR(" No target temperature set!"));
+                    return;
+                }
+
+                FatFile* root = sd.fat.vwd();
+                root->rewind();
+                SdFile file;
+
+                while (file.openNext(root, O_READ)) {
+                    if (!file.isDir()) {
+                        file.getName(tempLongFilename, LONG_FILENAME_LENGTH);
+                        if (strstr_P(tempLongFilename, PSTR(".csv")) != nullptr) {
+                            CSVParser csv(&file);
+                            float version = 0.0f;
+                            if (csv.getField(Com::tBumpCSVHeader, version, CSVDir::NEXT)) {
+
+                                int gridSize = 0;
+                                if (!csv.getField(PSTR("GridSize"), gridSize, CSVDir::BELOW) || gridSize != GRID_SIZE) {
+                                    // Wrong grid size
+                                    file.close();
+                                    continue;
+                                }
+
+                                float temp = 0.0f;
+                                // Get if bed temp within 1.0c
+                                if (csv.getField(PSTR("BedTemp"), temp, CSVDir::BELOW) && (temp > (heatedBeds[0]->getTargetTemperature() - 1.0) && temp < (heatedBeds[0]->getTargetTemperature() + 1.0))) {
+                                    file.close();
+
+                                    Leveling::importBumpMatrix(tempLongFilename);
+                                    if (com->hasP() && com->P != 0) {
+                                        EEPROM::markChanged();
+                                    }
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                    file.close();
+                }
+                Com::printF(Com::tErrorImportBump);
+                Com::printF(PSTR(" No valid matrix file for "), heatedBeds[0]->getTargetTemperature(), 1);
+                Com::printFLN(Com::tUnitDegCelsius);
+                file.close();
+                return;
+            }
+#endif
+            // End auto import bed mesh
             if (distortionEnabled != (com->S != 0)) {
                 setDistortionEnabled(!distortionEnabled);
                 if (com->hasP() && com->P != 0) {
