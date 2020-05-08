@@ -1222,13 +1222,13 @@ void MCode_360(GCode* com) {
 
 void MCode_374(GCode* com) {
     if (com->hasString()) {
-        Leveling::exportBumpmap(com->text);
+        Leveling::exportBumpMatrix(com->text);
     }
 }
 
 void MCode_375(GCode* com) {
     if (com->hasString()) {
-        Leveling::importBumpmap(com->text);
+        Leveling::importBumpMatrix(com->text);
     }
 }
 void MCode_400(GCode* com) {
