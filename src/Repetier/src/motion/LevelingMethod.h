@@ -127,6 +127,7 @@ public:
     inline static void setDistortionEnabled(bool newState) {}
     inline static bool isDistortionEnabled() { return false; }
     inline static float distortionAt(float xp, float yp) { return 0; }
+    static bool measure();
     static void importBumpMatrix(char* filename) {}
     static void exportBumpMatrix(char* filename) {}
     inline static void init() {}
@@ -146,6 +147,7 @@ public:
     inline static void setDistortionEnabled(bool newState) {}
     inline static bool isDistortionEnabled() { return false; }
     inline static float distortionAt(float xp, float yp) { return 0; }
+    static bool measure();
     static void importBumpMatrix(char* filename) {}
     static void exportBumpMatrix(char* filename) {}
     inline static void init() {}
