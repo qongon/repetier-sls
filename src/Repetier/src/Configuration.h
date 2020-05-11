@@ -80,6 +80,8 @@ Early stage version for Stacke X2 printer - use with care
 #define BUMP_CORRECTION_START_DEGRADE 0.5
 #define BUMP_CORRECTION_END_HEIGHT 1.5
 #define BUMP_LIMIT_TO 0
+#define BUMP_DEFAULT_AUTOIMPORT_DIR "matrixes/" // Default auto import directory for M232 S2 matrix imports.
+
 
 
 //#define HAS_XTAL_RTC 		     // Uncomment if motherboard has a built in RTC and external crystal (Due-Based controllers only, for now.) 
