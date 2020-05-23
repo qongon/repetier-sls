@@ -69,11 +69,10 @@ protected:
     uint16_t playingFreq;
     TonePacket beepBuf[beepBufSize] {};
 public:
-    // handling for cond macros
-    // TODO: get/set + better names
     fast8_t condLastValidIndex;
     fast8_t condValidIndex;
     fast8_t condNumPlays;
+    
     BeeperSourceBase()
         : playing(false)
         , halted(false)

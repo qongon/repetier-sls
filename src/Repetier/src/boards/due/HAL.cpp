@@ -368,6 +368,10 @@ int HAL::initHardwarePWM(int pinNumber, uint32_t frequency) {
     if (foundPin == -1) {
         return -1;
     }
+    
+    if(!frequency) {
+        frequency = 1;
+    }
 
     if (foundTimer) {
         TimerPWMPin& t = timer_pins[foundPin];
@@ -476,7 +480,7 @@ void HAL::setHardwarePWM(int id, int value) {
 }
 
 void HAL::setHardwareFrequency(int id, uint32_t frequency) {
-    if (id < 0) {
+    if (id < 0 || !frequency) {
         return;
     }
     if (id < 8) {

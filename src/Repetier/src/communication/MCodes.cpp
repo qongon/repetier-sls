@@ -1119,10 +1119,12 @@ void MCode_300(GCode* com) {
     if (!Printer::tonesEnabled) {
         return;
     }
-    ufast8_t index = constrain(static_cast<ufast8_t>(com->hasB() ? com->B : 0), 0, NUM_BEEPERS);
-    uint16_t freq = static_cast<uint16_t>(com->hasS() ? com->S : 1000);
-    uint16_t dur = static_cast<uint16_t>(com->hasP() ? com->P : 1000);
-    beepers[index]->pushTone({ freq, dur });
+    ufast8_t index = static_cast<ufast8_t>(com->hasB() ? com->B : 0);
+    if (index < NUM_BEEPERS) {
+        uint16_t freq = static_cast<uint16_t>(com->hasS() ? com->S : 1000);
+        uint16_t dur = static_cast<uint16_t>(com->hasP() ? com->P : 1000);
+        beepers[index]->pushTone({ freq, dur });
+    }
 #endif
 }
 
