@@ -1213,16 +1213,14 @@ void TC3_Handler(void) {
 #endif
 
 void HAL::tone(uint32_t frequency) { 
-#if NUM_BEEPERS > 0
-    uint32_t neededFreq = frequency;
-#if NUM_BEEPERS > 1                                         // User has more beepers? allow simultaneous beeps.
+#if NUM_BEEPERS > 0 
+#if NUM_BEEPERS > 1
     ufast8_t curPlaying = 0;
-    BeeperSourceBase* playingBeeps[NUM_BEEPERS];
+    BeeperSourceBase* playingBeepers[NUM_BEEPERS];
     // Reduce freq to nearest 100hz, otherwise we can get some insane freq multiples (from eg primes).
     // also clamp max freq.
     constexpr ufast8_t reduce = 100;
-    constexpr uint32_t maxFreq = 200000 / 2;
-
+    constexpr uint32_t maxFreq = 100000;
     uint32_t multiFreq = frequency - (frequency % reduce);
     for (size_t i = 0; i < (NUM_BEEPERS + curPlaying); i++) {
         uint16_t beeperCurFreq = 0;
@@ -1230,9 +1228,9 @@ void HAL::tone(uint32_t frequency) {
             if (multiFreq > maxFreq) {
                 multiFreq = maxFreq;
             }
-            beeperCurFreq = playingBeeps[i - NUM_BEEPERS]->getCurFreq();
+            beeperCurFreq = playingBeepers[i - NUM_BEEPERS]->getCurFreq();
             beeperCurFreq -= (beeperCurFreq % reduce);
-            playingBeeps[i - NUM_BEEPERS]->setFreqDiv((multiFreq / beeperCurFreq) - 1);
+            playingBeepers[i - NUM_BEEPERS]->setFreqDiv((multiFreq / beeperCurFreq) - 1);
         } else {
             if (beepers[i]->getOutputType() == 1 && beepers[i]->isPlaying()) {
                 beeperCurFreq = beepers[i]->getCurFreq();
@@ -1241,18 +1239,16 @@ void HAL::tone(uint32_t frequency) {
                     multiFreq = beeperCurFreq;
                 }
                 multiFreq = RMath::LCM(multiFreq, beeperCurFreq);
-                playingBeeps[curPlaying++] = beepers[i];
+                playingBeepers[curPlaying++] = beepers[i];
             }
         }
     }
-    neededFreq = multiFreq;
-#endif 
-
-    if (neededFreq < 1) {
+    frequency = multiFreq;
+#endif
+    if (frequency < 1) {
         return;
     }
-
-    NVIC_SetPriority(TONE_TC_IRQn, 2); // don'r disturb stepper interrupt!
+    NVIC_SetPriority(TONE_TC_IRQn, 2); // don't disturb stepper interrupt!
     GCLK->PCHCTRL[TONE_TC_GCLK_ID].reg = GCLK_PCHCTRL_GEN_GCLK0_Val | (1 << GCLK_PCHCTRL_CHEN_Pos);
     while (GCLK->SYNCBUSY.reg > 0) {}
 
@@ -1265,7 +1261,7 @@ void HAL::tone(uint32_t frequency) {
     TONE_TC->COUNT16.INTENSET.reg = 0;
     TONE_TC->COUNT16.INTENSET.bit.MC0 = 1;
     uint32_t prescale, freq;
-    getPrescaleFreq(F_CPU_TRUE / (2 * neededFreq), prescale, freq);
+    getPrescaleFreq(F_CPU_TRUE / (2 * frequency), prescale, freq);
     TONE_TC->COUNT16.CTRLA.reg &= ~TC_CTRLA_PRESCALER_DIV1024;
     TONE_TC->COUNT16.CTRLA.reg |= prescale;
     NVIC_EnableIRQ(TONE_TC_IRQn); // Enable IRQ for function call

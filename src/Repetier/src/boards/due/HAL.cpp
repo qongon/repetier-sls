@@ -1293,16 +1293,14 @@ void BEEPER_TIMER_VECTOR() {
 #endif
 
 void HAL::tone(uint32_t frequency) {
-#if NUM_BEEPERS > 0
-    uint32_t neededFreq = frequency;
-#if NUM_BEEPERS > 1                                         // User has more beepers? allow simultaneous beeps.
+#if NUM_BEEPERS > 0 
+#if NUM_BEEPERS > 1
     ufast8_t curPlaying = 0;
-    BeeperSourceBase* playingBeeps[NUM_BEEPERS];
+    BeeperSourceBase* playingBeepers[NUM_BEEPERS];
     // Reduce freq to nearest 100hz, otherwise we can get some insane freq multiples (from eg primes).
     // also clamp max freq.
     constexpr ufast8_t reduce = 100;
-    constexpr uint32_t maxFreq = 200000 / 2;
-
+    constexpr uint32_t maxFreq = 100000;
     uint32_t multiFreq = frequency - (frequency % reduce);
     for (size_t i = 0; i < (NUM_BEEPERS + curPlaying); i++) {
         uint16_t beeperCurFreq = 0;
@@ -1310,9 +1308,9 @@ void HAL::tone(uint32_t frequency) {
             if (multiFreq > maxFreq) {
                 multiFreq = maxFreq;
             }
-            beeperCurFreq = playingBeeps[i - NUM_BEEPERS]->getCurFreq();
+            beeperCurFreq = playingBeepers[i - NUM_BEEPERS]->getCurFreq();
             beeperCurFreq -= (beeperCurFreq % reduce);
-            playingBeeps[i - NUM_BEEPERS]->setFreqDiv((multiFreq / beeperCurFreq) - 1);
+            playingBeepers[i - NUM_BEEPERS]->setFreqDiv((multiFreq / beeperCurFreq) - 1);
         } else {
             if (beepers[i]->getOutputType() == 1 && beepers[i]->isPlaying()) {
                 beeperCurFreq = beepers[i]->getCurFreq();
@@ -1321,24 +1319,22 @@ void HAL::tone(uint32_t frequency) {
                     multiFreq = beeperCurFreq;
                 }
                 multiFreq = RMath::LCM(multiFreq, beeperCurFreq);
-                playingBeeps[curPlaying++] = beepers[i];
+                playingBeepers[curPlaying++] = beepers[i];
             }
         }
     }
-    neededFreq = multiFreq;
+    frequency = multiFreq;
 #endif
-    neededFreq *= 2;
-    if (neededFreq < 1) {
+    frequency *= 2;
+    if (frequency < 1) {
         return;
     }
-
     if (!(TC_GetStatus(BEEPER_TIMER, BEEPER_TIMER_CHANNEL) & TC_SR_CLKSTA)) {
         TC_Start(BEEPER_TIMER, BEEPER_TIMER_CHANNEL);
     }
-
-    uint32_t rc = (F_CPU_TRUE / 2) / neededFreq;
+    uint32_t rc = (F_CPU_TRUE / 2) / frequency;
     TC_SetRC(BEEPER_TIMER, BEEPER_TIMER_CHANNEL, rc);
-    // If the counter is already beyond our desired RC, reset it. Otherwise, don't stop.
+    // If the counter is already beyond our desired RC, reset it. 
     if (TC_ReadCV(BEEPER_TIMER, BEEPER_TIMER_CHANNEL) > rc) {
         BEEPER_TIMER->TC_CHANNEL[BEEPER_TIMER_CHANNEL].TC_CCR = TC_CCR_SWTRG;
     }
@@ -1351,9 +1347,8 @@ void HAL::noTone() {
     // If any IO beeper is still playing, we can't stop the timer yet.
     for (size_t i = 0; i < NUM_BEEPERS; i++) {
         if (beepers[i]->getOutputType() == 1 && beepers[i]->isPlaying()) {
-            constexpr uint32_t maxFreq = (F_CPU_TRUE / 2) / 200000;
-            // lower "RC" compare value = higher freq.
-            // if we're at our freq limit, refresh the divisors
+            constexpr uint32_t maxFreq = (F_CPU_TRUE / 2) / 100000;
+            // if we're nearing/at our freq limit, refresh the divisors
             if (maxFreq == BEEPER_TIMER->TC_CHANNEL[BEEPER_TIMER_CHANNEL].TC_RC) {
                 HAL::tone(0);
             }

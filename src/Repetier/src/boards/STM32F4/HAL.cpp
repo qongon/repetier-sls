@@ -951,16 +951,14 @@ void TIMER_VECTOR(TONE_TIMER_NUM) {
 #endif
 
 void HAL::tone(uint32_t frequency) {
-#if NUM_BEEPERS > 0
-    uint32_t neededFreq = frequency;
-#if NUM_BEEPERS > 1         // User has more beepers? allow simultaneous beeps.
+#if NUM_BEEPERS > 0 
+#if NUM_BEEPERS > 1
     ufast8_t curPlaying = 0;
-    BeeperSourceBase* playingBeeps[NUM_BEEPERS];
+    BeeperSourceBase* playingBeepers[NUM_BEEPERS];
     // Reduce freq to nearest 100hz, otherwise we can get some insane freq multiples (from eg primes).
     // also clamp max freq.
     constexpr ufast8_t reduce = 100;
-    constexpr uint32_t maxFreq = 200000 / 2;
-
+    constexpr uint32_t maxFreq = 100000;
     uint32_t multiFreq = frequency - (frequency % reduce);
     for (size_t i = 0; i < (NUM_BEEPERS + curPlaying); i++) {
         uint16_t beeperCurFreq = 0;
@@ -968,9 +966,9 @@ void HAL::tone(uint32_t frequency) {
             if (multiFreq > maxFreq) {
                 multiFreq = maxFreq;
             }
-            beeperCurFreq = playingBeeps[i - NUM_BEEPERS]->getCurFreq();
+            beeperCurFreq = playingBeepers[i - NUM_BEEPERS]->getCurFreq();
             beeperCurFreq -= (beeperCurFreq % reduce);
-            playingBeeps[i - NUM_BEEPERS]->setFreqDiv((multiFreq / beeperCurFreq) - 1);
+            playingBeepers[i - NUM_BEEPERS]->setFreqDiv((multiFreq / beeperCurFreq) - 1);
         } else {
             if (beepers[i]->getOutputType() == 1 && beepers[i]->isPlaying()) {
                 beeperCurFreq = beepers[i]->getCurFreq();
@@ -979,19 +977,17 @@ void HAL::tone(uint32_t frequency) {
                     multiFreq = beeperCurFreq;
                 }
                 multiFreq = RMath::LCM(multiFreq, beeperCurFreq);
-                playingBeeps[curPlaying++] = beepers[i];
+                playingBeepers[curPlaying++] = beepers[i];
             }
         }
     }
-    neededFreq = multiFreq;
-#endif 
-
-    if (neededFreq < 1) {
+    frequency = multiFreq;
+#endif
+    if (frequency < 1) {
         return;
     }
-
     toneTimer->timer->pause();
-    toneTimer->timer->setOverflow(2 * neededFreq, HERTZ_FORMAT);
+    toneTimer->timer->setOverflow(2 * frequency, HERTZ_FORMAT);
     toneTimer->timer->resume();
 #endif
 }
