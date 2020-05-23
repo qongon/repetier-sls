@@ -1001,6 +1001,7 @@ void HAL::noTone() {
     // If any IO beeper is still playing, we can't stop the timer yet.
     for (size_t i = 0; i < NUM_BEEPERS; i++) {
         if (beepers[i]->getOutputType() == 1 && beepers[i]->isPlaying()) {
+            HAL::tone(0);
             return;
         }
     }
