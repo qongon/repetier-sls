@@ -25,7 +25,7 @@
 #undef TONE_THEME_COND
 #undef BEEPER_SOURCE_IO
 #undef BEEPER_SOURCE_PWM
-#undef SOUNDS // helper macro for init lists
+#undef TONES // helper macro for init lists
 
 #if IO_TARGET == IO_TARGET_CLASS_DEFINITION
 
@@ -257,7 +257,7 @@ public:
 
 #elif IO_TARGET == IO_TARGET_DEFINE_VARIABLES
 
-#define SOUNDS(...) \
+#define TONES(...) \
     { __VA_ARGS__ }
 
 #define BEEPER_SOURCE_IO(name, IOPin) \
