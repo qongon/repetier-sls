@@ -468,20 +468,20 @@ int32_t Motion1::getBufferedLengthMM() {
 void Motion1::waitForEndOfMoves() {
     while (buffersUsed() > 0) {
         Commands::checkForPeriodicalActions(false);
-        GCode::keepAlive(Processing, 3);
+        GCode::keepAlive(FirmwareState::Processing, 3);
     }
 }
 
 void Motion1::waitForXFreeMoves(fast8_t n, bool allowMoves) {
     while (buffersUsed() >= PRINTLINE_CACHE_SIZE - n) {
-        GCode::keepAlive(Processing, 3);
+        GCode::keepAlive(FirmwareState::Processing, 3);
         Commands::checkForPeriodicalActions(allowMoves);
     }
     if (buffersUsed() < MIN_PRINTLINE_FILL) {
         return;
     }
     while (getBufferedLengthMM() > maxIntLengthBuffered) { // wait for reduced length to limit buffer
-        GCode::keepAlive(Processing, 3);
+        GCode::keepAlive(FirmwareState::Processing, 3);
         Commands::checkForPeriodicalActions(allowMoves);
     }
 }
@@ -1167,7 +1167,7 @@ void Motion1::backplan(fast8_t actId) {
             return;
         }
         next->startSpeed = act->endSpeed = lastJunctionSpeed;
-        act->state = BACKWARD_PLANNED;
+        act->state = Motion1State::BACKWARD_PLANNED;
         maxLoops--;
     } while (maxLoops);
     if (next) {
@@ -1709,13 +1709,10 @@ EndstopDriver& Motion1::endstopFoxAxisDir(fast8_t axis, bool maxDir) {
         switch (axis) {
         case X_AXIS:
             return endstopXMax;
-            break;
         case Y_AXIS:
             return endstopYMax;
-            break;
         case Z_AXIS:
             return endstopZMax;
-            break;
         case E_AXIS:
             if (motors[E_AXIS] != nullptr) {
                 return *motors[E_AXIS]->getMaxEndstop();
@@ -1741,13 +1738,10 @@ EndstopDriver& Motion1::endstopFoxAxisDir(fast8_t axis, bool maxDir) {
         switch (axis) {
         case X_AXIS:
             return endstopXMin;
-            break;
         case Y_AXIS:
             return endstopYMin;
-            break;
         case Z_AXIS:
             return endstopZMin;
-            break;
         case E_AXIS:
             if (motors[E_AXIS] != nullptr) {
                 return *motors[E_AXIS]->getMinEndstop();

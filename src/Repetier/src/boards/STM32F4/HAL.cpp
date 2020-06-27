@@ -93,6 +93,7 @@ extern "C" char* sbrk(int i);
 
 char HAL::virtualEeprom[EEPROM_BYTES] = { 0 };
 bool HAL::wdPinged = true;
+uint8_t HAL::i2cError = 0;
 
 enum class TimerUsage {
     UNUSED,
@@ -303,7 +304,7 @@ void HAL::hwSetup(void) {
     SET_OUTPUT(DEBUG_ISR_ANALOG_PIN);
 #endif
     // Servo control
-#if NUM_SERVOS > 0
+#if NUM_SERVOS > 0 || NUM_BEEPERS > 0
 
     servo = reserveTimerInterrupt(SERVO_TIMER_NUM); // prevent pwm usage
     servo->timer = new HardwareTimer(TIMER(SERVO_TIMER_NUM));
@@ -363,17 +364,17 @@ void HAL::setupTimer() {
     motion3->timer->attachInterrupt(TIMER_VECTOR_NAME(MOTION3_TIMER_NUM));
     motion3->timer->resume();
     HAL_NVIC_SetPriority(TIMER_IRQ(MOTION3_TIMER_NUM), 0, 0); // highest priority required!
-    
+
 #if NUM_BEEPERS > 0
     for (int i = 0; i < NUM_BEEPERS; i++) {
-        if (beepers[i]->getOutputType() == 1) { 
+        if (beepers[i]->getOutputType() == 1) {
             // If we have any SW beepers, enable the beeper IRQ
             toneTimer = reserveTimerInterrupt(TONE_TIMER_NUM); // prevent pwm usage
             toneTimer->timer = new HardwareTimer(TIMER(TONE_TIMER_NUM));
             toneTimer->timer->setMode(2, TIMER_OUTPUT_COMPARE);
             toneTimer->timer->setOverflow(0, HERTZ_FORMAT);
             toneTimer->timer->attachInterrupt(TIMER_VECTOR_NAME(TONE_TIMER_NUM));
-            return; 
+            break;
         }
     }
 #endif
@@ -448,10 +449,9 @@ void HAL::setHardwarePWM(int id, int value) {
     entry.ht->resume();
 }
 
-
 void HAL::setHardwareFrequency(int id, uint32_t frequency) {
-    // TODO: handle HAL pwm frequency change requests 
-    // 
+    // TODO: handle HAL pwm frequency change requests
+    //
 }
 
 ADC_HandleTypeDef AdcHandle = {};
@@ -655,7 +655,7 @@ void HAL::importEEPROM() {
 #if EEPROM_AVAILABLE == EEPROM_SDCARD
 
 #if !SDSUPPORT
-#error EEPROM using sd card requires SDCARSUPPORT
+#error EEPROM using sd card requires SDCARDSUPPORT
 #endif
 
 millis_t eprSyncTime = 0; // in sync
@@ -759,12 +759,14 @@ void HAL::i2cInit(uint32_t clockSpeedHz) {
 /*************************************************************************
   Issues a start condition and sends address and transfer direction.
 *************************************************************************/
-void HAL::i2cStart(uint8_t address) {
+/* void HAL::i2cStart(uint8_t address) {
     WIRE_PORT.beginTransmission(address);
-}
+} */
 
 void HAL::i2cStartRead(uint8_t address, uint8_t bytes) {
-    WIRE_PORT.requestFrom(address, bytes);
+    if (!i2cError) {
+        i2cError |= (WIRE_PORT.requestFrom(address, bytes) != bytes);
+    }
 }
 /*************************************************************************
  Issues a start condition and sends address and transfer direction.
@@ -773,12 +775,14 @@ void HAL::i2cStartRead(uint8_t address, uint8_t bytes) {
  Input:   address and transfer direction of I2C device, internal address
 *************************************************************************/
 void HAL::i2cStartAddr(uint8_t address, unsigned int pos, uint8_t readBytes) {
-    WIRE_PORT.beginTransmission(address);
-    WIRE_PORT.write(pos >> 8);
-    WIRE_PORT.write(pos & 255);
-    if (readBytes) {
-        WIRE_PORT.endTransmission();
-        WIRE_PORT.requestFrom(address, readBytes);
+    if (!i2cError) {
+        WIRE_PORT.beginTransmission(address);
+        WIRE_PORT.write(pos >> 8);
+        WIRE_PORT.write(pos & 255);
+        if (readBytes) {
+            i2cError |= WIRE_PORT.endTransmission();
+            i2cError |= (WIRE_PORT.requestFrom(address, readBytes) != readBytes);
+        }
     }
 }
 
@@ -786,7 +790,7 @@ void HAL::i2cStartAddr(uint8_t address, unsigned int pos, uint8_t readBytes) {
  Terminates the data transfer and releases the I2C bus
 *************************************************************************/
 void HAL::i2cStop(void) {
-    WIRE_PORT.endTransmission();
+    i2cError |= WIRE_PORT.endTransmission();
 }
 
 /*************************************************************************
@@ -795,7 +799,9 @@ void HAL::i2cStop(void) {
   Input:    byte to be transfered
 *************************************************************************/
 void HAL::i2cWrite(uint8_t data) {
-    WIRE_PORT.write(data);
+    if (!i2cError) {
+        WIRE_PORT.write(data);
+    }
 }
 
 /*************************************************************************
@@ -803,7 +809,7 @@ void HAL::i2cWrite(uint8_t data) {
  Return:  byte read from I2C device
 *************************************************************************/
 int HAL::i2cRead(void) {
-    if (WIRE_PORT.available()) {
+    if (!i2cError && WIRE_PORT.available()) {
         return WIRE_PORT.read();
     }
     return -1; // should never happen, but better then blocking
@@ -848,6 +854,10 @@ void servoOffTimer(HardwareTimer* timer) {
             servo->tim->CCR1 = Servo2500;
         }
     }
+// Add all generated servo interrupt handlers
+#undef IO_TARGET
+#define IO_TARGET IO_TARGET_SERVO_INTERRUPT
+#include "io/redefine.h"
 }
 
 // Servo timer Interrupt handler
@@ -942,7 +952,7 @@ void HAL::spiEnd() {
     SPI.endTransaction();
 }
 
-#if NUM_BEEPERS > 0 
+#if NUM_BEEPERS > 0
 void TIMER_VECTOR(TONE_TIMER_NUM) {
 #undef IO_TARGET
 #define IO_TARGET IO_TARGET_BEEPER_LOOP
@@ -951,7 +961,7 @@ void TIMER_VECTOR(TONE_TIMER_NUM) {
 #endif
 
 void HAL::tone(uint32_t frequency) {
-#if NUM_BEEPERS > 0 
+#if NUM_BEEPERS > 0
 #if NUM_BEEPERS > 1
     ufast8_t curPlaying = 0;
     BeeperSourceBase* playingBeepers[NUM_BEEPERS];

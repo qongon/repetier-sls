@@ -747,6 +747,7 @@ void GUI::menuEnd(GUIAction action) {
             } else if (cb) { /* Push new display function on stack */ \
                 push(cb, cData, tp); \
             } \
+            action = GUIAction::CLICK_PROCESSED; \
         } \
     }
 
@@ -920,7 +921,8 @@ void GUI::menuText(GUIAction& action, char* text, bool highlight) {
     } else if (action == GUIAction::DRAW) {
         if (guiLine >= topRow[level] && guiLine < topRow[level] + UI_ROWS) {
             bufClear();
-            if (highlight) {
+            bufAddString(text);
+            /* if (highlight) {
                 // bufAddChar('*');
                 // bufAddChar(' ');
                 bufAddString(text);
@@ -928,7 +930,7 @@ void GUI::menuText(GUIAction& action, char* text, bool highlight) {
                 // bufAddChar('*');
             } else {
                 bufAddString(text);
-            }
+            } */
             printRow(guiY++, buf);
         }
     } else if (action == GUIAction::NEXT) {

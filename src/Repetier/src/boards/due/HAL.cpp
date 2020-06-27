@@ -57,6 +57,8 @@ static uint32_t adcEnable = 0;
 
 char HAL::virtualEeprom[EEPROM_BYTES] = { 0, 0, 0, 0, 0, 0, 0 };
 bool HAL::wdPinged = true;
+uint8_t HAL::i2cError = 0;
+
 volatile uint8_t HAL::insideTimer1 = 0;
 #ifndef DUE_SOFTWARE_SPI
 int spiDueDividors[] = { 10, 21, 42, 84, 168, 255, 255 };
@@ -135,7 +137,7 @@ void HAL::setupTimer() {
     NVIC_SetPriority(PIOC_IRQn, 1);
     NVIC_SetPriority(PIOD_IRQn, 1);
     // Servo control
-#if NUM_SERVOS > 0
+#if NUM_SERVOS > 0 || NUM_BEEPER > 0
     pmc_enable_periph_clk(SERVO_TIMER_IRQ);
     //NVIC_SetPriority((IRQn_Type)SERVO_TIMER_IRQ, NVIC_EncodePriority(4, 5, 0));
     NVIC_SetPriority((IRQn_Type)SERVO_TIMER_IRQ, 4);
@@ -193,12 +195,12 @@ struct TimerPWMPin {
     int pin;
     Pio* pio;
     uint32_t pio_pin;
-    byte tc_global_chan; // 0 .. 8 What's our overall timer channel number?
-    byte tc_local_chan;  // 0 .. 2 We're a timer channel inside a timer counter.
-    bool peripheral_A;   // Do we need to set the peripheral to A instead of B?
-    bool tio_line_AB;    // 0 = A, 1 = B Is this the TIOA or TIOB output pin?
-    Tc* tc_base_address; // TC0 .. TC2 timer counter registers
-    ufast8_t lastSetDuty;     // Last duty cycle we were set to. (for frequency changes).
+    byte tc_global_chan;  // 0 .. 8 What's our overall timer channel number?
+    byte tc_local_chan;   // 0 .. 2 We're a timer channel inside a timer counter.
+    bool peripheral_A;    // Do we need to set the peripheral to A instead of B?
+    bool tio_line_AB;     // 0 = A, 1 = B Is this the TIOA or TIOB output pin?
+    Tc* tc_base_address;  // TC0 .. TC2 timer counter registers
+    ufast8_t lastSetDuty; // Last duty cycle we were set to. (for frequency changes).
 };
 
 // Each timer COUNTER has 3 timer channels.
@@ -326,10 +328,10 @@ static void computePWMDivider(uint32_t frequency, uint32_t& div, uint32_t& scale
 
     if (scale > 65535) {
         scale = 65535;
-    } 
+    }
     if (div > 10) {
         div = 10;
-    }  
+    }
 }
 
 // Try to initialize pinNumber as hardware PWM. Returns internal
@@ -365,6 +367,10 @@ int HAL::initHardwarePWM(int pinNumber, uint32_t frequency) {
     }
     
     if(!frequency) {
+        frequency = 1;
+    }
+
+    if (!frequency) {
         frequency = 1;
     }
 
@@ -580,7 +586,7 @@ void HAL::importEEPROM() {
 #if EEPROM_AVAILABLE == EEPROM_SDCARD
 
 #if !SDSUPPORT
-#error EEPROM using sd card requires SDCARSUPPORT
+#error EEPROM using sd card requires SDCARDSUPPORT
 #endif
 
 millis_t eprSyncTime = 0; // in sync
@@ -895,12 +901,14 @@ void HAL::i2cInit(uint32_t clockSpeedHz) {
 /*************************************************************************
   Issues a start condition and sends address and transfer direction.
 *************************************************************************/
-void HAL::i2cStart(uint8_t address) {
+/* void HAL::i2cStart(uint8_t address) {
     WIRE_PORT.beginTransmission(address);
-}
+} */
 
 void HAL::i2cStartRead(uint8_t address, uint8_t bytes) {
-    WIRE_PORT.requestFrom(address, bytes);
+    if (!i2cError) {
+        i2cError |= (WIRE_PORT.requestFrom(address, bytes) != bytes);
+    }
 }
 /*************************************************************************
  Issues a start condition and sends address and transfer direction.
@@ -909,12 +917,14 @@ void HAL::i2cStartRead(uint8_t address, uint8_t bytes) {
  Input:   address and transfer direction of I2C device, internal address
 *************************************************************************/
 void HAL::i2cStartAddr(uint8_t address, unsigned int pos, uint8_t readBytes) {
-    WIRE_PORT.beginTransmission(address);
-    WIRE_PORT.write(pos >> 8);
-    WIRE_PORT.write(pos & 255);
-    if (readBytes != 0) {
-        WIRE_PORT.endTransmission();
-        WIRE_PORT.requestFrom(address, readBytes);
+    if (!i2cError) {
+        WIRE_PORT.beginTransmission(address);
+        WIRE_PORT.write(pos >> 8);
+        WIRE_PORT.write(pos & 255);
+        if (readBytes) {
+            i2cError |= WIRE_PORT.endTransmission();
+            i2cError |= (WIRE_PORT.requestFrom(address, readBytes) != readBytes);
+        }
     }
 }
 
@@ -922,7 +932,7 @@ void HAL::i2cStartAddr(uint8_t address, unsigned int pos, uint8_t readBytes) {
  Terminates the data transfer and releases the I2C bus
 *************************************************************************/
 void HAL::i2cStop(void) {
-    WIRE_PORT.endTransmission();
+    i2cError |= WIRE_PORT.endTransmission();
 }
 
 /*************************************************************************
@@ -931,7 +941,9 @@ void HAL::i2cStop(void) {
   Input:    byte to be transfered
 *************************************************************************/
 void HAL::i2cWrite(uint8_t data) {
-    WIRE_PORT.write(data);
+    if (!i2cError) {
+        WIRE_PORT.write(data);
+    }
 }
 
 /*************************************************************************
@@ -939,7 +951,7 @@ void HAL::i2cWrite(uint8_t data) {
  Return:  byte read from I2C device
 *************************************************************************/
 int HAL::i2cRead(void) {
-    if (WIRE_PORT.available()) {
+    if (!i2cError && WIRE_PORT.available()) {
         return WIRE_PORT.read();
     }
     return -1; // should never happen, but better then blocking
@@ -995,6 +1007,10 @@ void SERVO_TIMER_VECTOR() {
     if (servoIndex > 7) {
         servoIndex = 0;
     }
+// Add all generated servo interrupt handlers
+#undef IO_TARGET
+#define IO_TARGET IO_TARGET_SERVO_INTERRUPT
+#include "io/redefine.h"
 }
 #endif
 
@@ -1140,7 +1156,7 @@ void BEEPER_TIMER_VECTOR() {
 #endif
 
 void HAL::tone(uint32_t frequency) {
-#if NUM_BEEPERS > 0 
+#if NUM_BEEPERS > 0
 #if NUM_BEEPERS > 1
     ufast8_t curPlaying = 0;
     BeeperSourceBase* playingBeepers[NUM_BEEPERS];
@@ -1181,7 +1197,7 @@ void HAL::tone(uint32_t frequency) {
     }
     uint32_t rc = (F_CPU_TRUE / 2) / frequency;
     TC_SetRC(BEEPER_TIMER, BEEPER_TIMER_CHANNEL, rc);
-    // If the counter is already beyond our desired RC, reset it. 
+    // If the counter is already beyond our desired RC, reset it.
     if (TC_ReadCV(BEEPER_TIMER, BEEPER_TIMER_CHANNEL) > rc) {
         BEEPER_TIMER->TC_CHANNEL[BEEPER_TIMER_CHANNEL].TC_CCR = TC_CCR_SWTRG;
     }

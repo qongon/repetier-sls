@@ -263,6 +263,7 @@ public:
     // as long as hal eeprom functions are used.
     static char virtualEeprom[EEPROM_BYTES];
     static bool wdPinged;
+    static uint8_t i2cError;
 
     HAL();
     virtual ~HAL();
@@ -436,7 +437,7 @@ public:
     static void i2cSetClockspeed(uint32_t clockSpeedHz);
     static void i2cInit(uint32_t clockSpeedHz);
     static void i2cStartRead(uint8_t address7bit, uint8_t bytes);
-    static void i2cStart(uint8_t address7bit);
+    // static void i2cStart(uint8_t address7bit);
     static void i2cStartAddr(uint8_t address7bit, unsigned int pos, uint8_t readBytes);
     static void i2cStop(void);
     static void i2cWrite(uint8_t data);
@@ -446,7 +447,7 @@ public:
     inline static void startWatchdog() {
         IWatchdog.begin(WATCHDOG_INTERVAL);
     };
-    inline static void stopWatchdog() {}
+    inline static void stopWatchdog() { }
     inline static void pingWatchdog() {
 #if FEATURE_WATCHDOG
         wdPinged = true;

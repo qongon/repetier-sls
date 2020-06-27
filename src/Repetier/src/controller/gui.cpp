@@ -54,12 +54,18 @@ void GUI::update() {
     handleKeypress(); // Test for new keys
 
     if (nextAction == GUIAction::BACK) {
+        Printer::playDefaultSound(DefaultSounds::OK);
         pop();
         nextAction = GUIAction::BACK_PROCESSED;
         lastAction = HAL::timeInMilliseconds();
         nextActionRepeat = 0;
         contentChanged = true;
     } else if (nextAction != GUIAction::NONE && nextAction != GUIAction::CLICK_PROCESSED && nextAction != GUIAction::BACK_PROCESSED) {
+        if (nextAction == GUIAction::NEXT || nextAction == GUIAction::PREVIOUS) {
+            Printer::playDefaultSound(DefaultSounds::NEXT_PREV);
+        } else if (nextAction == GUIAction::CLICK) {
+            Printer::playDefaultSound(DefaultSounds::OK);
+        }
         // Com::printFLN(PSTR("Action:"), (int32_t)nextAction);
         lastAction = HAL::timeInMilliseconds();
         callbacks[level](nextAction, data[level]); // Execute action
@@ -270,11 +276,12 @@ void GUI::bufClear() {
     buf[0] = 0;
 }
 
-void GUI::bufAddInt(int value, uint8_t digits, char fillChar) {
+void GUI::bufAddInt(int value, int8_t digits, char fillChar) {
     uint8_t dig = 0, neg = 0;
     byte addspaces = digits > 0;
-    if (digits < 0)
+    if (digits < 0) {
         digits = -digits;
+    }
     if (value < 0) {
         neg = 1;
         value = -value;
@@ -379,8 +386,9 @@ void GUI::bufAddFloat(float value, int8_t fixdigits, int8_t digits) {
 void GUI::bufAddString(char* value) {
     while (bufPos < MAX_COLS) {
         uint8_t c = *value;
-        if (c == 0)
+        if (c == 0) {
             break;
+        }
         buf[bufPos++] = c;
         value++;
     }
@@ -390,8 +398,9 @@ void GUI::bufAddString(char* value) {
 void GUI::bufAddStringP(FSTRINGPARAM(value)) {
     while (bufPos < MAX_COLS) {
         uint8_t c = HAL::readFlashByte(value++);
-        if (c == 0)
+        if (c == 0) {
             break;
+        }
         buf[bufPos++] = c;
     }
     buf[bufPos] = 0;
@@ -549,9 +558,11 @@ void GUI::setStatusP(FSTRINGPARAM(text), GUIStatusLevel lvl) {
             push(infoScreen, status, GUIPageType::STATUS);
         }
         if (lvl == GUIStatusLevel::WARNING) {
+            Printer::playDefaultSound(DefaultSounds::WARNING);
             push(warningScreen, status, GUIPageType::STATUS);
         }
         if (lvl == GUIStatusLevel::ERROR) {
+            Printer::playDefaultSound(DefaultSounds::ERROR);
             push(errorScreen, status, GUIPageType::STATUS);
         }
     }

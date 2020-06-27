@@ -315,10 +315,10 @@ void Printer::kill(uint8_t onlySteppers) {
 
     FOR_ALL_AXES(i) {
 #if defined(PREVENT_Z_DISABLE_ON_STEPPER_TIMEOUT) && PREVENT_Z_DISABLE_ON_STEPPER_TIMEOUT == 1
-        if (i == Z_AXIS) { 
+        if (i == Z_AXIS) {
             continue;
-        } 
-#endif 
+        }
+#endif
         Motion1::setAxisHomed(i, false);
     }
     unsetHomedAll();
@@ -645,10 +645,15 @@ void Printer::setup() {
     GCode::executeFString(Com::tStartupGCode);
 #endif
     rescueSetup();
+    playDefaultSound(DefaultSounds::RESET);
 }
 
 void Printer::defaultLoopActions() {
     Commands::checkForPeriodicalActions(true); //check heater every n milliseconds
+    if (HAL::i2cError && HAL::i2cError != 255) {
+        HAL::i2cError = 255; // Flag to show error message only once
+        GCode::fatalError(Com::tI2CError);
+    }
     millis_t curtime = HAL::timeInMilliseconds();
     if (isRescueRequired() || Motion1::length != 0 || isMenuMode(MENU_MODE_SD_PRINTING + MENU_MODE_PAUSED))
         previousMillisCmd = curtime;
@@ -944,8 +949,9 @@ void Printer::showJSONStatus(int type) {
     //  "extr": [0.0, 0.0],
     Com::printF(PSTR("],\"extr\":["));
     for (int i = 0; i < NUM_TOOLS; i++) {
-        if (i)
+        if (i) {
             Com::print(',');
+        }
         if (Tool::getTool(i)->getHeater() != nullptr) {
             Com::print(Tool::getTool(i)->getHeater()->getCurrentTemperature());
         } else {
@@ -957,18 +963,20 @@ void Printer::showJSONStatus(int type) {
     //  "efactor": [100.00, 100.00],
     Com::printF(PSTR(",\"efactor\":["));
     for (int i = 0; i < NUM_TOOLS; i++) {
-        if (i)
+        if (i) {
             Com::print(',');
+        }
         Com::print((int)Printer::extrudeMultiply);
     }
     //  "tool": 0,
     Com::printF(PSTR("],\"tool\":"), Tool::getActiveToolId());
     //"probe": "4",
     Com::printF(PSTR(",\"probe\":"));
-    if (ZProbe->triggered())
+    if (ZProbe->triggered()) {
         Com::print((int)0);
-    else
+    } else {
         Com::print((int)1000);
+    }
     //  "fanPercent": [0.00, 100.00],
     Com::printF(PSTR(",\"fanPercent\":["));
     for (int i = 0; i < NUM_FANS; i++) {
@@ -997,14 +1005,15 @@ void Printer::showJSONStatus(int type) {
     Com::printF(PSTR("\"axesHomed\":["));
     Com::print((int)Motion1::isAxisHomed(X_AXIS));
     Com::print(',');
-    Com::print(Motion1::isAxisHomed(Y_AXIS));
+    Com::print((int)Motion1::isAxisHomed(Y_AXIS));
     Com::print(',');
-    Com::print(Motion1::isAxisHomed(Z_AXIS));
+    Com::print((int)Motion1::isAxisHomed(Z_AXIS));
     Com::printF(PSTR("],\"extr\":["));
     firstOccurrence = true;
     for (int i = 0; i < NUM_TOOLS; i++) {
-        if (!firstOccurrence)
+        if (!firstOccurrence) {
             Com::print(',');
+        }
         Com::print(Motion1::currentPosition[Z_AXIS]);
         firstOccurrence = false;
     }
@@ -1489,4 +1498,30 @@ void Printer::enableFailedMode(char* msg) {
     Com::print(msg);
     Com::println();
     Com::printErrorFLN(Com::tM999);
+}
+
+void Printer::playDefaultSound(DefaultSounds sound) {
+#if NUM_BEEPERS > 0
+    BeeperSourceBase* beeper = beepers[0];
+    switch (sound) {
+    case DefaultSounds::NEXT_PREV:
+        beeper->playTheme(ThemeButtonNextPrev, false);
+        break;
+    case DefaultSounds::OK:
+        beeper->playTheme(ThemeButtonOk, false);
+        break;
+    case DefaultSounds::SUCCESS:
+        beeper->playTheme(ThemeNotifyConfirm, false);
+        break;
+    case DefaultSounds::WARNING:
+        beeper->playTheme(ThemeNotifyWarning, false);
+        break;
+    case DefaultSounds::ERROR:
+        beeper->playTheme(ThemeNotifyError, false);
+        break;
+    case DefaultSounds::RESET:
+        beeper->playTheme(ThemeButtonReset, false);
+        break;
+    }
+#endif
 }
