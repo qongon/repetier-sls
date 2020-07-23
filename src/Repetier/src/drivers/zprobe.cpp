@@ -403,7 +403,6 @@ void ZProbeHandler::activate() {
         for (size_t i = 0; i < NUM_HEATERS; i++) {
             if (heaters[i]->isPaused() || heaters[i]->isOff()) {
                 userPausedHeaters |= (1 << i);
-                // heater is already manually paused
             } else {
                 userPausedHeaters &= ~(1 << i);
                 heaters[i]->pause();
@@ -748,7 +747,6 @@ void ZProbeHandler::activate() {
         for (size_t i = 0; i < NUM_HEATERS; i++) {
             if (heaters[i]->isPaused() || heaters[i]->isOff()) {
                 userPausedHeaters |= (1 << i);
-                // heater is already manually paused
             } else {
                 userPausedHeaters &= ~(1 << i);
                 heaters[i]->pause();
