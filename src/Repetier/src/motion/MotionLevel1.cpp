@@ -302,8 +302,8 @@ void Motion1::setAutolevelActive(bool state, bool silent) {
         } else {
             Com::printInfoFLN(Com::tAutolevelDisabled);
         }
+        printCurrentPosition();
     }
-    printCurrentPosition();
 }
 
 /// Compute safety margin required by rotation and sheer to not leave allowed region

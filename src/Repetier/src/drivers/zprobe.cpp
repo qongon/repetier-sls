@@ -102,7 +102,6 @@ void ZProbeHandler::deactivate() {
 
 float ZProbeHandler::runProbe() {
     Motion1::callBeforeHomingOnSteppers();
-    float zCorr = 0;
 #if defined(Z_PROBE_USE_MEDIAN) && Z_PROBE_USE_MEDIAN
     float measurements[Z_PROBE_REPETITIONS];
 #endif
@@ -244,14 +243,8 @@ float ZProbeHandler::runProbe() {
         corSteps[i] -= corSteps2[i];
     }
 #endif
-#if ENABLE_BUMP_CORRECTION
-    // if (Leveling::isDistortionEnabled()) {
-    // zCorr = Leveling::distortionAt(Motion1::currentPosition[X_AXIS], Motion1::currentPosition[Y_AXIS]);
-    // }
-#endif
     z += height;
     z -= coating;
-    z -= zCorr;
     /* DEBUG_MSG2_FAST("StartSteps", cPosSteps[Z_AXIS]);
     DEBUG_MSG2_FAST("EndSteps", tPosSteps[Z_AXIS]);
     DEBUG_MSG2_FAST("CorSteps", corSteps[Z_AXIS]);
@@ -288,18 +281,7 @@ float ZProbeHandler::runProbe() {
             return ILLEGAL_Z_PROBE;
         }
     }
-    Com::printF(Com::tZProbe, z, 3);
-    Com::printF(Com::tSpaceXColon, Motion1::currentPosition[X_AXIS]);
-#if ENABLE_BUMP_CORRECTION
-    if (Leveling::isDistortionEnabled()) {
-        Com::printF(Com::tSpaceYColon, Motion1::currentPosition[Y_AXIS]);
-        Com::printFLN(PSTR(" zCorr:"), zCorr, 3);
-    } else {
-        Com::printFLN(Com::tSpaceYColon, Motion1::currentPosition[Y_AXIS]);
-    }
-#else
-    Com::printFLN(Com::tSpaceYColon, Motion1::currentPosition[Y_AXIS]);
-#endif
+    Motion1::waitForEndOfMoves();
     Motion1::callAfterHomingOnSteppers();
     return z;
 }
@@ -468,7 +450,6 @@ void ZProbeHandler::deactivate() {
 }
 
 float ZProbeHandler::runProbe() {
-    float zCorr = 0;
     Motion1::callBeforeHomingOnSteppers();
 #if defined(Z_PROBE_USE_MEDIAN) && Z_PROBE_USE_MEDIAN && Z_PROBE_REPETITIONS > 1
     float measurements[Z_PROBE_REPETITIONS];
@@ -613,13 +594,7 @@ float ZProbeHandler::runProbe() {
         corSteps[i] -= corSteps2[i];
     }
 #endif
-#if ENABLE_BUMP_CORRECTION
-    // if (Leveling::isDistortionEnabled()) {
-    // zCorr = Leveling::distortionAt(Motion1::currentPosition[X_AXIS], Motion1::currentPosition[Y_AXIS]);
-    // }
-#endif
     z += height;
-    z -= zCorr;
     /* DEBUG_MSG2_FAST("StartSteps", cPosSteps[Z_AXIS]);
     DEBUG_MSG2_FAST("EndSteps", tPosSteps[Z_AXIS]);
     DEBUG_MSG2_FAST("CorSteps", corSteps[Z_AXIS]);
@@ -656,18 +631,7 @@ float ZProbeHandler::runProbe() {
             return ILLEGAL_Z_PROBE;
         }
     }
-    Com::printF(Com::tZProbe, z, 3);
-    Com::printF(Com::tSpaceXColon, Motion1::currentPosition[X_AXIS]);
-#if ENABLE_BUMP_CORRECTION
-    if (Leveling::isDistortionEnabled()) {
-        Com::printF(Com::tSpaceYColon, Motion1::currentPosition[Y_AXIS]);
-        Com::printFLN(PSTR(" zCorr:"), zCorr, 3);
-    } else {
-        Com::printFLN(Com::tSpaceYColon, Motion1::currentPosition[Y_AXIS]);
-    }
-#else
-    Com::printFLN(Com::tSpaceYColon, Motion1::currentPosition[Y_AXIS]);
-#endif
+    Motion1::waitForEndOfMoves();
     Motion1::callAfterHomingOnSteppers();
     return z;
 }
@@ -824,7 +788,6 @@ void ZProbeHandler::deactivate() {
 
 float ZProbeHandler::runProbe() {
     Motion1::callBeforeHomingOnSteppers();
-    float zCorr = 0;
 #if defined(Z_PROBE_USE_MEDIAN) && Z_PROBE_USE_MEDIAN && Z_PROBE_REPETITIONS > 1
     float measurements[Z_PROBE_REPETITIONS];
 #endif
@@ -967,14 +930,8 @@ float ZProbeHandler::runProbe() {
         corSteps[i] -= corSteps2[i];
     }
 #endif
-#if ENABLE_BUMP_CORRECTION
-    // if (Leveling::isDistortionEnabled()) {
-    // zCorr = Leveling::distortionAt(Motion1::currentPosition[X_AXIS], Motion1::currentPosition[Y_AXIS]);
-    // }
-#endif
     z += height;
     z -= coating;
-    z -= zCorr;
     /* DEBUG_MSG2_FAST("StartSteps", cPosSteps[Z_AXIS]);
     DEBUG_MSG2_FAST("EndSteps", tPosSteps[Z_AXIS]);
     DEBUG_MSG2_FAST("CorSteps", corSteps[Z_AXIS]);
@@ -1011,18 +968,7 @@ float ZProbeHandler::runProbe() {
             return ILLEGAL_Z_PROBE;
         }
     }
-    Com::printF(Com::tZProbe, z, 3);
-    Com::printF(Com::tSpaceXColon, Motion1::currentPosition[X_AXIS]);
-#if ENABLE_BUMP_CORRECTION
-    if (Leveling::isDistortionEnabled()) {
-        Com::printF(Com::tSpaceYColon, Motion1::currentPosition[Y_AXIS]);
-        Com::printFLN(PSTR(" zCorr:"), zCorr, 3);
-    } else {
-        Com::printFLN(Com::tSpaceYColon, Motion1::currentPosition[Y_AXIS]);
-    }
-#else
-    Com::printFLN(Com::tSpaceYColon, Motion1::currentPosition[Y_AXIS]);
-#endif
+    Motion1::waitForEndOfMoves();
     Motion1::callAfterHomingOnSteppers();
     return z;
 }
