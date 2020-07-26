@@ -140,6 +140,8 @@ public:
     FSTRINGVAR(tSoftwareReset)
     FSTRINGVAR(tUnknownCommand)
     FSTRINGVAR(tFreeRAM)
+    FSTRINGVAR(tParenthesesLeft)
+    FSTRINGVAR(tParenthesesRightSpace)
     FSTRINGVAR(tXColon)
     FSTRINGVAR(tSlash)
     FSTRINGVAR(tSpaceSlash)
