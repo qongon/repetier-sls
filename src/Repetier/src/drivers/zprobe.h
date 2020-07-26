@@ -31,6 +31,10 @@ public:
 
     static float getSpeed() { return 0; }
     static void setSpeed(float val) { }
+
+    static void printProbePoint(uint16_t curPoint, uint16_t maxPoints, float height, float x, float y, bool allowPlusSign = true) { }
+    static void printProbePointLN(uint16_t curPoint, uint16_t maxPoints, float height, float x, float y, bool allowPlusSign = true) { }
+    
 };
 
 #elif Z_PROBE_TYPE == Z_PROBE_TYPE_DEFAULT
@@ -77,6 +81,9 @@ public:
 
     static float getSpeed() { return speed; }
     static void setSpeed(float val) { speed = val; }
+
+    static void printProbePoint(uint16_t curPoint, uint16_t maxPoints, float height, float x, float y, bool allowPlusSign = true);
+    static void printProbePointLN(uint16_t curPoint, uint16_t maxPoints, float height, float x, float y, bool allowPlusSign = true);
 };
 
 #elif Z_PROBE_TYPE == Z_PROBE_TYPE_NOZZLE
@@ -128,6 +135,9 @@ public:
 
     static float getSpeed() { return speed; }
     static void setSpeed(float val) { speed = val; }
+
+    static void printProbePoint(uint16_t curPoint, uint16_t maxPoints, float height, float x, float y, bool allowPlusSign = true);
+    static void printProbePointLN(uint16_t curPoint, uint16_t maxPoints, float height, float x, float y, bool allowPlusSign = true);
 };
 
 #elif Z_PROBE_TYPE == Z_PROBE_TYPE_BLTOUCH
@@ -182,6 +192,9 @@ public:
 
     static float getSpeed() { return speed; }
     static void setSpeed(float val) { speed = val; }
+
+    static void printProbePoint(uint16_t curPoint, uint16_t maxPoints, float height, float x, float y, bool allowPlusSign = true);
+    static void printProbePointLN(uint16_t curPoint, uint16_t maxPoints, float height, float x, float y, bool allowPlusSign = true);
 };
 
 #else

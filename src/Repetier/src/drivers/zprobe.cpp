@@ -355,6 +355,27 @@ void ZProbeHandler::showConfigMenu(GUIAction action) {
     GUI::menuFloatP(action, PSTR("X Offset    :"), ZProbeHandler::xOffset(), 1, menuProbeOffset, reinterpret_cast<void*>(0), GUIPageType::FIXED_CONTENT);
     GUI::menuFloatP(action, PSTR("Y Offset    :"), ZProbeHandler::yOffset(), 1, menuProbeOffset, reinterpret_cast<void*>(1), GUIPageType::FIXED_CONTENT);
 }
+void ZProbeHandler::printProbePoint(uint16_t curPoint, uint16_t maxPoints, float height, float x, float y, bool allowPlusSign) {
+    // (4 /9) Z-probe:-0.115mm @ X:158.0 Y:104.0
+    if (maxPoints > 0) {
+        Com::printF(Com::tParenthesesLeft, curPoint);
+        Com::printF(Com::tSpaceSlash, maxPoints);
+        Com::printF(Com::tParenthesesRightSpace);
+    }
+    Com::printF(Com::tZProbe);
+    if (height >= 0.0f) {
+        Com::print(allowPlusSign ? '+' : ' ');
+    }
+    Com::printFloat(height, 3);
+    Com::printF(Com::tUnitMM);
+    Com::printF(Com::tSpaceAt);
+    Com::printF(Com::tSpaceXColon, x, 2);
+    Com::printF(Com::tSpaceYColon, y, 2);
+}
+void ZProbeHandler::printProbePointLN(uint16_t curPoint, uint16_t maxPoints, float height, float x, float y, bool allowPlusSign) {
+    printProbePoint(curPoint, maxPoints, height, x, y, allowPlusSign);
+    Com::println();
+}
 #endif
 
 #if Z_PROBE_TYPE == Z_PROBE_TYPE_NOZZLE
@@ -694,6 +715,27 @@ void ZProbeHandler::showConfigMenu(GUIAction action) {
         int maxTemp = hm->getMaxTemperature();
         GUI::menuLongP(action, PSTR("Nozzle Temp:"), ZProbeHandler::getProbingTemp(), menuProbeTemperature, reinterpret_cast<void*>(maxTemp), GUIPageType::FIXED_CONTENT);
     }
+}
+void ZProbeHandler::printProbePoint(uint16_t curPoint, uint16_t maxPoints, float height, float x, float y, bool allowPlusSign) {
+    // (4 /9) Z-probe:-0.115mm @ X:158.0 Y:104.0
+    if (maxPoints > 0) {
+        Com::printF(Com::tParenthesesLeft, curPoint);
+        Com::printF(Com::tSpaceSlash, maxPoints);
+        Com::printF(Com::tParenthesesRightSpace);
+    }
+    Com::printF(Com::tZProbe);
+    if (height >= 0.0f) {
+        Com::print(allowPlusSign ? '+' : ' ');
+    }
+    Com::printFloat(height, 3);
+    Com::printF(Com::tUnitMM);
+    Com::printF(Com::tSpaceAt);
+    Com::printF(Com::tSpaceXColon, x, 2);
+    Com::printF(Com::tSpaceYColon, y, 2);
+}
+void ZProbeHandler::printProbePointLN(uint16_t curPoint, uint16_t maxPoints, float height, float x, float y, bool allowPlusSign) {
+    printProbePoint(curPoint, maxPoints, height, x, y, allowPlusSign);
+    Com::println();
 }
 #endif
 
@@ -1056,5 +1098,26 @@ void ZProbeHandler::showConfigMenu(GUIAction action) {
     GUI::menuFloatP(action, PSTR("Coat. Height:"), ZProbeHandler::getCoating(), 2, menuProbeCoating, nullptr, GUIPageType::FIXED_CONTENT);
     GUI::menuFloatP(action, PSTR("X Offset    :"), ZProbeHandler::xOffset(), 1, menuProbeOffset, reinterpret_cast<void*>(0), GUIPageType::FIXED_CONTENT);
     GUI::menuFloatP(action, PSTR("Y Offset    :"), ZProbeHandler::yOffset(), 1, menuProbeOffset, reinterpret_cast<void*>(1), GUIPageType::FIXED_CONTENT);
+}
+void ZProbeHandler::printProbePoint(uint16_t curPoint, uint16_t maxPoints, float height, float x, float y, bool allowPlusSign) {
+    // (4 /9) Z-probe:-0.115mm @ X:158.0 Y:104.0
+    if (maxPoints > 0) {
+        Com::printF(Com::tParenthesesLeft, curPoint);
+        Com::printF(Com::tSpaceSlash, maxPoints);
+        Com::printF(Com::tParenthesesRightSpace);
+    }
+    Com::printF(Com::tZProbe);
+    if (height >= 0.0f) {
+        Com::print(allowPlusSign ? '+' : ' ');
+    }
+    Com::printFloat(height, 3);
+    Com::printF(Com::tUnitMM);
+    Com::printF(Com::tSpaceAt);
+    Com::printF(Com::tSpaceXColon, x, 2);
+    Com::printF(Com::tSpaceYColon, y, 2);
+}
+void ZProbeHandler::printProbePointLN(uint16_t curPoint, uint16_t maxPoints, float height, float x, float y, bool allowPlusSign) {
+    printProbePoint(curPoint, maxPoints, height, x, y, allowPlusSign);
+    Com::println();
 }
 #endif

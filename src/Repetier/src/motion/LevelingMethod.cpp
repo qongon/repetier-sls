@@ -245,7 +245,7 @@ bool Leveling::measure() {
     updateDerived();
 
     setDistortionEnabled(false);
-    Motion1::setAutolevelActive(false);
+    Motion1::setAutolevelActive(false, true);
     Motion1::homeAxes(7); // Home x, y and z
     float px = Motion1::currentPosition[X_AXIS], py = Motion1::currentPosition[Y_AXIS];
     // move first z axis, deltas don't like moving xy at top!
@@ -254,6 +254,11 @@ bool Leveling::measure() {
     Motion1::setTmpPositionXYZ(px, py, ZProbeHandler::optimumProbingHeight());
     PrinterType::closestAllowedPositionWithNewXYOffset(Motion1::tmpPosition, ZProbeHandler::xOffset(), ZProbeHandler::yOffset(), Z_PROBE_BORDER);
     Motion1::moveByOfficial(Motion1::tmpPosition, Motion1::moveFeedrate[X_AXIS], false);
+
+    constexpr uint16_t probePoints = GRID_SIZE * GRID_SIZE;
+    Com::printF(PSTR("Beginning autolevel with "), probePoints);
+    Com::printFLN(PSTR(" grid points..."));
+
     ZProbeHandler::activate();
     Motion1::copyCurrentPrinter(pos);
     bool ok = true;
@@ -282,6 +287,9 @@ bool Leveling::measure() {
                     ok &= h != ILLEGAL_Z_PROBE;
                     grid[xx][y] = h;
                     if (ok) {
+                        uint16_t count = (y * GRID_SIZE) + x;
+                        float diff = ZProbeHandler::getBedDistance() - h;
+                        ZProbeHandler::printProbePointLN(count + 1, probePoints, diff, px, py);
                         builder.addPoint(px, py, h);
                     }
                 }
@@ -956,22 +964,28 @@ bool Leveling::measure() {
     h1 = ZProbeHandler::runProbe();
     ok &= h1 != ILLEGAL_Z_PROBE;
     if (ok) {
+        ZProbeHandler::printProbePointLN(1, 4, ZProbeHandler::getBedDistance() - h1, L_P1_X, L_P1_Y);
         Motion1::setTmpPositionXYZ(L_P2_X, L_P2_Y, ZProbeHandler::optimumProbingHeight());
         ok &= Motion1::moveByOfficial(Motion1::tmpPosition, Motion1::moveFeedrate[X_AXIS], false);
         h2 = ZProbeHandler::runProbe();
         ok &= h2 != ILLEGAL_Z_PROBE;
     }
     if (ok) {
+        ZProbeHandler::printProbePointLN(2, 4, ZProbeHandler::getBedDistance() - h2, L_P2_X, L_P2_Y);
         Motion1::setTmpPositionXYZ(L_P3_X, L_P3_Y, ZProbeHandler::optimumProbingHeight());
         ok &= Motion1::moveByOfficial(Motion1::tmpPosition, Motion1::moveFeedrate[X_AXIS], false);
         h3 = ZProbeHandler::runProbe();
         ok &= h3 != ILLEGAL_Z_PROBE;
     }
     if (ok) {
+        ZProbeHandler::printProbePointLN(3, 4, ZProbeHandler::getBedDistance() - h3, L_P3_X, L_P3_Y);
         Motion1::setTmpPositionXYZ(x1Mirror, y1Mirror, ZProbeHandler::optimumProbingHeight());
         ok &= Motion1::moveByOfficial(Motion1::tmpPosition, Motion1::moveFeedrate[X_AXIS], false);
         h4 = ZProbeHandler::runProbe();
         ok &= h4 != ILLEGAL_Z_PROBE;
+        if (ok) { // Print immediately
+            ZProbeHandler::printProbePointLN(4, 4, ZProbeHandler::getBedDistance() - h4, x1Mirror, y1Mirror);
+        }
     }
     ZProbeHandler::deactivate();
     if (ok) {
@@ -983,7 +997,6 @@ bool Leveling::measure() {
         builder.createPlane(plane, false);
         LevelingCorrector::correct(&plane);
     }
-    Motion1::printCurrentPosition();
     return ok;
 }
 
@@ -1005,7 +1018,7 @@ bool Leveling::measure() {
     builder.reset();
     float h1, h2, h3;
     bool ok = true;
-    Motion1::setAutolevelActive(false);
+    Motion1::setAutolevelActive(false, true);
     Motion1::homeAxes(7); // Home x, y and z
     Motion1::setTmpPositionXYZ(L_P1_X, L_P1_Y, ZProbeHandler::optimumProbingHeight());
     ok &= Motion1::moveByOfficial(Motion1::tmpPosition, Motion1::moveFeedrate[X_AXIS], false);
@@ -1013,16 +1026,21 @@ bool Leveling::measure() {
     h1 = ZProbeHandler::runProbe();
     ok &= h1 != ILLEGAL_Z_PROBE;
     if (ok) {
+        ZProbeHandler::printProbePointLN(1, 3, ZProbeHandler::getBedDistance() - h1, L_P1_X, L_P1_Y);
         Motion1::setTmpPositionXYZ(L_P2_X, L_P2_Y, ZProbeHandler::optimumProbingHeight());
         ok &= Motion1::moveByOfficial(Motion1::tmpPosition, Motion1::moveFeedrate[X_AXIS], false);
         h2 = ZProbeHandler::runProbe();
         ok &= h2 != ILLEGAL_Z_PROBE;
     }
     if (ok) {
+        ZProbeHandler::printProbePointLN(2, 3, ZProbeHandler::getBedDistance() - h2, L_P2_X, L_P2_Y);
         Motion1::setTmpPositionXYZ(L_P3_X, L_P3_Y, ZProbeHandler::optimumProbingHeight());
         ok &= Motion1::moveByOfficial(Motion1::tmpPosition, Motion1::moveFeedrate[X_AXIS], false);
         h3 = ZProbeHandler::runProbe();
         ok &= h3 != ILLEGAL_Z_PROBE;
+        if (ok) {
+            ZProbeHandler::printProbePointLN(3, 3, ZProbeHandler::getBedDistance() - h3, L_P3_X, L_P3_Y);
+        }
     }
     ZProbeHandler::deactivate();
     if (ok) {
@@ -1032,7 +1050,6 @@ bool Leveling::measure() {
         builder.createPlane(plane, false);
         LevelingCorrector::correct(&plane);
     }
-    Motion1::printCurrentPosition();
     return ok;
 }
 
