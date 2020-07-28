@@ -164,6 +164,10 @@ to the position. 0 = no contribution. */
 // Define ZProbe by referencing a endstop defined
 CONFIG_VARIABLE_EQ(EndstopDriver, *ZProbe, &endstopZMin)
 
+
+// Define a common humidity sensor for M105 reporting if we have one
+CONFIG_VARIABLE_EQ(Sensors, *HumiditySensor, HUMIDITY_SENSOR_ADDRESS)
+
 /** Axes are homed in order of priority (0..10) if homing direction is not 0. */
 #define X_HOME_PRIORITY 0
 #define Y_HOME_PRIORITY 1

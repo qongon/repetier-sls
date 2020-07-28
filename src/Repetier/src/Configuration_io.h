@@ -189,6 +189,15 @@ HEAT_MANAGER_PID(HeaterExtruder2, 'E', 1, TempExt2, PWMExtruder2, 260, 255, 1000
 // HEAT_MANAGER_DYN_DEAD_TIME(HeaterExtruder1, 'E', 0, TempExt1, PWMExtruder1, 260, 255, 100, 10, 20000, 150, 7, 7, 200, 7, 7, false)
 // HEAT_MANAGER_DYN_DEAD_TIME(HeaterExtruder2, 'E', 1, TempExt2, PWMExtruder2, 260, 255, 100, 10, 20000, 150, 7, 7, 200, 7, 7, false)
 
+
+
+// Misc mixed sensors
+// IO_INPUT_PULLUP(IODHT, DHT_INOUT_PIN)
+// SENSOR_DHT_22(DHTSensor, IODHT)
+#undef HUMIDITY_SENSOR_ADDRESS
+#define HUMIDITY_SENSOR_ADDRESS nullptr
+
+
 // Coolers are stand alone functions that allow it to control
 // a fan with external sensors. Many extruders require a cooling
 // fan pointer to the extruder to prevent heat rising up.
