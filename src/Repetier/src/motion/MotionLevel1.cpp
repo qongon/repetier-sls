@@ -342,11 +342,11 @@ void Motion1::updateRotMinMax() {
         maxPosOff[i] = maxPos[i];
     }
     autolevelActive = old;
-    /* Com::printArrayFLN(PSTR("minPosOff:"), minPosOff, 3);
+    Com::printArrayFLN(PSTR("minPosOff:"), minPosOff, 3);
     Com::printArrayFLN(PSTR("maxPosOff:"), maxPosOff, 3);
     Com::printArrayFLN(PSTR("rotMin:"), rotMin, 3);
     Com::printArrayFLN(PSTR("rotMax:"), rotMax, 3);
-    Com::printArrayFLN(PSTR("transform:"), autolevelTransformation, 9, 5); */
+    Com::printArrayFLN(PSTR("transform:"), autolevelTransformation, 9, 5);
 }
 
 void Motion1::fillPosFromGCode(GCode& code, float pos[NUM_AXES], float fallback) {
@@ -1494,15 +1494,24 @@ void Motion1Buffer::unblock() {
 }
 
 void Motion1::moveToParkPosition() {
-    if (isAxisHomed(X_AXIS) && isAxisHomed(Y_AXIS)) {
-        setTmpPositionXYZ(parkPosition[X_AXIS], parkPosition[Y_AXIS], IGNORE_COORDINATE);
-        moveByOfficial(tmpPosition, Motion1::moveFeedrate[X_AXIS], false);
-    }
+#if PARK_POSITION_Z_UP_FIRST != 0
     if (Motion1::parkPosition[Z_AXIS] > 0 && isAxisHomed(Z_AXIS)) {
         Motion1::moveByPrinter(Motion1::tmpPosition, Motion1::moveFeedrate[Z_AXIS], false);
         setTmpPositionXYZ(IGNORE_COORDINATE, IGNORE_COORDINATE, RMath::min(maxPos[Z_AXIS], parkPosition[Z_AXIS] + currentPosition[Z_AXIS]));
         moveByOfficial(tmpPosition, Motion1::moveFeedrate[Z_AXIS], false);
     }
+#endif
+    if (isAxisHomed(X_AXIS) && isAxisHomed(Y_AXIS)) {
+        setTmpPositionXYZ(parkPosition[X_AXIS], parkPosition[Y_AXIS], IGNORE_COORDINATE);
+        moveByOfficial(tmpPosition, Motion1::moveFeedrate[X_AXIS], false);
+    }
+#if PARK_POSITION_Z_UP_FIRST == 0
+    if (Motion1::parkPosition[Z_AXIS] > 0 && isAxisHomed(Z_AXIS)) {
+        Motion1::moveByPrinter(Motion1::tmpPosition, Motion1::moveFeedrate[Z_AXIS], false);
+        setTmpPositionXYZ(IGNORE_COORDINATE, IGNORE_COORDINATE, RMath::min(maxPos[Z_AXIS], parkPosition[Z_AXIS] + currentPosition[Z_AXIS]));
+        moveByOfficial(tmpPosition, Motion1::moveFeedrate[Z_AXIS], false);
+    }
+#endif
 }
 
 /// Pushes current position to memory stack. Return true on success.
@@ -1816,7 +1825,7 @@ bool Motion1::simpleHome(fast8_t axis) {
         waitForEndOfMoves();
     } else {
         Com::printWarningF(PSTR("Endstop for axis "));
-        Com::print((int16_t)axis);
+        Com::print(axisNames[axis]);
         Com::printFLN(PSTR(" did not untrigger for retest!"));
         ok = false;
     }
