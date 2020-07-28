@@ -300,6 +300,9 @@ void MCode_48(GCode* com) {
     bool ok = true;
     for (int i = 0; i < n; i++) {
         float z = ZProbeHandler::runProbe();
+        z = ZProbeHandler::getBedDistance() - z;
+        ZProbeHandler::printProbePointLN(i + 1, n, z, Motion1::currentPosition[X_AXIS], Motion1::currentPosition[Y_AXIS]); 
+
         if (z == ILLEGAL_Z_PROBE) {
             ok = false;
             break;

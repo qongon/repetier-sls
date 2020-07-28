@@ -477,10 +477,14 @@ void GCode_30(GCode* com) {
                 z += zCorr;
             }
 #endif
+            ZProbeHandler::printProbePointLN(0, 0, z, Motion1::currentPosition[X_AXIS], Motion1::currentPosition[Y_AXIS], false);
             Motion1::g92Offsets[Z_AXIS] = o - h;
             Motion1::currentPosition[Z_AXIS] = z + h + Motion1::minPos[Z_AXIS];
             Motion1::updatePositionsFromCurrent();
             Motion1::setAxisHomed(Z_AXIS, true);
+        }
+        else {
+            ZProbeHandler::printProbePointLN(0, 0, z, Motion1::currentPosition[X_AXIS], Motion1::currentPosition[Y_AXIS], false);
         }
     }
     if (p & 2) {
@@ -523,6 +527,7 @@ void GCode_32(GCode* com) {
             EEPROM::markChanged();
             Motion1::updateRotMinMax();
             Motion1::currentPosition[Z_AXIS] = zMeasured;
+            ZProbeHandler::printProbePointLN(0, 0, zMeasured, Motion1::currentPosition[X_AXIS], Motion1::currentPosition[Y_AXIS], false);
             Motion1::updatePositionsFromCurrent();
             Motion2::setMotorPositionFromTransformed();
         }
