@@ -65,6 +65,7 @@ enum class GUIAction;
 #include "io_tools.h"
 #include "io_beeper.h"
 #include "io_light.h"
+#include "io_sensors.h"
 #include "../custom/customMacros.h"
 
 // Add user configuration

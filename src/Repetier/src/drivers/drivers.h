@@ -34,6 +34,12 @@ public:
     virtual bool isDefect() = 0; /// Return true if sensor is defect
 };
 
+class Sensors {
+public:
+    virtual float getTemperature() = 0;
+    virtual float getHumidity() = 0;
+    virtual uint16_t getError() = 0;
+};
 extern void motorEndstopTriggered(fast8_t axis, bool dir);
 extern void endstopTriggered(fast8_t axis, bool dir);
 
@@ -41,4 +47,5 @@ extern void endstopTriggered(fast8_t axis, bool dir);
 #include "stepper.h"
 #include "heatManager.h"
 #include "coolerManager.h"
+#include "sensors.h"
 #include "../tools/tools.h"
