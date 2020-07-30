@@ -1536,8 +1536,6 @@ void MCode_999(GCode* com) {
     Printer::failedMode = false;
     if (com->hasS()) {
         GCode::fatalError(Com::tTestM999);
-        Printer::failedMode = true;
-        GUI::setStatusP(Com::tTestM999, GUIStatusLevel::ERROR);
     } else {
         GCode::resetFatalError();
     }

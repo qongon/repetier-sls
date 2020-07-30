@@ -1046,6 +1046,9 @@ void GCode::fatalError(FSTRINGPARAM(message)) {
     Printer::setPowerOn(false);
 #endif
     reportFatalError();
+    Printer::failedMode = true;
+    Printer::setUIErrorMessage(true);
+    GUI::setStatusP(fatalErrorMsg, GUIStatusLevel::ERROR);
 }
 
 void GCode::reportFatalError() {
@@ -1059,6 +1062,7 @@ void GCode::reportFatalError() {
 
 void GCode::resetFatalError() {
     Com::writeToAll = true;
+    Printer::failedMode = false;
     HeatManager::resetAllErrorStates();
     Printer::debugReset(8); // disable dry run
     HAL::i2cError = 0;
@@ -1067,6 +1071,10 @@ void GCode::resetFatalError() {
     Printer::setUIErrorMessage(false); // allow overwrite
     EVENT_CONTINUE_FROM_FATAL_ERROR
     Com::printFLN(PSTR("info:Continue from fatal state"));
+    if (GUI::statusLevel == GUIStatusLevel::ERROR) {
+        GUI::pop();
+        GUI::setStatusP(Com::tEmpty, GUIStatusLevel::REGULAR);
+    }
 }
 
 FlashGCodeSource flashSource;
