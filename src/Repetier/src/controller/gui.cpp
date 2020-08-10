@@ -194,8 +194,10 @@ void GUI::okKey() {
 
 /** Check for button and store result in nextAction. */
 void GUI::handleKeypress() {
-    setEncoderA(ControllerEncA::get());
-    setEncoderB(ControllerEncB::get());
+    if (!ControllerClick::get()) {
+        setEncoderA(ControllerEncA::get());
+        setEncoderB(ControllerEncB::get());
+    }
     // debounce clicks
     if (nextAction == GUIAction::CLICK_PROCESSED || nextAction == GUIAction::BACK_PROCESSED) {
         millis_t timeDiff = HAL::timeInMilliseconds() - lastAction;
@@ -667,7 +669,9 @@ void directAction(GUIAction action, void* data) {
     int opt = reinterpret_cast<int>(data);
     switch (opt) {
     case GUI_DIRECT_ACTION_HOME_ALL:
-        Motion1::homeAxes(0);
+        if (!Printer::isHoming()) {
+            Motion1::homeAxes(0);
+        }
         break;
     case GUI_DIRECT_ACTION_HOME_X:
     case GUI_DIRECT_ACTION_HOME_Y:
@@ -676,7 +680,9 @@ void directAction(GUIAction action, void* data) {
     case GUI_DIRECT_ACTION_HOME_A:
     case GUI_DIRECT_ACTION_HOME_B:
     case GUI_DIRECT_ACTION_HOME_C:
-        Motion1::homeAxes(axisBits[opt - GUI_DIRECT_ACTION_HOME_X]);
+        if (!Printer::isHoming()) {
+            Motion1::homeAxes(axisBits[opt - GUI_DIRECT_ACTION_HOME_X]);
+        }
         break;
     case GUI_DIRECT_ACTION_FACTORY_RESET:
         EEPROM::restoreEEPROMSettingsFromConfiguration();
