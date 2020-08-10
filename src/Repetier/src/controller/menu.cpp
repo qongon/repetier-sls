@@ -337,12 +337,14 @@ void __attribute__((weak)) menuTempControl(GUIAction action, void* data) {
 #else
         GUI::flashToString(help, PSTR("= Bed ="));
 #endif
-    } else {
+    } else if (hm->isChamberHeater()) {
 #if NUM_HEATED_CHAMBERS > 1
         GUI::flashToStringLong(help, PSTR("= Chamber @ ="), hm->getIndex() + 1);
 #else
         GUI::flashToString(help, PSTR("= Chamber ="));
 #endif
+    } else if (hm->isOtherHeater()) { 
+        GUI::flashToString(help, PSTR("= Other Heater ="));
     }
     GUI::menuText(action, help, true);
     GUI::menuBack(action);
@@ -360,12 +362,14 @@ void __attribute__((weak)) menuTempConfig(GUIAction action, void* data) {
 #else
         GUI::flashToString(help, PSTR("= Bed ="));
 #endif
-    } else {
+    } else if (hm->isChamberHeater()) {
 #if NUM_HEATED_CHAMBERS > 1
         GUI::flashToStringLong(help, PSTR("= Chamber @ ="), hm->getIndex() + 1);
 #else
         GUI::flashToString(help, PSTR("= Chamber ="));
 #endif
+    } else if (hm->isOtherHeater()) { 
+        GUI::flashToString(help, PSTR("= Other Heater ="));
     }
     GUI::menuText(action, help, true);
     GUI::menuBack(action);
