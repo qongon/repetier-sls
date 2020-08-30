@@ -340,9 +340,6 @@ public:
     static uint8_t i2cError;
     static BootReason startReason;
 
-    static StepFreqState curStepFreqState;
-    static bool setStepperFrequency(StepFreqState newState);
-
     HAL();
     virtual ~HAL();
 

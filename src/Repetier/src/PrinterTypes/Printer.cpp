@@ -314,7 +314,6 @@ void Printer::kill(uint8_t onlySteppers) {
     }
     Tool::disableMotors();
     setAllSteppersDisabled();
-    HAL::setStepperFrequency(StepFreqState::STATE_IDLE);
 
     FOR_ALL_AXES(i) {
 #if defined(PREVENT_Z_DISABLE_ON_STEPPER_TIMEOUT) && PREVENT_Z_DISABLE_ON_STEPPER_TIMEOUT == 1

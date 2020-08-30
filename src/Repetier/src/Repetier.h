@@ -216,12 +216,6 @@ enum class BootReason {
     UNKNOWN = -1
 };
 
-enum class StepFreqState {
-    STATE_IDLE = 0,
-    STATE_MOVING_MED,
-    STATE_MOVING_MAX
-};
-
 #include "io/temperature_tables.h"
 #include "Configuration.h"
 

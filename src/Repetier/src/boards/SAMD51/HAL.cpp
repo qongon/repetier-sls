@@ -142,49 +142,6 @@ void getPrescaleFreq(uint32_t ticks, uint32_t& prescale, uint32_t& freq) {
         freq = 65535;
     }
 }
-#define DEBUG_ECHO_STEP_FREQ_CHANGES 0
-StepFreqState HAL::curStepFreqState = StepFreqState::STATE_MOVING_MAX;
-bool HAL::setStepperFrequency(StepFreqState newState) {
-    if (newState == curStepFreqState) {
-        return false;
-    }
-    // Give a small delay before idleing the frequency just in case.
-    constexpr millis_t delayBeforeIdleMS = 500;
-    static millis_t lastChange = 0;
-    uint32_t newFreq = STEPPER_FREQUENCY; // Max Speed
-    if (newState == StepFreqState::STATE_IDLE) {
-        if ((timeInMilliseconds() - lastChange) < delayBeforeIdleMS) {
-            return false;
-        }
-        newFreq = (STEPPER_FREQUENCY * 2) / 100; // 2%
-    } else if (newState == StepFreqState::STATE_MOVING_MED) {
-        newFreq = (STEPPER_FREQUENCY * 50) / 100; // 50%
-    } else {
-        // already handled.
-    }
-    curStepFreqState = newState;
-    MOTION3_TIMER->COUNT16.CTRLA.bit.ENABLE = 0;
-    MOTION3_TIMER->COUNT16.WAVE.bit.WAVEGEN = TC_WAVE_WAVEGEN_MFRQ;
-    SYNC_TIMER(MOTION3_TIMER);
-    MOTION3_TIMER->COUNT16.INTENSET.reg = 0;
-    MOTION3_TIMER->COUNT16.INTENSET.bit.MC0 = 1;
-    getPrescaleFreq(F_CPU_TRUE / newFreq, prescale, freq);
-    MOTION3_TIMER->COUNT16.CTRLA.reg &= ~TC_CTRLA_PRESCALER_DIV1024;
-    MOTION3_TIMER->COUNT16.CTRLA.reg |= prescale;
-    MOTION3_TIMER->COUNT16.COUNT.reg = map(MOTION3_TIMER->COUNT16.COUNT.reg, 0,
-                                           MOTION3_TIMER->COUNT16.CC[0].reg, 0, freq);
-    MOTION3_TIMER->COUNT16.CC[0].reg = freq;
-    SYNC_TIMER(MOTION3_TIMER);
-    MOTION3_TIMER->COUNT16.CTRLA.bit.ENABLE = 1; // enable timer
-    SYNC_TIMER(MOTION3_TIMER);
-#if DEBUG_ECHO_STEP_FREQ_CHANGES
-    Com::printInfoF(PSTR("New Step Freq:"));
-    Com::printNumber(newFreq);
-    Com::println();
-#endif
-    lastChange = timeInMilliseconds();
-    return true;
-}
 // Set up all timer interrupts
 void HAL::setupTimer() {
 #if DEBUG_TIMING
