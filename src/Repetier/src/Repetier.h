@@ -196,12 +196,14 @@ extern void updateEndstops();
 #define EEPROM_SDCARD 3        /** Use mounted sd card as eeprom replacement */
 #define EEPROM_FLASH 4         /** Use flash memory as eeprom replacement */
 
+class GCode;
 class ServoInterface {
 public:
     virtual int getPosition();
     virtual void setPosition(int pos, int32_t timeout);
     virtual void enable();
     virtual void disable();
+    virtual void executeGCode(GCode* com);
 };
 
 enum class StepFreqState {
@@ -391,20 +393,6 @@ extern ServoInterface* servos[];
 #define ZHOME_Y_POS IGNORE_COORDINATE
 #endif
 
-// MS1 MS2 Stepper Driver Micro stepping mode table
-#define MICROSTEP1 LOW, LOW
-#define MICROSTEP2 HIGH, LOW
-#define MICROSTEP4 LOW, HIGH
-#define MICROSTEP8 HIGH, HIGH
-#if (MOTHERBOARD == 501) || MOTHERBOARD == 502
-#define MICROSTEP16 LOW, LOW
-#else
-#define MICROSTEP16 HIGH, HIGH
-#endif
-#define MICROSTEP32 HIGH, HIGH
-
-#define GCODE_BUFFER_SIZE 1
-
 #if !defined(Z_PROBE_REPETITIONS) || Z_PROBE_REPETITIONS < 1
 #define Z_PROBE_SWITCHING_DISTANCE 0.5 // Distance to safely untrigger probe
 #define Z_PROBE_REPETITIONS 1
@@ -438,46 +426,6 @@ extern ServoInterface* servos[];
 #ifndef KEEP_ALIVE_INTERVAL
 #define KEEP_ALIVE_INTERVAL 2000
 #endif
-
-#ifndef MAX_VFAT_ENTRIES
-#ifdef AVR_BOARD
-#define MAX_VFAT_ENTRIES (2)
-#else
-#define MAX_VFAT_ENTRIES (3)
-#endif
-#endif
-
-/** Total size of the buffer used to store the long filenames */
-#define LONG_FILENAME_LENGTH (13 * MAX_VFAT_ENTRIES + 1)
-#define SD_MAX_FOLDER_DEPTH 2
-
-#ifndef SD_MENU_SHOW_HIDDEN_FILES
-#define SD_MENU_SHOW_HIDDEN_FILES 1
-#endif
-
-#ifndef SD_MENU_CACHE_SCROLL_ENTRIES
-#define SD_MENU_CACHE_SCROLL_ENTRIES 0
-#endif
-
-#if UI_DISPLAY_TYPE != DISPLAY_U8G
-#if (defined(USER_KEY1_PIN) && (USER_KEY1_PIN == UI_DISPLAY_D5_PIN || USER_KEY1_PIN == UI_DISPLAY_D6_PIN || USER_KEY1_PIN == UI_DISPLAY_D7_PIN)) || (defined(USER_KEY2_PIN) && (USER_KEY2_PIN == UI_DISPLAY_D5_PIN || USER_KEY2_PIN == UI_DISPLAY_D6_PIN || USER_KEY2_PIN == UI_DISPLAY_D7_PIN)) || (defined(USER_KEY3_PIN) && (USER_KEY3_PIN == UI_DISPLAY_D5_PIN || USER_KEY3_PIN == UI_DISPLAY_D6_PIN || USER_KEY3_PIN == UI_DISPLAY_D7_PIN)) || (defined(USER_KEY4_PIN) && (USER_KEY4_PIN == UI_DISPLAY_D5_PIN || USER_KEY4_PIN == UI_DISPLAY_D6_PIN || USER_KEY4_PIN == UI_DISPLAY_D7_PIN))
-#error You cannot use DISPLAY_D5_PIN, DISPLAY_D6_PIN or DISPLAY_D7_PIN for "User Keys" with character LCD display
-#endif
-#endif
-
-#ifndef SDCARDDETECT
-#define SDCARDDETECT -1
-#endif
-
-#ifndef SDSUPPORT
-#define SDSUPPORT 0
-#endif
-
-#if SDSUPPORT
-#include "SdFat/SdFat.h"
-#endif
-
-#include "communication/gcode.h"
 
 #undef min
 #undef max
