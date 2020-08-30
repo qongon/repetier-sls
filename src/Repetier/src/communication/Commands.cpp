@@ -119,6 +119,10 @@ void Commands::checkForPeriodicalActions(bool allowNewMoves) {
         }
     }
 
+    if(!Motion1::buffersUsed()) {
+        HAL::setStepperFrequency(StepFreqState::STATE_IDLE);
+    }
+
     EVENT_TIMER_100MS;
     // Extruder::manageTemperatures();
     if (--counter500ms == 0) {

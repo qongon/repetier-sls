@@ -339,6 +339,9 @@ public:
     static bool wdPinged;
     static uint8_t i2cError;
 
+    static StepFreqState curStepFreqState;
+    static bool setStepperFrequency(StepFreqState newState);
+
     HAL();
     virtual ~HAL();
 

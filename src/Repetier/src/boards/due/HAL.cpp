@@ -72,6 +72,41 @@ HAL::~HAL() {
     //dtor
 }
 
+#define DEBUG_ECHO_STEP_FREQ_CHANGES 0
+StepFreqState HAL::curStepFreqState = StepFreqState::STATE_MOVING_MAX;
+bool HAL::setStepperFrequency(StepFreqState newState) {
+    if (newState == curStepFreqState) {
+        return false;
+    }
+
+    // Give a small delay before idleing the frequency just in case.
+    constexpr millis_t delayBeforeIdleMS = 500;
+    static millis_t lastChange = 0;
+
+    uint32_t newFreq = STEPPER_FREQUENCY; // Max Speed
+    if (newState == StepFreqState::STATE_IDLE) {
+        if ((timeInMilliseconds() - lastChange) < delayBeforeIdleMS) {
+            return false;
+        }
+        newFreq = (STEPPER_FREQUENCY * 2) / 100; // 2%
+    } else if (newState == StepFreqState::STATE_MOVING_MED) {
+        newFreq = (STEPPER_FREQUENCY * 50) / 100; // 50%
+    } else {
+        // already handled.
+    }
+    curStepFreqState = newState;
+    MOTION3_TIMER->TC_CHANNEL[MOTION3_TIMER_CHANNEL].TC_CCR = TC_CCR_CLKDIS;
+    MOTION3_TIMER->TC_CHANNEL[MOTION3_TIMER_CHANNEL].TC_RC = (F_CPU_TRUE / 2) / newFreq;
+    MOTION3_TIMER->TC_CHANNEL[MOTION3_TIMER_CHANNEL].TC_CCR = TC_CCR_CLKEN | TC_CCR_SWTRG;
+
+#if DEBUG_ECHO_STEP_FREQ_CHANGES
+    Com::printInfoF(PSTR("New Step Freq:"));
+    Com::printNumber(newFreq);
+    Com::println();
+#endif
+    lastChange = timeInMilliseconds();
+    return true;
+}
 // Set up all timer interrupts
 void HAL::setupTimer() {
 #if DEBUG_TIMING

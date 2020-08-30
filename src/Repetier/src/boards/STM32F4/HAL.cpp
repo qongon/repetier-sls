@@ -279,10 +279,10 @@ HAL::HAL() {
 HAL::~HAL() {
     //dtor
 }
-TimerFunction* motion2;
-TimerFunction* motion3;
-TimerFunction* pwm;
-TimerFunction* servo;
+TimerFunction* motion2 = nullptr;
+TimerFunction* motion3 = nullptr;
+TimerFunction* pwm = nullptr;
+TimerFunction* servo = nullptr;
 TimerFunction* toneTimer = nullptr;
 extern void TIMER_VECTOR(MOTION2_TIMER_NUM);
 extern void TIMER_VECTOR(MOTION3_TIMER_NUM);
@@ -295,6 +295,41 @@ extern void TIMER_VECTOR(SERVO_TIMER_NUM);
 static uint32_t ServoPrescalerfactor = 20000;
 static uint32_t Servo2500 = 2500;
 #endif
+
+#define DEBUG_ECHO_STEP_FREQ_CHANGES 0
+StepFreqState HAL::curStepFreqState = StepFreqState::STATE_MOVING_MAX;
+bool HAL::setStepperFrequency(StepFreqState newState) {
+
+    if (newState == curStepFreqState || !motion3) {
+        return false;
+    }
+    // Give a small delay before idleing the frequency just in case.
+    constexpr millis_t delayBeforeIdleMS = 500;
+    static millis_t lastChange = 0;
+
+    uint32_t newFreq = STEPPER_FREQUENCY; // Max Speed
+    if (newState == StepFreqState::STATE_IDLE) {
+        if ((timeInMilliseconds() - lastChange) < delayBeforeIdleMS) {
+            return false;
+        }
+        newFreq = (STEPPER_FREQUENCY * 2) / 100; // 2%
+    } else if (newState == StepFreqState::STATE_MOVING_MED) {
+        newFreq = (STEPPER_FREQUENCY * 50) / 100; // 50%
+    } else {
+        // already handled.
+    }
+    curStepFreqState = newState;
+    motion3->timer->pause();
+    motion3->timer->setOverflow(newFreq, HERTZ_FORMAT);
+    motion3->timer->resume();
+#if DEBUG_ECHO_STEP_FREQ_CHANGES
+    Com::printInfoF(PSTR("New Step Freq:"));
+    Com::printNumber(newFreq);
+    Com::println();
+#endif
+    lastChange = timeInMilliseconds();
+    return true;
+}
 
 void HAL::hwSetup(void) {
 #if DEBUG_TIMING

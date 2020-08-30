@@ -833,6 +833,7 @@ bool Motion1::moveRelativeByPrinter(float coords[NUM_AXES], float feedrate, bool
  * It assumes that we can move all axes in parallel.
  */
 void Motion1::moveRelativeBySteps(int32_t coords[NUM_AXES]) {
+    HAL::setStepperFrequency(StepFreqState::STATE_MOVING_MAX);
     Printer::unparkSafety();
     fast8_t axesUsed = 0;
     FOR_ALL_AXES(i) {
@@ -888,6 +889,7 @@ void Motion1::correctBumpOffset() {
 }
 
 bool Motion1::queueMove(float feedrate, bool secondaryMove) {
+    HAL::setStepperFrequency(StepFreqState::STATE_MOVING_MAX);
     if (!PrinterType::positionAllowed(destinationPositionTransformed, currentPosition[Z_AXIS])) {
         Com::printWarningFLN(PSTR("Move to illegal position prevented! Position should not be trusted any more!"));
         if (Printer::debugEcho()) {
