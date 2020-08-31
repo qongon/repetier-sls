@@ -22,3 +22,7 @@
 *.jpg binary
 *.db binary
 *.stl binary
+
+
+api-doc/html/* linguist-documentation
+doc/* linguist-documentation 
