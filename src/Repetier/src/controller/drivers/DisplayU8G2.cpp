@@ -161,7 +161,49 @@ static int guiLine;
 static int guiY;
 static int guiSelIndex;
 
+static fast8_t textScrollPos = 0;
+static bool textScrollDir = false;
+
+static void scrollSelectedText(fast8_t x, fast8_t y) {
+    fast8_t charWidth = lcd.getMaxCharWidth();
+    fast8_t lastCharPos = (GUI::bufPos * charWidth);
+    if (lastCharPos > (128 - x)) {
+        constexpr fast8_t waitTicks = 1; // +1
+        if (!GUI::textIsScrolling) {
+            // Wait a few refresh ticks before starting scroll.
+            textScrollPos = 999;
+            GUI::textIsScrolling = true;
+        }
+        if (textScrollPos < (999 - waitTicks)) {
+            // One extra charWidth/2 move at the end to show more.
+            fast8_t maxScrollX = ((128 - lastCharPos) - x) - (charWidth / 2);
+            constexpr fast8_t scrollIncr = 4;
+            if (!textScrollDir) {
+                if ((textScrollPos -= scrollIncr) <= maxScrollX) {
+                    textScrollDir = true; // Left scroll
+                }
+            } else {
+                if ((textScrollPos += scrollIncr) >= (charWidth / 2)) {
+                    textScrollDir = false; // Right scroll back
+                }
+            }
+            x += textScrollPos;
+        } else {
+            if (--textScrollPos < (999 - waitTicks)) {
+                textScrollPos = 0;
+            }
+        }
+    }
+    lcd.drawUTF8(x, y, GUI::buf);
+}
 void GUI::menuStart(GUIAction action) {
+    if (npActionFound) {
+        if (GUI::textIsScrolling) {
+            GUI::textIsScrolling = false;
+            textScrollDir = false;
+            textScrollPos = 0;
+        }
+    }
     npActionFound = false;
     guiLine = 0;
     guiSelIndex = cursorRow[level];
@@ -222,11 +264,11 @@ void GUI::menuTextP(GUIAction& action, PGM_P text, bool highlight) {
                 guiY += 10;
                 if (guiLine == cursorRow[level]) {
                     lcd.drawBox(0, guiY - 8, 128, 10);
-                    lcd.setDrawColor(0);
-                }
-                lcd.drawUTF8(1, guiY, GUI::buf);
-                if (guiLine == cursorRow[level]) {
+                    lcd.setDrawColor(0); 
+                    scrollSelectedText(1, guiY);
                     lcd.setDrawColor(1);
+                } else {
+                    lcd.drawUTF8(1, guiY, GUI::buf);
                 }
             }
         }
@@ -376,7 +418,7 @@ void GUI::menuSelectableP(GUIAction& action, PGM_P text, GuiCallback cb, void* c
             if (guiLine == cursorRow[level]) {
                 lcd.drawBox(0, guiY - 8, 128, 10);
                 lcd.setDrawColor(0);
-                lcd.drawUTF8(10, guiY, GUI::buf);
+                scrollSelectedText(10, guiY);
                 lcd.drawGlyph(0, guiY, '>');
                 lcd.setDrawColor(1);
             } else {
@@ -419,10 +461,10 @@ void GUI::menuText(GUIAction& action, char* text, bool highlight) {
                 if (guiLine == cursorRow[level]) {
                     lcd.drawBox(0, guiY - 8, 128, 10);
                     lcd.setDrawColor(0);
-                }
-                lcd.drawUTF8(1, guiY, GUI::buf);
-                if (guiLine == cursorRow[level]) {
+                    scrollSelectedText(1, guiY);
                     lcd.setDrawColor(1);
+                } else {
+                    lcd.drawUTF8(1, guiY, GUI::buf);
                 }
             }
         }
@@ -572,7 +614,7 @@ void GUI::menuSelectable(GUIAction& action, char* text, GuiCallback cb, void* cD
             if (guiLine == cursorRow[level]) {
                 lcd.drawBox(0, guiY - 8, 128, 10);
                 lcd.setDrawColor(0);
-                lcd.drawUTF8(10, guiY, GUI::buf);
+                scrollSelectedText(10, guiY);
                 lcd.drawGlyph(0, guiY, '>');
                 lcd.setDrawColor(1);
             } else {
