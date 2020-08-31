@@ -161,6 +161,7 @@ static int guiLine;
 static int guiY;
 static int guiSelIndex;
 
+static fast8_t textScrollWaits = 0;
 static fast8_t textScrollPos = 0;
 static bool textScrollDir = false;
 
@@ -168,40 +169,40 @@ static void scrollSelectedText(fast8_t x, fast8_t y) {
     fast8_t charWidth = lcd.getMaxCharWidth();
     fast8_t lastCharPos = (GUI::bufPos * charWidth);
     if (lastCharPos > (128 - x)) {
-        constexpr fast8_t waitTicks = 1; // +1
         if (!GUI::textIsScrolling) {
             // Wait a few refresh ticks before starting scroll.
-            textScrollPos = 999;
+            textScrollWaits = 2;
             GUI::textIsScrolling = true;
         }
-        if (textScrollPos < (999 - waitTicks)) {
+        if (textScrollWaits <= 0) {
             // One extra charWidth/2 move at the end to show more.
             fast8_t maxScrollX = ((128 - lastCharPos) - x) - (charWidth / 2);
             constexpr fast8_t scrollIncr = 4;
             if (!textScrollDir) {
                 if ((textScrollPos -= scrollIncr) <= maxScrollX) {
                     textScrollDir = true; // Left scroll
+                    textScrollWaits = 2;
                 }
             } else {
                 if ((textScrollPos += scrollIncr) >= (charWidth / 2)) {
                     textScrollDir = false; // Right scroll back
+                    textScrollWaits = 1;
                 }
             }
-            x += textScrollPos;
         } else {
-            if (--textScrollPos < (999 - waitTicks)) {
-                textScrollPos = 0;
-            }
+            --textScrollWaits;
         }
+        lcd.drawUTF8(x + textScrollPos, y, GUI::buf);
+    } else {
+        lcd.drawUTF8(x, y, GUI::buf);
     }
-    lcd.drawUTF8(x, y, GUI::buf);
 }
 void GUI::menuStart(GUIAction action) {
     if (npActionFound) {
         if (GUI::textIsScrolling) {
             GUI::textIsScrolling = false;
             textScrollDir = false;
-            textScrollPos = 0;
+            textScrollPos = textScrollWaits = 0;
         }
     }
     npActionFound = false;
