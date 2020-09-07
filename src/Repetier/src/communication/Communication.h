@@ -434,7 +434,7 @@ public:
     FSTRINGVAR(tEPRAdvanceL)
     FSTRINGVAR(tEPRPreheatTemp)
     FSTRINGVAR(tEPRPreheatBedTemp)
-    FSTRINGVAR(tEPRTonesEnabled)
+    FSTRINGVAR(tEPRToneVolume)
     //FSTRINGVAR(tSDRemoved)
     //FSTRINGVAR(tSDInserted)
     FSTRINGVAR(tSDInitFail)

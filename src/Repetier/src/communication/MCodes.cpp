@@ -1124,7 +1124,8 @@ void MCode_281(GCode* com) {
 
 void MCode_300(GCode* com) {
 #if NUM_BEEPERS > 0
-    if (!Printer::tonesEnabled) {
+    // Can't really hear anything lower. 
+    if (Printer::toneVolume <= MINIMUM_TONE_VOLUME) {
         return;
     }
     ufast8_t index = static_cast<ufast8_t>(com->hasB() ? com->B : 0);
