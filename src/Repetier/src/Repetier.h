@@ -206,6 +206,16 @@ public:
     virtual void executeGCode(GCode* com);
 };
 
+enum class BootReason {
+    SOFTWARE_RESET = 0,
+    BROWNOUT = 1,
+    LOW_POWER = 2,
+    WATCHDOG_RESET = 3,
+    EXTERNAL_PIN = 4,
+    POWER_UP = 5,
+    UNKNOWN = -1
+};
+
 enum class StepFreqState {
     STATE_IDLE = 0,
     STATE_MOVING_MED,
