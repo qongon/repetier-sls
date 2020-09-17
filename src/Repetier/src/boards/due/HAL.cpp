@@ -73,6 +73,25 @@ HAL::~HAL() {
     //dtor
 }
 
+uint32_t dwt_init(void) {
+    /* Enable use of DWT */
+    if (!(CoreDebug->DEMCR & CoreDebug_DEMCR_TRCENA_Msk)) {
+        CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+    }
+    /* Reset the clock cycle counter value */
+    DWT->CYCCNT = 0;
+    DWT->EXCCNT = 0;
+    /* Enable  clock cycle counter */
+    DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk | DWT_CTRL_EXCEVTENA_Msk;
+    /* 3 NO OPERATION instructions */
+    __asm volatile(" nop      \n\t"
+                   " nop      \n\t"
+                   " nop      \n\t");
+    /* Check if clock cycle counter has started */
+    return (DWT->CYCCNT) ? 0 : 1;
+}
+
+
 // Set up all timer interrupts
 void HAL::setupTimer() {
 #if DEBUG_TIMING

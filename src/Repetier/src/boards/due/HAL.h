@@ -50,6 +50,55 @@
 #define WIRE_PORT Wire
 #endif
 
+
+// Moses - Add the missing CMSIS DWT registers (taken from a STM32F1)
+// ATMEL/microchip advertises this feature on their site and datasheet
+// but for some reason it wasn't included in the CMSIS headers? 
+// Guess they just didn't plan for in-software usage, just debugging.
+// These addresses still work, and you still need to enable the ITM first. 
+// dwt_init() does this.
+
+/**
+  \ingroup  CMSIS_core_register
+  \defgroup CMSIS_DWT     Data Watchpoint and Trace (DWT)
+  \brief    Type definitions for the Data Watchpoint and Trace (DWT)
+  @{
+ */
+
+/**
+  \brief  Structure type to access the Data Watchpoint and Trace Register (DWT).
+ */
+#define __IM volatile const /*! Defines 'read only' structure member permissions */
+#define __IOM volatile      /*! Defines 'read / write' structure member permissions */
+typedef struct
+{
+    __IOM uint32_t CTRL;      /*!< Offset: 0x000 (R/W)  Control Register */
+    __IOM uint32_t CYCCNT;    /*!< Offset: 0x004 (R/W)  Cycle Count Register */
+    __IOM uint32_t CPICNT;    /*!< Offset: 0x008 (R/W)  CPI Count Register */
+    __IOM uint32_t EXCCNT;    /*!< Offset: 0x00C (R/W)  Exception Overhead Count Register */
+    __IOM uint32_t SLEEPCNT;  /*!< Offset: 0x010 (R/W)  Sleep Count Register */
+    __IOM uint32_t LSUCNT;    /*!< Offset: 0x014 (R/W)  LSU Count Register */
+    __IOM uint32_t FOLDCNT;   /*!< Offset: 0x018 (R/W)  Folded-instruction Count Register */
+    __IM uint32_t PCSR;       /*!< Offset: 0x01C (R/ )  Program Counter Sample Register */
+} DWT_Type;
+
+#define DWT_BASE (0xE0001000UL)   /*!< DWT Base Address */
+#define DWT ((DWT_Type*)DWT_BASE) /*!< DWT configuration struct */
+
+#define DWT_CTRL_CYCCNTENA_Pos 0U                                    /*!< DWT CTRL: CYCCNTENA Position */
+#define DWT_CTRL_CYCCNTENA_Msk (0x1UL /*<< DWT_CTRL_CYCCNTENA_Pos*/) /*!< DWT CTRL: CYCCNTENA Mask */
+
+#define DWT_CTRL_EXCEVTENA_Pos 18U /*!< DWT CTRL: EXCEVTENA Position */
+#define DWT_CTRL_EXCEVTENA_Msk (0x1UL << DWT_CTRL_EXCEVTENA_Pos)
+
+/* DWT Exception Overhead Count Register Definitions */
+#define DWT_EXCCNT_EXCCNT_Pos 0U                                    /*!< DWT EXCCNT: EXCCNT Position */
+#define DWT_EXCCNT_EXCCNT_Msk (0xFFUL /*<< DWT_EXCCNT_EXCCNT_Pos*/) /*!< DWT EXCCNT: EXCCNT Mask */
+uint32_t dwt_init(void);
+
+
+
+
 // Hack to make 84 MHz Due clock work without changes to pre-existing code
 // which would otherwise have problems with int overflow.
 #undef F_CPU
@@ -349,6 +398,7 @@ public:
         //Serial.begin(115200);
         TimeTick_Configure(F_CPU_TRUE);
 
+        dwt_init();
 #if EEPROM_AVAILABLE && EEPROM_MODE != EEPROM_NONE && EEPROM_AVAILABLE != EEPROM_SDCARD && EEPROM_AVAILABLE != EEPROM_FLASH
         // Copy eeprom to ram for faster access
         int i;
