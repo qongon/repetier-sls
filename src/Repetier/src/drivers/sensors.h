@@ -37,9 +37,9 @@ public:
         , lastTemperature(0.0f)
         , errorCount(0) {
     }
-    inline virtual float getTemperature() final { return lastTemperature; }
-    inline virtual float getHumidity() final { return lastHumidity; }
-    inline virtual uint16_t getError() final { return (errorCount > 2); }
+    inline float getTemperature() final { return lastTemperature; }
+    inline float getHumidity() final { return lastHumidity; }
+    inline uint16_t getError() final { return (errorCount > 2); }
     void pinInterrupt();
     void process();
 };
