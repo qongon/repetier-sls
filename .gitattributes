@@ -26,3 +26,6 @@
 
 api-doc/html/* linguist-documentation
 doc/* linguist-documentation 
+*.h linguist-language=cpp 
+*.cpp linguist-language=cpp 
+*.c linguist-language=c
