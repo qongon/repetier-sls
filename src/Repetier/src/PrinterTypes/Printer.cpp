@@ -203,7 +203,7 @@ void Printer::setFanSpeed(int speed, bool immediately, int fanId, uint32_t timeo
     if (activeTool != nullptr && activeTool->usesSecondary(fans[fanId].fan)) {
         tool = activeTool;
         tool->setSecondaryFixed(speed);
-        if (!immediately && Motion1::buffersUsed()) {
+        if (!immediately && Motion1::buffersUsed() > 0) {
             return;
         }
     }

@@ -480,7 +480,7 @@ void Motion1::waitForXFreeMoves(fast8_t n, bool allowMoves) {
     if (buffersUsed() < MIN_PRINTLINE_FILL) {
         return;
     }
-    while (getBufferedLengthMM() > maxIntLengthBuffered) { // wait for reduced length to limit buffer
+    while (getBufferedLengthMM() > maxIntLengthBuffered && (buffersUsed() > 0)) { // wait for reduced length to limit buffer
         GCode::keepAlive(FirmwareState::Processing, 3);
         Commands::checkForPeriodicalActions(allowMoves);
     }
@@ -1070,7 +1070,7 @@ bool Motion1::queueMove(float feedrate, bool secondaryMove) {
 }
 
 void Motion1::insertWaitIfNeeded() {
-    if (buffersUsed()) { // already printing, do not wait
+    if (buffersUsed() > 0) { // already printing, do not wait
         return;
     }
     for (fast8_t i = 0; i <= NUM_MOTION2_BUFFER; i++) {
