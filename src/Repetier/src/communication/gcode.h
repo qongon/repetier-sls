@@ -375,7 +375,11 @@ public:
     }
     inline void reset() { params = params2 = 0; }
     inline bool isImmediateM() { // flag (eg.1, 2, 3) << 14u | MCode
-        return ((M >> 14u) == 3u) && (M != 9999u); // using 3 for now.
+#if IMMEDIATE_HOST_COMMANDS
+        return ((M >> 14u) == 3u); // using 3 for now.
+#else 
+        return false;
+#endif
     }
     inline uint16_t calcFromImmediateM() {
         return (isImmediateM() ? (M & 8191u) : 0u);
