@@ -381,6 +381,12 @@ public:
         return ((params2 & 32768) != 0);
     }
     inline void reset() { params = params2 = 0; }
+    inline bool isImmediateM() { // flag (eg.1, 2, 3) << 14u | MCode
+        return ((M >> 14u) == 3u) && (M != 9999u); // using 3 for now.
+    }
+    inline uint16_t calcFromImmediateM() {
+        return (isImmediateM() ? (M & 8191u) : 0u);
+    }
     void printCommand();
     bool parseBinary(uint8_t* buffer, fast8_t length, bool fromSerial);
     bool parseAscii(char* line, bool fromSerial);
