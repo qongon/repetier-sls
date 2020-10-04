@@ -1568,6 +1568,10 @@ void Motion1::homeAxes(fast8_t axes) {
     if (axes == 0) {
         axes = 127; // default is home all axes
     }
+    if (Printer::breakLongCommand) {
+        GUI::popBusy();
+        return;
+    }
     waitForEndOfMoves();
     float oldCoordinates[NUM_AXES];
     copyCurrentOfficial(oldCoordinates); // store to redo position when finished
@@ -1581,6 +1585,12 @@ void Motion1::homeAxes(fast8_t axes) {
             waitForEndOfMoves();
             // zAmountRaised = ZHOME_PRE_RAISE_DISTANCE;
         }
+    }
+
+    if (Printer::breakLongCommand) {
+        Printer::setHoming(false);
+        GUI::popBusy();
+        return;
     }
 #endif
     // We measure in printer coordinates, so deactivate all corrections
@@ -1604,7 +1614,7 @@ void Motion1::homeAxes(fast8_t axes) {
 #endif
     for (int priority = 0; priority <= 10; priority++) {
         FOR_ALL_AXES(i) {
-            if ((axisBits[i] & axes) == 0 && axes != 0) {
+            if (((axisBits[i] & axes) == 0 && axes != 0) || Printer::breakLongCommand) {
                 continue;
             }
             if (homePriority[i] == priority) {
@@ -1645,24 +1655,26 @@ void Motion1::homeAxes(fast8_t axes) {
     Printer::setHoming(false);
 
     // Test if all axes are homed
-    bool ok = true;
-    FOR_ALL_AXES(i) {
-        if (homePriority[i] >= 0 && isAxisHomed(i) == false) {
-            ok = false;
+    bool ok = !Printer::breakLongCommand;
+    if (ok) {
+        FOR_ALL_AXES(i) {
+            if (homePriority[i] >= 0 && isAxisHomed(i) == false) {
+                ok = false;
+                break;
+            }
         }
+        Printer::setHomedAll(ok);
+        // Reactivate corrections
+        setAutolevelActive(isAL); // Todo: how to properly handle a break but prevent autolevel's moves?
+        Leveling::setDistortionEnabled(bcActive);
     }
-    Printer::setHomedAll(ok);
-    // Reactivate corrections
-    setAutolevelActive(isAL);
-    Leveling::setDistortionEnabled(bcActive);
-
-    if (axes & axisBits[Z_AXIS]) {
+    if ((axes & axisBits[Z_AXIS]) && !Printer::breakLongCommand) {
         Motion1::correctBumpOffset(); // activate bump offset, needs distorion enabled to have an effect!
         // Add z probe correctons
+        waitForEndOfMoves();
         int32_t motorPos[NUM_AXES];
         float oldPos[NUM_AXES];
         copyCurrentPrinter(oldPos);
-        waitForEndOfMoves();
         int32_t* lp = Motion2::lastMotorPos[Motion2::lastMotorIdx];
         FOR_ALL_AXES(i) {
             motorPos[i] = lp[i];
@@ -1682,7 +1694,7 @@ void Motion1::homeAxes(fast8_t axes) {
         if (homeDir[Z_AXIS] < 0 && ZProbe != nullptr) {
             zpCorr += ZProbeHandler::getCoating() - ZProbeHandler::getZProbeHeight();
         }
-        if (zpCorr != 0.0f) { // anything to do?
+        if (zpCorr != 0.0f && !Printer::breakLongCommand) { // anything to do?
             setTmpPositionXYZ(IGNORE_COORDINATE, IGNORE_COORDINATE, zpCorr);
             bool isNoDest = Printer::isNoDestinationCheck();
             Printer::setNoDestinationCheck(true);
@@ -1705,12 +1717,15 @@ void Motion1::homeAxes(fast8_t axes) {
     }
 #endif
 */
-    if (Tool::getActiveTool() != nullptr && ok) { // select only if all is homed or we get unwanted moves!
+    if (Tool::getActiveTool() != nullptr && ok && !Printer::breakLongCommand) { // select only if all is homed or we get unwanted moves!
         Tool::selectTool(activeToolId, true);
     }
-    oldCoordinates[E_AXIS] = currentPosition[E_AXIS];
-    moveByOfficial(oldCoordinates, moveFeedrate[X_AXIS], false); // make official pos = homing pos reagrdless of transformation
-    Motion1::printCurrentPosition();
+
+    if (!Printer::breakLongCommand) {
+        oldCoordinates[E_AXIS] = currentPosition[E_AXIS];
+        moveByOfficial(oldCoordinates, moveFeedrate[X_AXIS], false); // make official pos = homing pos reagrdless of transformation
+        Motion1::printCurrentPosition();
+    }
     GUI::popBusy();
 }
 
@@ -1785,7 +1800,10 @@ bool Motion1::simpleHome(fast8_t axis) {
         Motion2::setMotorPositionFromTransformed();
         return true;
     }
-    bool ok = true;
+    bool ok = !Printer::breakLongCommand;
+    if (!ok) {
+        return false;
+    }
     EndstopDriver& eStop = endstopFoxAxisDir(axis, homeDir[axis] > 0);
     const float secureDistance = (maxPosOff[axis] - minPosOff[axis]) * 1.5f;
     const EndstopMode oldMode = endstopMode;
@@ -1797,6 +1815,12 @@ bool Motion1::simpleHome(fast8_t axis) {
         dest[i] = IGNORE_COORDINATE;
     }
     waitForEndOfMoves(); // defined starting condition
+    ok = !Printer::breakLongCommand;
+    // First test
+    if (!ok) {
+        endstopMode = oldMode;
+        return false;
+    }
 
     // First test
     dest[axis] = homeDir[axis] * secureDistance;
@@ -1815,7 +1839,7 @@ bool Motion1::simpleHome(fast8_t axis) {
     Motion1::axesTriggered = 0;
     moveRelativeByOfficial(dest, homingFeedrate[axis], false);
     waitForEndOfMoves();
-
+    ok = !Printer::breakLongCommand;
     // retest
     endstopMode = newMode;
     dest[axis] = homeDir[axis] * homeRetestDistance[axis] * 1.5f;
@@ -1823,12 +1847,13 @@ bool Motion1::simpleHome(fast8_t axis) {
     if (!eStop.update()) {
         moveRelativeByOfficial(dest, homingFeedrate[axis] / homeRetestReduction[axis], false);
         waitForEndOfMoves();
-    } else {
+    } else if (ok) {
         Com::printWarningF(PSTR("Endstop for axis "));
         Com::print(axisNames[axis]);
         Com::printFLN(PSTR(" did not untrigger for retest!"));
         ok = false;
     }
+
     updatePositionsFromCurrent();
     Motion2::setMotorPositionFromTransformed();
     HAL::delayMilliseconds(30);
@@ -1869,13 +1894,19 @@ bool Motion1::simpleHome(fast8_t axis) {
         }
     }
     endstopMode = EndstopMode::DISABLED;
-    moveRelativeByOfficial(dest, homingFeedrate[axis], false); // also adds toolOffset!
-    waitForEndOfMoves();
-    currentPosition[axis] = curPos;
-    updatePositionsFromCurrent();
-    Motion2::setMotorPositionFromTransformed();
+    if (Printer::breakLongCommand) {
+        ok = false;
+    }
+
+    if (ok) {
+        moveRelativeByOfficial(dest, homingFeedrate[axis], false); // also adds toolOffset!
+        waitForEndOfMoves();
+        currentPosition[axis] = curPos;
+        updatePositionsFromCurrent();
+        Motion2::setMotorPositionFromTransformed();
+        setAxisHomed(axis, true);
+    }
     endstopMode = oldMode;
-    setAxisHomed(axis, true);
     Motion1::axesTriggered = 0;
     return ok;
 }
