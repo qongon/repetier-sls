@@ -1318,24 +1318,34 @@ void SerialGCodeSource::testEmergency(GCode& gcode) {
             Printer::handlePowerLoss();
         } else if (gcode.M == 205) {
             EEPROM::writeSettings();
-        } else if (gcode.calcFromImmediateM() == 106) { // Host immediate fan
-            MCode_106(&gcode);
-        } else if (gcode.calcFromImmediateM() == 107) { // Host immediate fan OFF
-            MCode_107(&gcode);
-        } else if (gcode.calcFromImmediateM() == 220) { // Host immediate speed
-            MCode_220(&gcode);
-        } else if (gcode.calcFromImmediateM() == 221) { // Host immediate flow
-            MCode_221(&gcode);
-        } else if (gcode.calcFromImmediateM() == 140) { // Host immediate bed temp
-            MCode_140(&gcode);
-        } else if (gcode.calcFromImmediateM() == 141) { // Host immediate chamber temp
-            MCode_141(&gcode);
-        } else if (gcode.calcFromImmediateM() == 104) { // Host immediate extruder temp
-            MCode_104(&gcode);
-        } else if (gcode.calcFromImmediateM() == 117) { // Host immediate status display
-            MCode_117(&gcode);
-        } else if (gcode.calcFromImmediateM() == 355) { // Host immediate light toggle
-            MCode_355(&gcode);
+        } else if (gcode.isImmediateM()) {
+            if (gcode.calcFromImmediateM() == 106) { // Host immediate fan
+                MCode_106(&gcode);
+            }
+            else if (gcode.calcFromImmediateM() == 107) { // Host immediate fan OFF
+                MCode_107(&gcode);
+            }
+            else if (gcode.calcFromImmediateM() == 220) { // Host immediate speed
+                MCode_220(&gcode);
+            }
+            else if (gcode.calcFromImmediateM() == 221) { // Host immediate flow
+                MCode_221(&gcode);
+            }
+            else if (gcode.calcFromImmediateM() == 140) { // Host immediate bed temp
+                MCode_140(&gcode);
+            }
+            else if (gcode.calcFromImmediateM() == 141) { // Host immediate chamber temp
+                MCode_141(&gcode);
+            }
+            else if (gcode.calcFromImmediateM() == 104) { // Host immediate extruder temp
+                MCode_104(&gcode);
+            }
+            else if (gcode.calcFromImmediateM() == 117) { // Host immediate status display
+                MCode_117(&gcode);
+            }
+            else if (gcode.calcFromImmediateM() == 355) { // Host immediate light toggle
+                MCode_355(&gcode);
+            }
         }
     }
 }

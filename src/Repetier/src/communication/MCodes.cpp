@@ -634,6 +634,11 @@ void __attribute__((weak)) MCode_115(GCode* com) {
 #else
     Com::cap(PSTR("EMERGENCY_PARSER:0"));
 #endif
+#if EMERGENCY_PARSER && IMMEDIATE_HOST_COMMANDS
+    Com::cap(PSTR("IMMEDIATE_HOST_COMMANDS:1"));
+#else
+    Com::cap(PSTR("IMMEDIATE_HOST_COMMANDS:0"));
+#endif
     Commands::reportPrinterUsage();
 }
 
