@@ -92,6 +92,97 @@ uint32_t dwt_init(void) {
 }
 
 
+#if IMMEDIATE_STEPPER_PAUSE
+namespace transitioningStep {
+void (*callback)() = nullptr;
+volatile float target = 0.0f;
+volatile float* curModiferPtr = nullptr;
+volatile float stepIncr = 0.0f;
+volatile bool running = false;
+volatile uint32_t doneStates = 0; // Important! Needs to run multiple times once done to land on the right buffer.
+}
+#endif
+
+bool HAL::transitionStepFrequency(volatile float* userModifierPtr, float targetModifier, millis_t durationMillis, void (*callback)()) {
+#if IMMEDIATE_STEPPER_PAUSE
+    if (!userModifierPtr || transitioningStep::running) {
+        return false;
+    }
+    InterruptProtectedBlock noInts;
+    transitioningStep::doneStates = 0;
+    transitioningStep::callback = callback ? callback : nullptr;
+    transitioningStep::curModiferPtr = &(*userModifierPtr = constrain(*userModifierPtr, 0.0f, 1.0f));
+    transitioningStep::target = constrain(targetModifier, 0.0f, 1.0f);
+    durationMillis = constrain(durationMillis, 0u, 10000u);
+    float difference = (transitioningStep::target - *transitioningStep::curModiferPtr);
+    bool noChange = false;
+    if (durationMillis >= 1 && fabsf(difference) >= 0.005f) {
+        transitioningStep::stepIncr = (1000.0f / static_cast<float>(durationMillis)) * (1.0f / static_cast<float>(PREPARE_FREQUENCY));
+        transitioningStep::stepIncr *= difference;
+    } else {
+        noChange = true;
+        transitioningStep::stepIncr = 0.0f;
+        *transitioningStep::curModiferPtr = transitioningStep::target;
+    }
+
+    if ((MOTION3_TIMER->TC_CHANNEL[MOTION3_TIMER_CHANNEL].TC_SR & TC_SR_CLKSTA)) {
+        MOTION3_TIMER->TC_CHANNEL[MOTION3_TIMER_CHANNEL].TC_CCR = TC_CCR_CLKDIS;
+    }
+
+    if (*transitioningStep::curModiferPtr > 0.0f) { // Don't turn on the timer again if user's fade val is 0
+        uint32_t newFreq = constrain(static_cast<uint32_t>(STEPPER_FREQUENCY * (*transitioningStep::curModiferPtr)), 50u, STEPPER_FREQUENCY);
+        MOTION3_TIMER->TC_CHANNEL[MOTION3_TIMER_CHANNEL].TC_RC = (F_CPU_TRUE / 2) / newFreq;
+        MOTION3_TIMER->TC_CHANNEL[MOTION3_TIMER_CHANNEL].TC_CCR = TC_CCR_CLKEN | TC_CCR_SWTRG;
+    }
+
+    if (!noChange) {
+        transitioningStep::running = true;
+    } else {
+        transitioningStep::running = false;
+        if (transitioningStep::callback) {
+            transitioningStep::callback();
+        }
+    }
+    return true;
+#else
+    return false;
+#endif
+}
+
+static INLINE inline void stepFadeHandler() { // Goes inside Motion2 ISR
+#if IMMEDIATE_STEPPER_PAUSE
+    if (transitioningStep::running) {
+        //InterruptProtectedBlock noInts;
+        MOTION3_TIMER->TC_CHANNEL[MOTION3_TIMER_CHANNEL].TC_CCR = TC_CCR_CLKDIS;
+
+        bool done = false;
+        *transitioningStep::curModiferPtr += transitioningStep::stepIncr;
+        if (transitioningStep::stepIncr > 0.0f && (*transitioningStep::curModiferPtr >= transitioningStep::target)) {
+            *transitioningStep::curModiferPtr = transitioningStep::target;
+            done = true;
+        } else if (transitioningStep::stepIncr < 0.0f && (*transitioningStep::curModiferPtr <= transitioningStep::target)) {
+            *transitioningStep::curModiferPtr = transitioningStep::target;
+            done = true;
+        }
+
+        if (*transitioningStep::curModiferPtr > 0.0f || (done && transitioningStep::target > 0.0f)) {
+            uint32_t newFreq = static_cast<uint32_t>(ceilf(STEPPER_FREQUENCY * (*transitioningStep::curModiferPtr)));
+            newFreq = constrain(newFreq, 50u, STEPPER_FREQUENCY);
+            MOTION3_TIMER->TC_CHANNEL[MOTION3_TIMER_CHANNEL].TC_RC = (F_CPU_TRUE / 2) / newFreq;
+            MOTION3_TIMER->TC_CHANNEL[MOTION3_TIMER_CHANNEL].TC_CCR = TC_CCR_CLKEN | TC_CCR_SWTRG;
+        }
+
+        if (done && transitioningStep::doneStates++ > 1) {
+            transitioningStep::running = false;
+            if (transitioningStep::callback) {
+                transitioningStep::callback();
+            }
+        }
+    }
+#endif
+}
+
+
 // Set up all timer interrupts
 void HAL::setupTimer() {
 #if DEBUG_TIMING
@@ -1056,26 +1147,18 @@ void SERVO_TIMER_VECTOR() {
 }
 #endif
 
-TcChannel* stepperChannel = (MOTION3_TIMER->TC_CHANNEL + MOTION3_TIMER_CHANNEL);
 #ifndef STEPPERTIMER_EXIT_TICKS
 #define STEPPERTIMER_EXIT_TICKS 105 // at least 2,5us pause between stepper calls
 #endif
 
 /** \brief Timer interrupt routine to drive the stepper motors.
 */
-void MOTION3_TIMER_VECTOR() {
+void __aligned(0x10UL) MOTION3_TIMER_VECTOR() {
 #if DEBUG_TIMING
     WRITE(DEBUG_ISR_STEPPER_PIN, 1);
 #endif
-    // apparently have to read status register
-    stepperChannel->TC_SR;
-    /*  static bool inside = false; // prevent double call when not finished
-    if(inside) {
-        return;
-    }    
-    inside = true;*/
+    MOTION3_TIMER->TC_CHANNEL[MOTION3_TIMER_CHANNEL].TC_SR;
     Motion3::timer();
-    // inside = false;
 #if DEBUG_TIMING
     WRITE(DEBUG_ISR_STEPPER_PIN, 0);
 #endif
@@ -1176,15 +1259,14 @@ void PWM_TIMER_VECTOR() {
 }
 
 #if (DISABLED(MOTION2_USE_REALTIME_TIMER) || PREPARE_FREQUENCY > (PWM_CLOCK_FREQ / 2))
-TcChannel* motion2Channel = (MOTION2_TIMER->TC_CHANNEL + MOTION2_TIMER_CHANNEL);
-
 // MOTION2_TIMER IRQ handler
 void MOTION2_TIMER_VECTOR() {
 #if DEBUG_TIMING
     WRITE(DEBUG_ISR_MOTION_PIN, 1);
 #endif
-    motion2Channel->TC_SR; // faster replacement for above line!
+    MOTION2_TIMER->TC_CHANNEL[MOTION2_TIMER_CHANNEL].TC_SR;
     Motion2::timer();
+    stepFadeHandler();
 #if DEBUG_TIMING
     WRITE(DEBUG_ISR_MOTION_PIN, 0);
 #endif
@@ -1200,6 +1282,7 @@ extern "C" void RTT_Handler() {
     RTT->RTT_SR;
     RTT->RTT_MR &= ~RTT_MR_RTTINCIEN;
     Motion2::timer(); 
+    stepFadeHandler();
 #if DEBUG_TIMING
     WRITE(DEBUG_ISR_MOTION_PIN, 0);
 #endif

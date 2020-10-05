@@ -203,6 +203,13 @@ class Motion1 {
 public:
     friend class Motion2;
     friend class PrinterType;
+ 
+#if IMMEDIATE_STEPPER_PAUSE
+    volatile static float haltStepModifier;
+    volatile static bool haltRequested; 
+    static uint32_t haltedLine;
+    static float haltedPos[NUM_AXES];
+#endif
 
     static uint eprStart;
     static float autolevelTransformation[9]; ///< Transformation matrix
@@ -270,6 +277,10 @@ public:
     static volatile bool flushing;                      /// in the process of flushing the buffers.
     // Initializes data structures
     static void init();
+
+    // Immediately slows down and begins flushing the buffer.
+    static bool haltMotion(millis_t duration = 250u);
+
     static INLINE bool isAutolevelActive() { return autolevelActive; }
     // Set autoleveling, changes current position according to printer position
     static void setAutolevelActive(bool state, bool silent = false);
