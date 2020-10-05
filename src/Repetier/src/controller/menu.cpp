@@ -822,6 +822,7 @@ void __attribute__((weak)) mainMenu(GUIAction action, void* data) {
     } else {
         GUI::menuSelectableP(action, PSTR("Controls"), menuControls, nullptr, GUIPageType::MENU);
     }
+    bool sdPrint = false;
 #if SDSUPPORT
     if (sd.sdactive) {
         if (sd.sdmode == 0 && !Printer::isPrinting()) {
@@ -829,9 +830,11 @@ void __attribute__((weak)) mainMenu(GUIAction action, void* data) {
         } else if (sd.sdmode == 1) { // sd printing
             GUI::menuSelectableP(action, PSTR("Pause SD Print"), directAction, (void*)GUI_DIRECT_ACTION_PAUSE_SD_PRINT, GUIPageType::ACTION);
             GUI::menuSelectableP(action, PSTR("Stop SD Print"), directAction, (void*)GUI_DIRECT_ACTION_STOP_SD_PRINT, GUIPageType::ACTION);
+            sdPrint = true;
         } else if (sd.sdmode == 2) { // sd paused
             GUI::menuSelectableP(action, PSTR("Continue SD Print"), directAction, (void*)GUI_DIRECT_ACTION_CONTINUE_SD_PRINT, GUIPageType::ACTION);
             GUI::menuSelectableP(action, PSTR("Stop SD Print"), directAction, (void*)GUI_DIRECT_ACTION_STOP_SD_PRINT, GUIPageType::ACTION);
+            sdPrint = true;
         }
     }
 #if SDCARDDETECT < 0 // Offer mount option
@@ -840,6 +843,14 @@ void __attribute__((weak)) mainMenu(GUIAction action, void* data) {
     }
 #endif
 #endif
+    if (Printer::isPrinting() && !sdPrint) { // Host
+        if (Printer::isMenuMode(MENU_MODE_PRINTING)) {
+            GUI::menuSelectableP(action, PSTR("Pause Host Print"), directAction, (void*)GUI_DIRECT_ACTION_PAUSE_HOST_PRINT, GUIPageType::ACTION);
+        } else {
+            GUI::menuSelectableP(action, PSTR("Continue Host Print"), directAction, (void*)GUI_DIRECT_ACTION_CONTINUE_HOST_PRINT, GUIPageType::ACTION);
+        }
+        GUI::menuSelectableP(action, PSTR("Stop Host Print"), directAction, (void*)GUI_DIRECT_ACTION_STOP_HOST_PRINT, GUIPageType::ACTION);
+    }
 #undef IO_TARGET
 #define IO_TARGET IO_TARGET_GUI_MAIN_MENU
 #include "../io/redefine.h"

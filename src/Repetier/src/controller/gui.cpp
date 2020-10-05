@@ -785,6 +785,17 @@ void directAction(GUIAction action, void* data) {
         HAL::serialFlush();
         HAL::resetHardware();
         break;
+    case GUI_DIRECT_ACTION_STOP_HOST_PRINT:
+        Printer::stopPrint();
+        Motion1::haltMotion(500);
+        break;
+    case GUI_DIRECT_ACTION_PAUSE_HOST_PRINT:
+        Printer::pausePrint();
+        Motion1::haltMotion(500);
+        break;
+    case GUI_DIRECT_ACTION_CONTINUE_HOST_PRINT:
+        Printer::continuePrint();
+        break;
     }
 }
 
