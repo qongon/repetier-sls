@@ -267,6 +267,7 @@ public:
     static volatile fast8_t process;                    /// being processed
     static volatile fast8_t length;                     /// number of entries
     static volatile fast8_t lengthUnprocessed;          /// Number of unprocessed entries
+    static volatile bool flushing;                      /// in the process of flushing the buffers.
     // Initializes data structures
     static void init();
     static INLINE bool isAutolevelActive() { return autolevelActive; }
@@ -333,6 +334,9 @@ public:
     static void updateRotMinMax();
     static int32_t getBufferedLengthMM();
 
+    static bool isFlushing();
+    static void startFlush();
+    static void stopFlush();
 private:
     // Moved outside FEATURE_Z_PROBE to allow auto-level functional test on
     // system without Z-probe
