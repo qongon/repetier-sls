@@ -81,7 +81,8 @@ __attribute__((optimize("unroll-loops"))) void Motion2::timer() {
                     }
                     babysteps++; // next pointer
                 }
-                if (doBabystep) { // create pseudo motion
+                if (doBabystep) { // create pseudo motion 
+                    Motion1::waitForXFreeMoves(1);
                     Motion1Buffer& buf = Motion1::reserve();
                     buf.flags = FLAG_ACTIVE_SECONDARY;
                     buf.action = Motion1Action::MOVE_BABYSTEPS;
