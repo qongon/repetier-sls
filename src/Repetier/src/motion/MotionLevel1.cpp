@@ -81,6 +81,7 @@ fast8_t Motion1::dittoMode = 0;   // copy extrusion signals
 fast8_t Motion1::dittoMirror = 0; // mirror for dual x printer
 fast8_t Motion1::alwaysCheckEndstops;
 bool Motion1::autolevelActive = false;
+float Motion1::totalBabystepZ = 0.0f; // Sum since homing for z helper functions
 #if FEATURE_AXISCOMP
 float Motion1::axisCompTanXY, Motion1::axisCompTanXZ, Motion1::axisCompTanYZ;
 #endif
@@ -698,6 +699,11 @@ bool Motion1::moveByOfficial(float coords[NUM_AXES], float feedrate, bool second
         || (tool != nullptr && tool->getHeater() != nullptr && (tool->getHeater()->getCurrentTemperature() < MIN_EXTRUDER_TEMP && !Printer::isColdExtrusionAllowed()))
 #endif
     ) { // ignore
+#if MIN_EXTRUDER_TEMP > MAX_ROOM_TEMPERATURE
+        if (coords[E_AXIS] != IGNORE_COORDINATE && !Printer::debugDryrun()) {
+            Com::printWarningFLN(Com::tColdExtrusionPrevented);
+        }
+#endif
         destinationPositionTransformed[E_AXIS] = currentPositionTransformed[E_AXIS];
     }
     if (feedrate == IGNORE_COORDINATE) {
@@ -875,6 +881,11 @@ bool Motion1::moveByPrinter(float coords[NUM_AXES], float feedrate, bool seconda
         || (tool != nullptr && tool->getHeater() != nullptr && (tool->getHeater()->getCurrentTemperature() < MIN_EXTRUDER_TEMP && !Printer::isColdExtrusionAllowed()))
 #endif
     ) {
+#if MIN_EXTRUDER_TEMP > MAX_ROOM_TEMPERATURE
+        if (coords[E_AXIS] != IGNORE_COORDINATE && !Printer::debugDryrun()) {
+            Com::printWarningFLN(Com::tColdExtrusionPrevented);
+        }
+#endif
         currentPositionTransformed[E_AXIS] = destinationPositionTransformed[E_AXIS];
     }
     PrinterType::transformedToOfficial(destinationPositionTransformed, currentPosition);
@@ -1685,7 +1696,7 @@ void Motion1::homeAxes(fast8_t axes) {
 #if ZHOME_PRE_RAISE
     // float zAmountRaised = 0;
     if (ZHOME_PRE_RAISE == 2
-            || (Motion1::minAxisEndstops[Z_AXIS] && Motion1::minAxisEndstops[Z_AXIS]->update())) {
+        || (Motion1::minAxisEndstops[Z_AXIS] && Motion1::minAxisEndstops[Z_AXIS]->update())) {
         if (!isAxisHomed(Z_AXIS) || currentPosition[Z_AXIS] + ZHOME_PRE_RAISE_DISTANCE < maxPos[Z_AXIS]) {
             setTmpPositionXYZ(IGNORE_COORDINATE, IGNORE_COORDINATE, ZHOME_PRE_RAISE_DISTANCE);
             moveRelativeByOfficial(tmpPosition, homingFeedrate[Z_AXIS], false);
@@ -1824,7 +1835,7 @@ void Motion1::homeAxes(fast8_t axes) {
     }
 #endif
 */
-    if (Tool::getActiveTool() != nullptr && ok && !Printer::breakLongCommand) { // select only if all is homed or we get unwanted moves!
+    if (Tool::getActiveTool() != nullptr && ok && (axes & 7) != 0) { // select only if all is homed or we get unwanted moves! Also only do it if position has changed allowing homing of non position axis in extruder selection.
         Tool::selectTool(activeToolId, true);
     }
 

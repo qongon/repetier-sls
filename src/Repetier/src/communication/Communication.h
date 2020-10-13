@@ -152,6 +152,7 @@ public:
     FSTRINGVAR(tBtnOK)
     FSTRINGVAR(tM999)
     FSTRINGVAR(tTestM999)
+    FSTRINGVAR(tColdExtrusionPrevented)
     // Units
     FSTRINGVAR(tUnitMM)
     FSTRINGVAR(tUnitMMS)

@@ -38,6 +38,7 @@
 #define SERIAL_RX_BUFFER_SIZE 128
 #endif
 #endif
+ 
 
 
 #ifndef HAL_H

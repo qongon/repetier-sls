@@ -4,6 +4,15 @@ const char* const axisNames[] PROGMEM = {
     "X", "Y", "Z", "E", "A", "B", "C"
 };
 
+void __attribute__((weak)) menuBabystepZ(GUIAction action, void* data) {
+    DRAW_FLOAT_P(PSTR("Babystep Z:"), Com::tUnitMM, Motion1::totalBabystepZ, 2);
+    if (GUI::handleFloatValueAction(action, v, 0.01f)) {
+        GCode mod;
+        mod.setZ(v - Motion1::totalBabystepZ);
+        PrinterType::M290(&mod);
+    }
+}
+
 void __attribute__((weak)) menuMoveAxisFine(GUIAction action, void* data) {
     int axis = reinterpret_cast<int>(data);
     GUI::flashToStringFlash(GUI::tmpString, PSTR("Move @-Axis (0.01mm):"), axisNames[axis]);
@@ -11,7 +20,7 @@ void __attribute__((weak)) menuMoveAxisFine(GUIAction action, void* data) {
     if (!Tool::getActiveTool()->showMachineCoordinates()) {
         v -= Motion1::g92Offsets[axis];
     }
-    if (GUI::handleFloatValueAction(action, v, Motion1::minPos[axis], Motion1::maxPos[axis], 0.01)) {
+    if (GUI::handleFloatValueAction(action, v, Motion1::minPos[axis], Motion1::maxPos[axis], 0.01f)) {
         Motion1::copyCurrentOfficial(Motion1::tmpPosition);
         Motion1::tmpPosition[axis] = v;
         Motion1::moveByOfficial(Motion1::tmpPosition, Motion1::moveFeedrate[axis], false);
@@ -38,7 +47,7 @@ void __attribute__((weak)) menuMoveAxis(GUIAction action, void* data) {
 
 void __attribute__((weak)) menuMoveE(GUIAction action, void* data) {
     DRAW_FLOAT_P(PSTR("Active Extruder:"), Com::tUnitMM, Motion1::currentPosition[E_AXIS], 2);
-    if (GUI::handleFloatValueAction(action, v, Motion1::minPos[E_AXIS], Motion1::maxPos[E_AXIS], 1.0)) {
+    if (GUI::handleFloatValueAction(action, v, 1.0)) {
         Motion1::setTmpPositionXYZE(IGNORE_COORDINATE, IGNORE_COORDINATE, IGNORE_COORDINATE, v);
         Motion1::moveByOfficial(Motion1::tmpPosition, Motion1::moveFeedrate[E_AXIS], false);
     }
@@ -350,7 +359,11 @@ void __attribute__((weak)) menuMove(GUIAction action, void* data) {
             continue;
         }
         GUI::flashToStringFlash(GUI::tmpString, PSTR("Move @:"), axisNames[i]);
-        GUI::menuFloat(action, GUI::tmpString, Motion1::getShowPosition(i), 2, menuMoveAxis, (void*)(int)i, GUIPageType::FIXED_CONTENT);
+        if (i == E_AXIS) {
+            GUI::menuFloat(action, GUI::tmpString, Motion1::getShowPosition(i), 2, menuMoveE, (void*)(int)i, GUIPageType::FIXED_CONTENT);
+        } else {
+            GUI::menuFloat(action, GUI::tmpString, Motion1::getShowPosition(i), 2, menuMoveAxis, (void*)(int)i, GUIPageType::FIXED_CONTENT);
+        }
     }
     GUI::menuEnd(action);
 }
@@ -468,10 +481,17 @@ void __attribute__((weak)) menuControls(GUIAction action, void* data) {
     GUI::menuSelectable(action, GUI::tmpString, menuSpeedMultiplier, nullptr, GUIPageType::FIXED_CONTENT);
     GUI::flashToStringLong(GUI::tmpString, PSTR("Flow: @%"), Printer::extrudeMultiply);
     GUI::menuSelectable(action, GUI::tmpString, menuFlowMultiplier, nullptr, GUIPageType::FIXED_CONTENT);
+    GUI::flashToStringFloat(GUI::tmpString, PSTR("Babystep Z: @mm"), Motion1::totalBabystepZ, 2);
+    GUI::menuSelectable(action, GUI::tmpString, menuBabystepZ, nullptr, GUIPageType::FIXED_CONTENT);
 #ifndef NO_LIGHT_CONTROL
     GUI::menuSelectableP(action, PSTR("Toggle lights"), directAction, (void*)GUI_DIRECT_ACTION_TOGGLE_LIGHT, GUIPageType::ACTION);
 #endif
+#if PRINTER_TYPE == PRINTER_TYPE_DELTA
+    // Deltas have only home all so move the only function up
+    GUI::menuSelectableP(action, PSTR("Home"), directAction, (void*)GUI_DIRECT_ACTION_HOME_ALL, GUIPageType::ACTION);
+#else
     GUI::menuSelectableP(action, PSTR("Home"), menuHome, nullptr, GUIPageType::MENU);
+#endif
     GUI::menuSelectableP(action, PSTR("Move"), menuMove, nullptr, GUIPageType::MENU);
 #if NUM_FANS > 0
     GUI::menuSelectableP(action, PSTR("Fans"), menuFans, nullptr, GUIPageType::MENU);

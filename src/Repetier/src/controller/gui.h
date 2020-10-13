@@ -182,6 +182,7 @@ public:
 
     static void flashToString(char* dest, FSTRINGPARAM(text));
     static void flashToStringLong(char* dest, FSTRINGPARAM(text), int32_t val);
+    static void flashToStringFloat(char* dest, FSTRINGPARAM(text), float val, int prec = 0);
     static void flashToStringFlash(char* dest, FSTRINGPARAM(text), FSTRINGPARAM(val));
     static void flashToStringString(char* dest, FSTRINGPARAM(text), char* val);
 
@@ -234,6 +235,7 @@ public:
     static void showValueP(PGM_P text, PGM_P unit, char* value);
     static void showValue(char* text, PGM_P unit, char* value);
     static bool handleFloatValueAction(GUIAction& action, float& value, float min, float max, float increment);
+    static bool handleFloatValueAction(GUIAction& action, float& value, float increment);
     static bool handleLongValueAction(GUIAction& action, int32_t& value, int32_t min, int32_t max, int32_t increment);
 };
 

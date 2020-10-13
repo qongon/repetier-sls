@@ -1207,7 +1207,7 @@ SerialGCodeSource::SerialGCodeSource(Stream* p) {
     commentDetected = false;
 #endif
 
-#if (CPU_ARCH != ARCH_AVR)
+#if (CPU_ARCH != ARCH_AVR) && (!defined(SAMD51_BOARD) || (defined(USBCON) && defined(USBD_USE_CDC)))
     if (stream && (stream == &SerialUSB)) {
         usbHostSource = this;
     }
