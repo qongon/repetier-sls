@@ -899,7 +899,7 @@ void TIMER_VECTOR(SERVO_TIMER_NUM) {
     } else if (LL_TIM_IsActiveFlag_UPDATE(TIMER(SERVO_TIMER_NUM))) {
         LL_TIM_ClearFlag_UPDATE(TIMER(SERVO_TIMER_NUM));
 #if NUM_SERVOS > 0
-        if (actServo) {
+        if (actServo && HAL::servoTimings[servoId]) {
             actServo->enable();
         }
 #endif
