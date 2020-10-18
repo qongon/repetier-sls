@@ -466,6 +466,7 @@ void __attribute__((weak)) GCode_30(GCode* com) {
         Com::printFLN(PSTR("Z-probe height [mm]:"), zProbeHeight);
 
     } else {
+        // H is always the height you measured and R is which Z position you want to assign it.
         float z = ZProbeHandler::runProbe();
         if (z == ILLEGAL_Z_PROBE) {
             GCode::fatalError(PSTR("G30 probing failed!"));

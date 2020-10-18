@@ -56,6 +56,7 @@ class ZProbeHandler {
     static bool activated;
     static uint16_t userPausedHeaters;
     static bool pauseHeaters;
+
 public:
     static void activate();
     static void deactivate();
@@ -85,7 +86,7 @@ public:
     static void showConfigMenu(GUIAction action);
     static bool hasConfigMenu() { return true; }
 
-    static void showControlMenu(GUIAction action) { };
+    static void showControlMenu(GUIAction action) {};
     static bool hasControlMenu() { return false; }
 
     static bool getHeaterPause() { return pauseHeaters; }
@@ -114,6 +115,7 @@ class ZProbeHandler {
 
     static uint16_t userPausedHeaters;
     static bool pauseHeaters;
+
 public:
     static void activate();
     static void deactivate();
@@ -145,7 +147,7 @@ public:
     static void showConfigMenu(GUIAction action);
     static bool hasConfigMenu() { return true; }
 
-    static void showControlMenu(GUIAction action) { };
+    static void showControlMenu(GUIAction action) {};
     static bool hasControlMenu() { return false; }
 
     static bool getHeaterPause() { return pauseHeaters; }

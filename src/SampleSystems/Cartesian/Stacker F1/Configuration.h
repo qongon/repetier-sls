@@ -27,6 +27,8 @@ Early stage version for Stacke F1 printer - use with care
 // ******* Model dependent changes ***********
 // Adds z probe support
 #define STACKER_WITH_ZPROBE
+// Adds 2 z end stops 
+#define STACKER_2_Z_END_STOPS
 
 /**************** READ FIRST ************************
 
@@ -403,7 +405,11 @@ CONFIG_VARIABLE_EQ(EndstopDriver, *ZProbe, ZPROBE_ADDRESS)
 #define ALWAYS_CHECK_ENDSTOPS 0
 #define X_HOME_DIR -1
 #define Y_HOME_DIR -1
+#ifdef STACKER_2_Z_END_STOPS
+#define Z_HOME_DIR 1
+#else
 #define Z_HOME_DIR -1
+#endif
 #define A_HOME_DIR 1
 #define MOVE_X_WHEN_HOMED 1
 #define MOVE_Y_WHEN_HOMED 1
@@ -412,15 +418,21 @@ CONFIG_VARIABLE_EQ(EndstopDriver, *ZProbe, ZPROBE_ADDRESS)
 #define HOMING_FEEDRATE_X 25
 #define HOMING_FEEDRATE_Y 25
 #define HOMING_FEEDRATE_Z 10
-#define ZHOME_PRE_RAISE 2
-#define ZHOME_PRE_RAISE_DISTANCE 0
+#define ZHOME_PRE_RAISE 1
+#define ZHOME_PRE_RAISE_DISTANCE 10
 #define RAISE_Z_ON_TOOLCHANGE 0
 #define ZHOME_MIN_TEMPERATURE 0
 #define ZHOME_HEAT_ALL 0
 #define ZHOME_HEIGHT 0
+#ifdef STACKER_WITH_ZPROBE
+#define FIXED_Z_HOME_POSITION 1
+#define ZHOME_X_POS 50
+#define ZHOME_Y_POS 50
+#else
 #define FIXED_Z_HOME_POSITION 0
 #define ZHOME_X_POS 0
 #define ZHOME_Y_POS 0
+#endif
 
 // ################# XYZ movements ###################
 

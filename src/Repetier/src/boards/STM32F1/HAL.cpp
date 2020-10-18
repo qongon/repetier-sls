@@ -47,7 +47,6 @@
 #define _TIMER(num) TIM##num
 #define _TIMER_IRQ(num) TIM##num##_IRQn
 
-
 #define _TIMER_VECTOR(num) RAW_TIM##num##_IRQHandler(void)
 #define _TIMER_VECTOR_NAME(num) RAW_TIM##num##_IRQHandler
 
