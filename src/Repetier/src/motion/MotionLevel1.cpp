@@ -1847,7 +1847,7 @@ void Motion1::homeAxes(fast8_t axes) {
     }
 
     if (!Printer::breakLongCommand) {
-        oldCoordinates[E_AXIS] = currentPosition[E_AXIS];
+    oldCoordinates[E_AXIS] = IGNORE_COORDINATE; //currentPosition[E_AXIS];
         moveByOfficial(oldCoordinates, moveFeedrate[X_AXIS], false); // make official pos = homing pos reagrdless of transformation
         Motion1::printCurrentPosition();
     }

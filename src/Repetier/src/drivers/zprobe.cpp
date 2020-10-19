@@ -55,6 +55,7 @@ void ZProbeHandler::activate() {
     float cPos[NUM_AXES];
     Motion1::copyCurrentOfficial(cPos);
     PrinterType::closestAllowedPositionWithNewXYOffset(cPos, offsetX, offsetY, Z_PROBE_BORDER);
+    cPos[E_AXIS] = IGNORE_COORDINATE;
     Motion1::moveByOfficial(cPos, Motion1::moveFeedrate[X_AXIS], false);
     GCode::executeFString(Com::tZProbeStartScript);
     Motion1::moveByOfficial(cPos, Motion1::moveFeedrate[X_AXIS], false);
@@ -86,6 +87,7 @@ void ZProbeHandler::deactivate() {
     Motion1::copyCurrentOfficial(cPos);
     PrinterType::closestAllowedPositionWithNewXYOffset(cPos, tool->getOffsetX(), tool->getOffsetY(), Z_PROBE_BORDER);
     GCode::executeFString(Com::tZProbeEndScript);
+    cPos[E_AXIS] = IGNORE_COORDINATE;
     Motion1::moveByOfficial(cPos, Motion1::moveFeedrate[X_AXIS], false);
     Motion1::setToolOffset(-tool->getOffsetX(), -tool->getOffsetY(), -tool->getOffsetZ());
     Motion1::moveByOfficial(cPos, Motion1::moveFeedrate[X_AXIS], false);
@@ -145,6 +147,7 @@ float ZProbeHandler::runProbe() {
     HAL::delayMilliseconds(Z_PROBE_DELAY);
 #endif
     Motion1::stepsRemaining[Z_AXIS] = 0;
+    tPos[E_AXIS] = IGNORE_COORDINATE;
     Motion1::moveByPrinter(tPos, speed, false);
     Motion1::waitForEndOfMoves();
     Motion1::endstopMode = EndstopMode::DISABLED;
@@ -185,6 +188,7 @@ float ZProbeHandler::runProbe() {
     PrinterType::transform(cPos2, cPosSteps2);
     PrinterType::transform(tPos2, tPosSteps2);
     PrinterType::transform(tPos3, tPosSteps3);
+    tPos2[E_AXIS] = IGNORE_COORDINATE;
     Motion1::moveByPrinter(tPos2, Motion1::moveFeedrate[Z_AXIS], false);
     Motion1::waitForEndOfMoves();
 #ifdef Z_PROBE_RUN_AFTER_EVERY_PROBE
@@ -198,6 +202,7 @@ float ZProbeHandler::runProbe() {
 #endif
         Motion1::stepsRemaining[Z_AXIS] = 0;
         Motion1::endstopMode = EndstopMode::PROBING;
+        tPos3[E_AXIS] = IGNORE_COORDINATE;
         Motion1::moveByPrinter(tPos3, speed, false);
         Motion1::waitForEndOfMoves();
         Motion1::endstopMode = EndstopMode::DISABLED;
@@ -416,6 +421,7 @@ void ZProbeHandler::activate() {
     Tool* tool = Tool::getActiveTool();
     Motion1::copyCurrentOfficial(cPos);
     PrinterType::closestAllowedPositionWithNewXYOffset(cPos, tool->getOffsetX(), tool->getOffsetY(), Z_PROBE_BORDER);
+    cPos[E_AXIS] = IGNORE_COORDINATE;
     Motion1::moveByOfficial(cPos, Motion1::moveFeedrate[X_AXIS], false);
     GCode::executeFString(Com::tZProbeStartScript);
     Motion1::moveByOfficial(cPos, Motion1::moveFeedrate[X_AXIS], false);
@@ -460,6 +466,7 @@ void ZProbeHandler::deactivate() {
     Motion1::copyCurrentOfficial(cPos);
     PrinterType::closestAllowedPositionWithNewXYOffset(cPos, tool->getOffsetX(), tool->getOffsetY(), Z_PROBE_BORDER);
     GCode::executeFString(Com::tZProbeEndScript);
+    cPos[E_AXIS] = IGNORE_COORDINATE;
     Motion1::moveByOfficial(cPos, Motion1::moveFeedrate[X_AXIS], false);
     Motion1::setToolOffset(-tool->getOffsetX(), -tool->getOffsetY(), -tool->getOffsetZ());
     Motion1::moveByOfficial(cPos, Motion1::moveFeedrate[X_AXIS], false);
@@ -524,6 +531,7 @@ float ZProbeHandler::runProbe() {
     HAL::delayMilliseconds(Z_PROBE_DELAY);
 #endif
     Motion1::stepsRemaining[Z_AXIS] = 0;
+    tPos[E_AXIS] = IGNORE_COORDINATE;
     Motion1::moveByPrinter(tPos, speed, false);
     Motion1::waitForEndOfMoves();
     Motion1::endstopMode = EndstopMode::DISABLED;
@@ -565,6 +573,7 @@ float ZProbeHandler::runProbe() {
     PrinterType::transform(cPos2, cPosSteps2);
     PrinterType::transform(tPos2, tPosSteps2);
     PrinterType::transform(tPos3, tPosSteps3);
+    tPos2[E_AXIS] = IGNORE_COORDINATE;
     Motion1::moveByPrinter(tPos2, Motion1::moveFeedrate[Z_AXIS], false);
     Motion1::waitForEndOfMoves();
 #ifdef Z_PROBE_RUN_AFTER_EVERY_PROBE
@@ -578,6 +587,7 @@ float ZProbeHandler::runProbe() {
 #endif
         Motion1::stepsRemaining[Z_AXIS] = 0;
         Motion1::endstopMode = EndstopMode::PROBING;
+        tPos3[E_AXIS] = IGNORE_COORDINATE;
         Motion1::moveByPrinter(tPos3, speed, false);
         Motion1::waitForEndOfMoves();
         Motion1::endstopMode = EndstopMode::DISABLED;
@@ -785,6 +795,7 @@ void ZProbeHandler::activate() {
     float cPos[NUM_AXES];
     Motion1::copyCurrentOfficial(cPos);
     PrinterType::closestAllowedPositionWithNewXYOffset(cPos, offsetX, offsetY, Z_PROBE_BORDER);
+    cPos[E_AXIS] = IGNORE_COORDINATE;
     Motion1::moveByOfficial(cPos, Motion1::moveFeedrate[X_AXIS], false);
     GCode::executeFString(Com::tZProbeStartScript);
     Motion1::moveByOfficial(cPos, Motion1::moveFeedrate[X_AXIS], false);
@@ -826,6 +837,7 @@ void ZProbeHandler::deactivate() {
     Motion1::copyCurrentOfficial(cPos);
     PrinterType::closestAllowedPositionWithNewXYOffset(cPos, tool->getOffsetX(), tool->getOffsetY(), Z_PROBE_BORDER);
     GCode::executeFString(Com::tZProbeEndScript);
+    cPos[E_AXIS] = IGNORE_COORDINATE;
     Motion1::moveByOfficial(cPos, Motion1::moveFeedrate[X_AXIS], false);
     Motion1::setToolOffset(-tool->getOffsetX(), -tool->getOffsetY(), -tool->getOffsetZ());
     Motion1::moveByOfficial(cPos, Motion1::moveFeedrate[X_AXIS], false);
@@ -885,6 +897,7 @@ float ZProbeHandler::runProbe() {
     HAL::delayMilliseconds(Z_PROBE_DELAY);
 #endif
     Motion1::stepsRemaining[Z_AXIS] = 0;
+    tPos[E_AXIS] = IGNORE_COORDINATE;
     Motion1::moveByPrinter(tPos, speed, false);
     Motion1::waitForEndOfMoves();
     Motion1::endstopMode = EndstopMode::DISABLED;
@@ -926,6 +939,7 @@ float ZProbeHandler::runProbe() {
     PrinterType::transform(cPos2, cPosSteps2);
     PrinterType::transform(tPos2, tPosSteps2);
     PrinterType::transform(tPos3, tPosSteps3);
+    tPos2[E_AXIS] = IGNORE_COORDINATE;
     Motion1::moveByPrinter(tPos2, Motion1::moveFeedrate[Z_AXIS], false);
     Motion1::waitForEndOfMoves();
 #ifdef Z_PROBE_RUN_AFTER_EVERY_PROBE
@@ -939,6 +953,7 @@ float ZProbeHandler::runProbe() {
 #endif
         Motion1::stepsRemaining[Z_AXIS] = 0;
         Motion1::endstopMode = EndstopMode::PROBING;
+        tPos3[E_AXIS] = IGNORE_COORDINATE;
         Motion1::moveByPrinter(tPos3, speed, false);
         Motion1::waitForEndOfMoves();
         Motion1::endstopMode = EndstopMode::DISABLED;

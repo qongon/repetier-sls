@@ -1481,6 +1481,7 @@ void Printer::unparkSafety() {
     if (needsPop && Motion1::popFromMemory(pos)) {
         float z = pos[Z_AXIS];
         pos[Z_AXIS] = IGNORE_COORDINATE;
+        pos[E_AXIS] = IGNORE_COORDINATE;
         Motion1::moveByOfficial(pos, Motion1::moveFeedrate[X_AXIS], false);
         FOR_ALL_AXES(i) {
             pos[i] = IGNORE_COORDINATE;

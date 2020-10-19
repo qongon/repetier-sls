@@ -289,6 +289,8 @@ bool Leveling::measure() {
             pos[X_AXIS] = px - ZProbeHandler::xOffset();
             pos[Y_AXIS] = py - ZProbeHandler::yOffset();
             pos[Z_AXIS] = ZProbeHandler::optimumProbingHeight();
+            pos[E_AXIS] = IGNORE_COORDINATE;
+
             float bedPos[2] = { px, py };
             if (PrinterType::positionOnBed(bedPos) && PrinterType::positionAllowed(pos, pos[Z_AXIS])) {
                 if (ok) {
