@@ -347,7 +347,7 @@ void HAL::setupTimer() {
             // Timer 11 has only one channel, 1.
             toneTimer->timer->setMode(1, TIMER_OUTPUT_COMPARE, NC);
             toneTimer->timer->attachInterrupt(TIMER_VECTOR_NAME(TONE_TIMER_NUM));
-            toneTimer->timer->attachInterrupt(1, &beeperComparePhase);
+            toneTimer->timer->attachInterrupt(1, [] {});
             // Not on by default for output_compare
             LL_TIM_OC_EnablePreload(TIMER(TONE_TIMER_NUM), toneTimer->timer->getLLChannel(1));
             LL_TIM_OC_EnableFast(TIMER(TONE_TIMER_NUM), toneTimer->timer->getLLChannel(1));
@@ -1017,7 +1017,7 @@ void HAL::tone(uint32_t frequency) {
     uint32_t prescale = (autoReload / 0x10000) + 1;
     LL_TIM_SetPrescaler(TIMER(TONE_TIMER_NUM), prescale - 1); 
     autoReload /= prescale;
-    LL_TIM_SetAutoReload(TIMER(TONE_TIMER_NUM), autoReload);
+    LL_TIM_SetAutoReload(TIMER(TONE_TIMER_NUM), autoReload);  
     LL_TIM_OC_SetCompareCH1(TIMER(TONE_TIMER_NUM), ((autoReload + 1) * (Printer::toneVolume * 50)) / 10000);
     if (toneStopped) { // Only generate updates if the timer's dead.
         LL_TIM_GenerateEvent_UPDATE(TIMER(TONE_TIMER_NUM));
