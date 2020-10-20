@@ -125,14 +125,12 @@
     name.eepromReserve();
 #define STEPPER_TMC5160_SW_SPI(name, stepPin, dirPin, enablePin, mosiPin, misoPin, sckPin, csPin, rsense, chainPos, microsteps, currentMillis, stealth, hybridSpeed, stallSensitivity, fclk, minEndstop, maxEndstop) \
     name.eepromReserve();
-#if defined(SAMD51_BOARD)
+#if defined(SAMD51_BOARD) || defined(ARDUINO_ARCH_STM32)
 #define STEPPER_TMC2208_HW_UART(name, stepPin, dirPin, enablePin, serial, rsense, microsteps, currentMillis, stealth, hybridSpeed, fclk, minEndstop, maxEndstop) \
     serial.begin(115200); \
-    serial.setInterruptPriority(5); \
     name.eepromReserve();
 #define STEPPER_TMC2209_HW_UART(name, stepPin, dirPin, enablePin, serial, rsense, microsteps, currentMillis, stealth, hybridSpeed, slaveAddr, stallSensitivity, fclk, minEndstop, maxEndstop) \
     serial.begin(115200); \
-    serial.setInterruptPriority(5); \
     name.eepromReserve();
 #else
 #define STEPPER_TMC2208_HW_UART(name, stepPin, dirPin, enablePin, serial, rsense, microsteps, currentMillis, stealth, hybridSpeed, fclk, minEndstop, maxEndstop) \
