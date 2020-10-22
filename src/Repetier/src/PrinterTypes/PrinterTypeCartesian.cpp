@@ -46,7 +46,6 @@ bool PrinterType::positionAllowed(float pos[NUM_AXES], float zOfficial) {
         if (Motion1::axesHomed & axisBits[i]) {
             if (pos[i] < Motion1::minPosOff[i]
                 || pos[i] > Motion1::maxPosOff[i]) {
-                Com::printFLN(PSTR("Axis failed:"), (int32_t)i);
                 return false;
             }
         }
@@ -64,7 +63,7 @@ void PrinterType::closestAllowedPositionWithNewXYOffset(float pos[NUM_AXES], flo
 
         float p = pos[i] - offsets[i];
         float minP = Motion1::minPos[i] + safety - tOffMax;
-        float maxP = Motion1::maxPos[i] - safety + tOffMin;
+        float maxP = Motion1::maxPos[i] - safety - tOffMin;
         if (p < minP) {
             pos[i] += minP - p;
         } else if (p > maxP) {
