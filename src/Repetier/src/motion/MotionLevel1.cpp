@@ -417,8 +417,8 @@ void Motion1::updateRotMinMax() {
     }
     // add some safety margin preventing triggering end stops.
     for (fast8_t i = 0; i <= Z_AXIS; i++) {
-        rotMax[i] *= 1.001;
-        rotMin[i] *= 1.001;
+        rotMax[i] += 0.01; // Add small epsilon to compensate rounding errors in transformations
+        rotMin[i] -= 0.01;
         minPosOff[i] += rotMin[i];
         maxPosOff[i] += rotMax[i];
     }
@@ -1844,15 +1844,13 @@ void Motion1::homeAxes(fast8_t axes) {
     }
 #endif
 */
+    oldCoordinates[E_AXIS] = currentPosition[E_AXIS];
+    moveByOfficial(oldCoordinates, moveFeedrate[X_AXIS], false);     // make official pos = homing pos reagrdless of transformation
     if (Tool::getActiveTool() != nullptr && ok && (axes & 7) != 0) { // select only if all is homed or we get unwanted moves! Also only do it if position has changed allowing homing of non position axis in extruder selection.
         Tool::selectTool(activeToolId, true);
     }
 
-    if (!Printer::breakLongCommand) {
-    oldCoordinates[E_AXIS] = IGNORE_COORDINATE; //currentPosition[E_AXIS];
-        moveByOfficial(oldCoordinates, moveFeedrate[X_AXIS], false); // make official pos = homing pos reagrdless of transformation
-        Motion1::printCurrentPosition();
-    }
+    Motion1::printCurrentPosition();
     GUI::popBusy();
 }
 
