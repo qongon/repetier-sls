@@ -820,20 +820,16 @@ void directAction(GUIAction action, void* data) {
         sd.mount();
 #endif
         break;
-    case GUI_DIRECT_ACTION_STOP_SD_PRINT:
-#if SDSUPPORT
-        sd.stopPrint();
-#endif
+    case GUI_DIRECT_ACTION_STOP_PRINT:
+        Printer::stopPrint();
+        Motion1::haltMotion(500);
         break;
-    case GUI_DIRECT_ACTION_PAUSE_SD_PRINT:
-#if SDSUPPORT
-        sd.pausePrint(true);
-#endif
+    case GUI_DIRECT_ACTION_PAUSE_PRINT:
+        Printer::pausePrint();
+        Motion1::haltMotion(500);
         break;
-    case GUI_DIRECT_ACTION_CONTINUE_SD_PRINT:
-#if SDSUPPORT
-        sd.continuePrint(true);
-#endif
+    case GUI_DIRECT_ACTION_CONTINUE_PRINT:
+        Printer::continuePrint();
         break;
     case GUI_DIRECT_ACTION_POWERLOSS:
         Printer::handlePowerLoss();
@@ -862,17 +858,6 @@ void directAction(GUIAction action, void* data) {
     case GUI_DIRECT_ACTION_REBOOT:
         HAL::serialFlush();
         HAL::resetHardware();
-        break;
-    case GUI_DIRECT_ACTION_STOP_HOST_PRINT:
-        Printer::stopPrint();
-        Motion1::haltMotion(500);
-        break;
-    case GUI_DIRECT_ACTION_PAUSE_HOST_PRINT:
-        Printer::pausePrint();
-        Motion1::haltMotion(500);
-        break;
-    case GUI_DIRECT_ACTION_CONTINUE_HOST_PRINT:
-        Printer::continuePrint();
         break;
     }
 }
