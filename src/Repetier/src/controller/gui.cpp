@@ -822,11 +822,9 @@ void directAction(GUIAction action, void* data) {
         break;
     case GUI_DIRECT_ACTION_STOP_PRINT:
         Printer::stopPrint();
-        Motion1::haltMotion(500);
         break;
     case GUI_DIRECT_ACTION_PAUSE_PRINT:
         Printer::pausePrint();
-        Motion1::haltMotion(500);
         break;
     case GUI_DIRECT_ACTION_CONTINUE_PRINT:
         Printer::continuePrint();

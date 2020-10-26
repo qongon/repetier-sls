@@ -866,7 +866,7 @@ void __attribute__((weak)) mainMenu(GUIAction action, void* data) {
     if (!sd.sdactive) {
         GUI::menuSelectableP(action, PSTR("Mount SD Card"), directAction, (void*)GUI_DIRECT_ACTION_MOUNT_SD_CARD, GUIPageType::ACTION);
     }
-#endif 
+#endif
 
 #undef IO_TARGET
 #define IO_TARGET IO_TARGET_GUI_MAIN_MENU
