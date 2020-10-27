@@ -1318,18 +1318,18 @@ void SerialGCodeSource::testEmergency(GCode& gcode) {
             Printer::handlePowerLoss();
         } else if (gcode.M == 205) {
             EEPROM::writeSettings();
-        } else if (gcode.isImmediateM()) {
-            if (gcode.calcFromImmediateM() == 106) { // Host immediate fan
+        } else if (gcode.isPriorityM()) {
+            if (gcode.getPriorityM() == 106) { // Host priority fan
                 MCode_106(&gcode);
-            } else if (gcode.calcFromImmediateM() == 107) { // Host immediate fan OFF
+            } else if (gcode.getPriorityM() == 107) { // Host priority fan OFF
                 MCode_107(&gcode);
-            } else if (gcode.calcFromImmediateM() == 140) { // Host immediate bed temp
+            } else if (gcode.getPriorityM() == 140) { // Host priority bed temp
                 MCode_140(&gcode);
-            } else if (gcode.calcFromImmediateM() == 141) { // Host immediate chamber temp
+            } else if (gcode.getPriorityM() == 141) { // Host priority chamber temp
                 MCode_141(&gcode);
-            } else if (gcode.calcFromImmediateM() == 104) { // Host immediate extruder temp
+            } else if (gcode.getPriorityM() == 104) { // Host priority extruder temp
                 MCode_104(&gcode);
-            } else if (gcode.calcFromImmediateM() == 355) { // Host immediate light toggle
+            } else if (gcode.getPriorityM() == 355) { // Host priority light toggle
                 MCode_355(&gcode);
             }
         }

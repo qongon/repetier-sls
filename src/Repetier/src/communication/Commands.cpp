@@ -838,7 +838,7 @@ void Commands::executeGCode(GCode* com) {
     if (com->hasG()) {
         processGCode(com);
     } else if (com->hasM()) {
-        if (!com->isImmediateM()) {
+        if (!com->isPriorityM()) {
             processMCode(com);
         }
     } else if (com->hasT()) { // Process T code
