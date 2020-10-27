@@ -1319,19 +1319,8 @@ void SerialGCodeSource::testEmergency(GCode& gcode) {
         } else if (gcode.M == 205) {
             EEPROM::writeSettings();
         } else if (gcode.isPriorityM()) {
-            if (gcode.getPriorityM() == 106) { // Host priority fan
-                MCode_106(&gcode);
-            } else if (gcode.getPriorityM() == 107) { // Host priority fan OFF
-                MCode_107(&gcode);
-            } else if (gcode.getPriorityM() == 140) { // Host priority bed temp
-                MCode_140(&gcode);
-            } else if (gcode.getPriorityM() == 141) { // Host priority chamber temp
-                MCode_141(&gcode);
-            } else if (gcode.getPriorityM() == 104) { // Host priority extruder temp
-                MCode_104(&gcode);
-            } else if (gcode.getPriorityM() == 355) { // Host priority light toggle
-                MCode_355(&gcode);
-            }
+            gcode.M = gcode.getPriorityM();
+            Commands::processMCode(&gcode);
         }
     }
 }

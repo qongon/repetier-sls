@@ -383,14 +383,13 @@ public:
     inline void reset() { params = params2 = 0; }
     inline bool isPriorityM() {
 #if HOST_PRIORITY_CONTROLS
-        return ((M >> 14u) == 3u); // using 3 for now.
+        return (M >= 10000 && M < 19999);
 #else 
         return false;
 #endif
     }
     inline uint16_t getPriorityM() {
-         // priority M = flag (eg.1, 2, 3) << 14u | MCode
-        return (isPriorityM() ? (M & 8191u) : 0u);
+        return (isPriorityM() ? (M - 10000) : M);
     }
     void printCommand();
     bool parseBinary(uint8_t* buffer, fast8_t length, bool fromSerial);
