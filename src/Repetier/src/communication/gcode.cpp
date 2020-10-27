@@ -1319,7 +1319,6 @@ void SerialGCodeSource::testEmergency(GCode& gcode) {
         } else if (gcode.M == 205) {
             EEPROM::writeSettings();
         } else if (gcode.isPriorityM()) {
-            gcode.M = gcode.getPriorityM();
             Commands::processMCode(&gcode);
         }
     }
