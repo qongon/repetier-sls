@@ -1267,7 +1267,7 @@ void __attribute__((weak)) startScreen(GUIAction action, void* data) {
             }
             GUI::bufAddChar(':');
             GUI::bufAddHeaterTemp(heatedBeds[auxHeaterIndex], true);
-        } else if (auxHeaterIndex >= NUM_HEATED_BEDS) {
+        } else if (auxHeaterIndex >= NUM_HEATED_BEDS && auxHeaterIndex < (NUM_HEATED_BEDS + NUM_HEATED_CHAMBERS)) {
             GUI::bufAddChar('C');
             if (NUM_HEATED_CHAMBERS > 1) {
                 GUI::bufAddInt(heatedChambers[auxHeaterIndex - NUM_HEATED_BEDS]->getIndex() + 1, 1);
@@ -1276,11 +1276,24 @@ void __attribute__((weak)) startScreen(GUIAction action, void* data) {
             }
             GUI::bufAddChar(':');
             GUI::bufAddHeaterTemp(heatedChambers[auxHeaterIndex - NUM_HEATED_BEDS], true);
+        } else if (auxHeaterIndex >= (NUM_HEATED_BEDS + NUM_HEATED_CHAMBERS) && HumiditySensor) {
+            GUI::bufAddChar('R');
+            GUI::bufAddChar('H');
+            GUI::bufAddChar(':');
+            GUI::bufAddChar(' ');
+            if (HumiditySensor->getError()) {
+                GUI::bufAddStringP(PSTR("ERR"));
+            } else {
+                GUI::bufAddFloat(HumiditySensor->getHumidity(), 0, 1);
+            }
+            GUI::bufAddChar('%');
+            GUI::bufAddChar(' ');
+            GUI::bufAddChar(' ');
         }
         GUI::bufAddChar(' ');
         // change every four seconds.
         if (!(refresh_counter % 4)) {
-            if (++auxHeaterIndex > (NUM_HEATED_BEDS + NUM_HEATED_CHAMBERS) - 1) {
+            if (++auxHeaterIndex > (NUM_HEATED_BEDS + NUM_HEATED_CHAMBERS + static_cast<fast8_t>(HumiditySensor != nullptr)) - 1) {
                 auxHeaterIndex = 0;
             }
         }
