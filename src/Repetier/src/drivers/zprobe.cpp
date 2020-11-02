@@ -48,9 +48,9 @@ void ZProbeHandler::setZProbeHeight(float _height) {
     height = _height;
 }
 
-void ZProbeHandler::activate() {
+bool ZProbeHandler::activate() {
     if (activated) {
-        return;
+        return true;
     }
     // Ensure x and y positions are valid
     if (!Motion1::isAxisHomed(X_AXIS) || !Motion1::isAxisHomed(Y_AXIS)) {
@@ -81,6 +81,7 @@ void ZProbeHandler::activate() {
             HAL::delayMilliseconds(150);
         }
     }
+    return true;
 }
 
 void ZProbeHandler::deactivate() {
@@ -413,9 +414,9 @@ void ZProbeHandler::setZProbeHeight(float _height) {
     height = _height;
 }
 
-void ZProbeHandler::activate() {
+bool ZProbeHandler::activate() {
     if (activated) {
-        return;
+        return true;
     }
     // Ensure x and y positions are valid
     if (!Motion1::isAxisHomed(X_AXIS) || !Motion1::isAxisHomed(Y_AXIS)) {
@@ -459,6 +460,7 @@ void ZProbeHandler::activate() {
             HAL::delayMilliseconds(150);
         }
     }
+    return true;
 }
 
 void ZProbeHandler::deactivate() {
@@ -787,9 +789,9 @@ void ZProbeHandler::setZProbeHeight(float _height) {
     height = _height;
 }
 
-void ZProbeHandler::activate() {
+bool ZProbeHandler::activate() {
     if (activated) {
-        return;
+        return true;
     }
     disableAlarmIfOn();
     // Ensure x and y positions are valid
@@ -813,6 +815,14 @@ void ZProbeHandler::activate() {
         Motion1::moveByOfficial(cPos, Motion1::moveFeedrate[Z_AXIS], false);
         Motion1::waitForEndOfMoves();
         disableAlarmIfOn();
+        ZProbeServo.setPosition(647, 0);     // deploy pin
+        HAL::delayMilliseconds(deployDelay); // give time to deploy
+        if (isAlarmOn()) {
+            // if BLTouch gives Alarm again, needle is blocked, stop printer
+            Motion1::waitForEndOfMoves();                                                                              // this avoids hard moves with very high feedrates and lost steps (where do they come from? only happens in case distortion correction is active.
+            GCode::fatalError(PSTR("Z-Probe again triggered before probing! Printer Stopped for avoiding Bed crash")); // Z is raised to Z=30, probably by the fatalError
+            return false;
+        }
     }
     activated = true;
     if (pauseHeaters) {
@@ -830,6 +840,7 @@ void ZProbeHandler::activate() {
             HAL::delayMilliseconds(150);
         }
     }
+    return true;
 }
 
 void ZProbeHandler::deactivate() {
@@ -1036,7 +1047,8 @@ float ZProbeHandler::runProbe() {
     }
     if (ZProbe->update()) {
         millis_t startTime = HAL::timeInMilliseconds();
-        while (ZProbe->update() && ((HAL::timeInMilliseconds() - startTime) < 200)) {
+        // wait up to 200ms to be sure signal stays
+        while (ZProbe->update() && ((HAL::timeInMilliseconds() - startTime) < 200ul)) {
             Commands::checkForPeriodicalActions(false);
         }
 

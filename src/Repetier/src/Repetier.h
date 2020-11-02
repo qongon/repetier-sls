@@ -176,7 +176,6 @@ usage or for searching for memory induced errors. Switch it off for production, 
 #define ANALOG_REF ANALOG_REF_AVCC
 
 #include "utilities/RMath.h"
-#include "utilities/RVector3.h"
 extern void updateEndstops();
 
 // we can not prevent this as some configurations need a parameter and others not
@@ -627,6 +626,7 @@ extern int debugWaitLoop;
 #include "motion/Drivers.h"
 #include "utilities/PlaneBuilder.h"
 #include "drivers/zprobe.h"
+#include "utilities/RVector3.h"
 
 #include "Events.h"
 #include "custom/customEvents.h"

@@ -234,8 +234,10 @@ void Leveling::setDistortionEnabled(bool newState) {
 
 bool Leveling::measure(uint8_t gridSize) {
     float pos[NUM_AXES];
+    float tOffMinX, tOffMaxX, tOffMinY, tOffMaxY;
     Plane plane;
     PlaneBuilder builder;
+
     builder.reset();
     PrinterType::getBedRectangle(xMin, xMax, yMin, yMax);
     // Sanity check for bad eeprom config
@@ -247,6 +249,15 @@ bool Leveling::measure(uint8_t gridSize) {
     xMax -= Z_PROBE_BORDER;
     yMin += Z_PROBE_BORDER;
     yMax -= Z_PROBE_BORDER;
+    // get get min and max offsets from tools (without z-probe offsets)
+    Tool::minMaxOffsetForAxis(X_AXIS, tOffMinX, tOffMaxX);
+    Tool::minMaxOffsetForAxis(Y_AXIS, tOffMinY, tOffMaxY);
+    // calc min and max coordinates defining the area reachable by ZProbe
+    xMin = RMath::max(xMin - tOffMaxX + ZProbeHandler::xOffset(), xMin);
+    xMax = RMath::min(xMax - tOffMinX + ZProbeHandler::xOffset(), xMax);
+    yMin = RMath::max(yMin - tOffMaxY + ZProbeHandler::yOffset(), yMin);
+    yMax = RMath::min(yMax - tOffMinY + ZProbeHandler::yOffset(), yMax);
+
     updateDerived();
 
     setDistortionEnabled(false);
@@ -259,6 +270,9 @@ bool Leveling::measure(uint8_t gridSize) {
     Motion1::setTmpPositionXYZ(px, py, ZProbeHandler::optimumProbingHeight());
     PrinterType::closestAllowedPositionWithNewXYOffset(Motion1::tmpPosition, ZProbeHandler::xOffset(), ZProbeHandler::yOffset(), Z_PROBE_BORDER);
     Motion1::moveByOfficial(Motion1::tmpPosition, Motion1::moveFeedrate[X_AXIS], false);
+    if (!ZProbeHandler::activate()) {
+        return false;
+    }
 
     constexpr uint16_t probePoints = GRID_SIZE * GRID_SIZE;
     Com::printF(PSTR("Beginning autolevel with "), probePoints);
@@ -968,7 +982,9 @@ bool Leveling::measure() {
     if (!Printer::breakLongCommand) {
         Motion1::setTmpPositionXYZ(L_P1_X, L_P1_Y, ZProbeHandler::optimumProbingHeight());
         ok &= Motion1::moveByOfficial(Motion1::tmpPosition, Motion1::moveFeedrate[X_AXIS], false);
-        ZProbeHandler::activate();
+        if (!ZProbeHandler::activate()) {
+            return false;
+        }
         h1 = ZProbeHandler::runProbe();
         ok &= h1 != ILLEGAL_Z_PROBE;
     }
@@ -1034,7 +1050,9 @@ bool Leveling::measure() {
     if (!Printer::breakLongCommand) {
         Motion1::setTmpPositionXYZ(L_P1_X, L_P1_Y, ZProbeHandler::optimumProbingHeight());
         ok &= Motion1::moveByOfficial(Motion1::tmpPosition, Motion1::moveFeedrate[X_AXIS], false);
-        ZProbeHandler::activate();
+        if (!ZProbeHandler::activate()) {
+            return false;
+        }
         h1 = ZProbeHandler::runProbe();
         ok &= h1 != ILLEGAL_Z_PROBE;
     }

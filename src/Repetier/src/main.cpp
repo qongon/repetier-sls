@@ -67,6 +67,7 @@ Implemented Codes
 - G203 P<motorId>            - Report current motor position
 - G204 P<motorId> S<0/1>     - Enable/disable motor
 - G205 P<motorId> S<0/1> E<0/1> - Home motor, S1 = go back to stored position, E1 = home only if endstop was never met, meaning it was never homed with motor.
+- G320 P<params> U<normalise> - Optimize delta geometry for flat bed. params= 3,4,6 or 6 (6 default) parameters to optimize. U1 = default = normalise end stops to minimum position.
 
 RepRap M Codes
 
@@ -183,7 +184,9 @@ Custom M Codes
 - M602 S<1/0> P<1/0>- Debug jam control (S) Disable jam control (P). If enabled it will log signal changes and will not trigger jam errors!
 - M603 Park extruder for printer types where this makes sense.
 - M604 X<slowdownSteps> Y<errorSteps> Z<slowdownTo> T<extruderId> - Set jam detection values on a per extruder basis. If not set it uses defaults from Configuration.h
-- M666 - force communication error, required DEBUG_COM_ERRORS
+- M665 L<diagonalLength> H<horizRadius> A<diagACorr> B<diagBCorr> C<diagCCorr> X<angleACorr> Y<angleBCorr> Z<angleCCorr> - Set Delta geometry.
+- M666 X<AOffset> Y<BOffet> Z<COffset> - Set end stop offsets for delta printer.
+- M667 - force communication error, required DEBUG_COM_ERRORS
 - M668 - set line number 0 without notice to simulate error
 - M669 - Measure time for a LCD display refresh
 - M900 K<advance> R<ratio> W<extrusion width> H<layer height> D<filament diameter> - set advance parameter.

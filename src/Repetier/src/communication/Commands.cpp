@@ -82,6 +82,12 @@ void Commands::commandLoop() {
 void Commands::checkForPeriodicalActions(bool allowNewMoves) {
     Printer::handleInterruptEvent();
     FirmwareEvent::handleEvents();
+    if (Printer::reportFlag) {
+        if (Printer::isReportFlag(PRINTER_REPORT_FLAG_ENDSTOPS)) {
+            MCode_119(nullptr);
+            Printer::reportFlagReset(PRINTER_REPORT_FLAG_ENDSTOPS);
+        }
+    }
 #if EMERGENCY_PARSER
     GCodeSource::prefetchAll();
 #endif
@@ -301,6 +307,7 @@ void Commands::processGCode(GCode* com) {
         previousMillisCmd = HAL::timeInMilliseconds();
         return;
     }
+    bool unknown = false;
     switch (com->G) {
     case 0: // G0 -> G1
     case 1: // G1
@@ -385,7 +392,13 @@ void Commands::processGCode(GCode* com) {
     case 205:
         GCode_205(com);
         break;
+    case 320:
+        unknown = PrinterType::runGCode(com);
+        break;
     default:
+        unknown = true;
+    }
+    if (unknown) {
         if (Printer::debugErrors()) {
             Com::printF(Com::tUnknownCommand);
             com->printCommand();
@@ -405,7 +418,8 @@ void Commands::processMCode(GCode* com) {
     if (EVENT_UNHANDLED_M_CODE(com)) {
         return;
     }
-    uint16_t mCode = com->isPriorityM() ? com->getPriorityM() : com->M; 
+    bool unknown = false;
+    uint16_t mCode = com->isPriorityM() ? com->getPriorityM() : com->M;
     switch (mCode) {
     case 0:
         // HAL::reportHALDebug();
@@ -745,6 +759,10 @@ void Commands::processMCode(GCode* com) {
     case 606: // Park extruder
         MCode_606(com);
         break;
+    case 665:
+    case 666:
+        PrinterType::runMCode(com);
+        break;
     case 669: // Measure lcd refresh time
         MCode_669(com);
         break;
@@ -811,12 +829,15 @@ void Commands::processMCode(GCode* com) {
         Com::printFLN(PSTR(" YPosSteps:"), lp[1]);
     } break; */
     default:
+        unknown = true;
+    } // switch
+    if (unknown) {
         if (Printer::debugErrors()) {
             Com::writeToAll = false;
             Com::printF(Com::tUnknownCommand);
             com->printCommand();
         }
-    } // switch
+    }
 }
 
 /**
