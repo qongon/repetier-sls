@@ -199,7 +199,8 @@ void HAL::setupTimer() {
     // Timer for extruder control
 #if (DISABLED(MOTION2_USE_REALTIME_TIMER) || PREPARE_FREQUENCY > (PWM_CLOCK_FREQ / 2))
     pmc_enable_periph_clk(MOTION2_TIMER_IRQ); // enable power to timer
-    NVIC_SetPriority((IRQn_Type)MOTION2_TIMER_IRQ, 15);
+    //NVIC_SetPriority((IRQn_Type)EXTRUDER_TIMER_IRQ, NVIC_EncodePriority(4, 4, 1));
+    NVIC_SetPriority((IRQn_Type)MOTION2_TIMER_IRQ, 2);
 
     // count up to value in RC register using given clock
     TC_Configure(MOTION2_TIMER, MOTION2_TIMER_CHANNEL, TC_CMR_WAVSEL_UP_RC | TC_CMR_WAVE | TC_CMR_TCCLKS_TIMER_CLOCK1);
@@ -217,14 +218,14 @@ void HAL::setupTimer() {
 #else
     RTT_SetPrescaler(RTT, (32768 / PREPARE_FREQUENCY) - 1);
     RTT_EnableIT(RTT, RTT_MR_RTTINCIEN);
-    NVIC_SetPriority(RTT_IRQn, 15);
+    NVIC_SetPriority(RTT_IRQn, 2);
     NVIC_EnableIRQ(RTT_IRQn);
 #endif
 
     // Regular interrupts for heater control etc
     pmc_enable_periph_clk(PWM_TIMER_IRQ);
     //NVIC_SetPriority((IRQn_Type)PWM_TIMER_IRQ, NVIC_EncodePriority(4, 6, 0));
-    NVIC_SetPriority((IRQn_Type)PWM_TIMER_IRQ, 15);
+    NVIC_SetPriority((IRQn_Type)PWM_TIMER_IRQ, 6);
 
     TC_FindMckDivisor(PWM_CLOCK_FREQ, F_CPU_TRUE, &tc_count, &tc_clock, F_CPU_TRUE);
     TC_Configure(PWM_TIMER, PWM_TIMER_CHANNEL, TC_CMR_WAVSEL_UP_RC | TC_CMR_WAVE | tc_clock);
@@ -257,7 +258,7 @@ void HAL::setupTimer() {
 #if NUM_SERVOS > 0 || NUM_BEEPER > 0
     pmc_enable_periph_clk(SERVO_TIMER_IRQ);
     //NVIC_SetPriority((IRQn_Type)SERVO_TIMER_IRQ, NVIC_EncodePriority(4, 5, 0));
-    NVIC_SetPriority((IRQn_Type)SERVO_TIMER_IRQ, 4);
+    NVIC_SetPriority((IRQn_Type)SERVO_TIMER_IRQ, 3);
 
     TC_Configure(SERVO_TIMER, SERVO_TIMER_CHANNEL, TC_CMR_WAVSEL_UP_RC | TC_CMR_WAVE | TC_CMR_TCCLKS_TIMER_CLOCK1);
 
@@ -274,7 +275,7 @@ void HAL::setupTimer() {
             // If we have any SW beepers, enable the beeper IRQ
             pmc_set_writeprotect(false);
             pmc_enable_periph_clk((uint32_t)BEEPER_TIMER_IRQ);
-            NVIC_SetPriority((IRQn_Type)BEEPER_TIMER_IRQ, 25);
+            NVIC_SetPriority((IRQn_Type)BEEPER_TIMER_IRQ, 1);
 
             TC_Configure(BEEPER_TIMER, BEEPER_TIMER_CHANNEL, TC_CMR_WAVE | TC_CMR_WAVSEL_UP_RC | TC_CMR_TCCLKS_TIMER_CLOCK1);
 
