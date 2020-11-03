@@ -555,7 +555,7 @@ public:
         sdpos = newpos;
         file.seekSet(sdpos);
     }
-    void printStatus();
+    void printStatus(bool getFilename = false);
     void ls();
 #if JSON_OUTPUT
     void lsJSON(const char* filename);

@@ -451,6 +451,7 @@ public:
     FSTRINGVAR(tFileOpenFailed)
     FSTRINGVAR(tSDPrintingByte)
     FSTRINGVAR(tNotSDPrinting)
+    FSTRINGVAR(tCurrentOpenFile)
     FSTRINGVAR(tOpenFailedFile)
     FSTRINGVAR(tWritingToFile)
     FSTRINGVAR(tDoneSavingFile)
