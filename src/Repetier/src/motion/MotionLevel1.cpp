@@ -626,7 +626,11 @@ bool Motion1::moveByOfficial(float coords[NUM_AXES], float feedrate, bool second
     ) { // ignore
 #if MIN_EXTRUDER_TEMP > MAX_ROOM_TEMPERATURE
         if (movingEAxis && coords[E_AXIS] != IGNORE_COORDINATE && !Printer::debugDryrun()) {
-            Com::printWarningFLN(Com::tColdExtrusionPrevented);
+            static millis_t lastWarnMS = 0ul;
+            if ((HAL::timeInMilliseconds() - lastWarnMS) > 3500ul) {
+                Com::printWarningFLN(Com::tColdExtrusionPrevented);
+                lastWarnMS = HAL::timeInMilliseconds();
+            }
         }
 #endif
         destinationPositionTransformed[E_AXIS] = currentPositionTransformed[E_AXIS];
@@ -809,7 +813,11 @@ bool Motion1::moveByPrinter(float coords[NUM_AXES], float feedrate, bool seconda
     ) {
 #if MIN_EXTRUDER_TEMP > MAX_ROOM_TEMPERATURE
         if (movingEAxis && coords[E_AXIS] != IGNORE_COORDINATE && !Printer::debugDryrun()) {
-            Com::printWarningFLN(Com::tColdExtrusionPrevented);
+            static millis_t lastWarnMS = 0ul;
+            if ((HAL::timeInMilliseconds() - lastWarnMS) > 3500ul) {
+                Com::printWarningFLN(Com::tColdExtrusionPrevented);
+                lastWarnMS = HAL::timeInMilliseconds();
+            }
         }
 #endif
         currentPositionTransformed[E_AXIS] = destinationPositionTransformed[E_AXIS];
