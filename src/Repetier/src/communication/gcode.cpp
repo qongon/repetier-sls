@@ -425,7 +425,7 @@ void GCode::readFromSerial() {
                 GCodeSource::activeSource->timeOfLastDataPacket = time;
             }
 #ifndef NO_WAIT_MESSAGES
-            else if (bufferLength == 0 && time - GCodeSource::activeSource->timeOfLastDataPacket > 1000) // Don't do it if buffer is not empty. It may be a slow executing command.
+            else if (bufferLength == 0 && time - GCodeSource::activeSource->timeOfLastDataPacket > 1000 && !Printer::isAutoreportTemp()) // Don't do it if buffer is not empty. It may be a slow executing command.
             {
                 Com::printFLN(Com::tWait); // Unblock communication in case the last ok was not received correct.
                 GCodeSource::activeSource->timeOfLastDataPacket = time;
