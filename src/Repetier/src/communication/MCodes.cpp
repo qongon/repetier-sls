@@ -376,10 +376,7 @@ void __attribute__((weak)) MCode_84(GCode* com) {
 }
 
 void __attribute__((weak)) MCode_85(GCode* com) {
-    if (com->hasS())
-        maxInactiveTime = (int32_t)com->S * 1000;
-    else
-        maxInactiveTime = 0;
+    maxInactiveTime = static_cast<millis_t>(com->getS(0u)) * 1000u;
 }
 
 void __attribute__((weak)) MCode_92(GCode* com) {
@@ -1428,6 +1425,22 @@ void __attribute__((weak)) MCode_540(GCode* com) {
     Motion1::reportBuffers();
     Motion2::reportBuffers();
     Motion3::reportBuffers();
+}
+
+void __attribute__((weak)) MCode_575(GCode* com) {
+    if (!Printer::isNativeUSB() && com->hasB() && static_cast<int32_t>(com->B) > 0l) {
+        int32_t curBaud = 0l;
+        for (size_t i = 0ul; (curBaud = pgm_read_dword(&(baudrates[i]))); i++) {
+            if (static_cast<int32_t>(com->B) == curBaud) {
+                Com::printFLN(PSTR("Setting baudrate:"), curBaud);
+                Com::printFLN(PSTR(" baud."));
+                HAL::serialFlush();
+                HAL::serialSetBaudrate((baudrate = curBaud));
+                return;
+            }
+        }
+        Com::printFLN(PSTR("Invalid baudrate"));
+    }
 }
 
 void __attribute__((weak)) MCode_600(GCode* com) {
