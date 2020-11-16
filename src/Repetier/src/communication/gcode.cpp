@@ -1152,8 +1152,7 @@ void GCodeSource::rotateSource() { ///< Move active to next source
 
 void GCodeSource::writeToAll(uint8_t byte) { ///< Write to all listening sources
     if (Com::writeToAll) {
-        fast8_t i;
-        for (i = 0; i < numWriteSources; i++) {
+        for (fast8_t i = 0; i < numWriteSources; i++) {
             writeableSources[i]->writeByte(byte);
         }
     } else {
@@ -1245,11 +1244,20 @@ int SerialGCodeSource::readByte() {
     return stream->read();
 #endif
 }
-void SerialGCodeSource::writeByte(uint8_t byte) {
+inline void SerialGCodeSource::writeByte(uint8_t byte) {
 #if defined(DUE_BOARD)
     if (usbHostSource == this) {
-        if (!Is_udd_suspend()) {
+        if (!Is_udd_suspend()
+#if DUE_DIRECT_USB_SERIAL
+            && _usbConfiguration) {
+            while (!Is_udd_in_send(CDC_TX)) { };
+            *udd_get_endpoint_fifo_access8(CDC_TX) = byte;
+            udd_ack_in_send(CDC_TX);
+            udd_ack_fifocon(CDC_TX);
+#else
+        ) {
             stream->write(byte);
+#endif
         }
         return;
     }

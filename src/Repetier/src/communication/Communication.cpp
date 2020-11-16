@@ -592,12 +592,14 @@ void Com::printFLN(FSTRINGPARAM(text), const char* msg) {
     println();
 }
 
+#if defined(AVR_BOARD)
 void Com::printF(FSTRINGPARAM(ptr)) {
     char c;
     while ((c = HAL::readFlashByte(ptr++)) != 0) {
         GCodeSource::writeToAll(c);
     }
 }
+#endif
 
 void Com::printF(FSTRINGPARAM(text), const char* msg) {
     printF(text);
@@ -657,12 +659,6 @@ void Com::printFLN(FSTRINGPARAM(text), float value, uint8_t digits) {
 void Com::printF(FSTRINGPARAM(text), float value, uint8_t digits) {
     printF(text);
     printFloat(value, digits);
-}
-
-void Com::print(const char* text) {
-    while (*text) {
-        GCodeSource::writeToAll(*text++);
-    }
 }
 void Com::print(long value) {
     if (value < 0) {

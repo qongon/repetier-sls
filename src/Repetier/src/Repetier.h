@@ -33,6 +33,10 @@
 #define atof(s)
 
 
+// Due only - Bypass all of the arduino USB CDC serial write functions
+// for a performance gain. Will break programming port serial.
+#define DUE_DIRECT_USB_SERIAL 1
+
 #ifndef REPETIER_VERSION
 #define REPETIER_VERSION "2.0.0dev"
 #endif
