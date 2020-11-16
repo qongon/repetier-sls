@@ -393,7 +393,6 @@ void EEPROM::handleFloat(uint pos, PGM_P text, uint8_t digits, float& var) {
     }
 #endif
 }
-
 void EEPROM::handleLong(uint pos, PGM_P text, int32_t& var) {
     if (mode == EEPROMMode::REPORT && !silent && text != nullptr) {
         Com::printF(Com::tEPR2, static_cast<int>(pos));
@@ -420,36 +419,6 @@ void EEPROM::handleLong(uint pos, PGM_P text, int32_t& var) {
         HAL::eprSetInt32(pos, var);
     } else if (mode == EEPROMMode::READ) {
         var = HAL::eprGetInt32(pos);
-    }
-#endif
-}
-
-void EEPROM::handleLong(uint pos, PGM_P text, uint32_t& var) {
-    if (mode == EEPROMMode::REPORT && !silent && text != nullptr) {
-        Com::printF(Com::tEPR2, static_cast<int>(pos));
-        Com::print(' ');
-        Com::print(static_cast<int32_t>(var));
-        Com::print(' ');
-        Com::print(prefix);
-        Com::printFLN(text);
-        HAL::delayMilliseconds(4); // reduces somehow transmission errors
-    } else if (mode == EEPROMMode::SET_VAR) {
-        if (pos == storePos) {
-            if (storeType != EEPROMType::LONG) {
-                Com::printErrorFLN(PSTR("Storing variable called for wrong type long"));
-            } else {
-                if (static_cast<int32_t>(var) != storeVar.l) {
-                    var = storeVar.l;
-                    markChanged();
-                }
-            }
-        }
-    }
-#if EEPROM_MODE != 0
-    else if (mode == EEPROMMode::STORE) {
-        HAL::eprSetInt32(pos, static_cast<int32_t>(var));
-    } else if (mode == EEPROMMode::READ) {
-        var = static_cast<uint32_t>(HAL::eprGetInt32(pos));
     }
 #endif
 }
@@ -508,96 +477,6 @@ void EEPROM::handleByte(uint pos, PGM_P text, uint8_t& var) {
 #if EEPROM_MODE != 0
     else if (mode == EEPROMMode::STORE) {
         HAL::eprSetByte(pos, var);
-    } else if (mode == EEPROMMode::READ) {
-        var = HAL::eprGetByte(pos);
-    }
-#endif
-}
-
-void EEPROM::handleByte(uint pos, PGM_P text, int8_t& var) {
-    if (mode == EEPROMMode::REPORT && !silent && text != nullptr) {
-        Com::printF(Com::tEPR0, static_cast<int>(pos));
-        Com::print(' ');
-        Com::print((int)var);
-        Com::print(' ');
-        Com::print(prefix);
-        Com::printFLN(text);
-        HAL::delayMilliseconds(4); // reduces somehow transmission errors
-    } else if (mode == EEPROMMode::SET_VAR) {
-        if (pos == storePos) {
-            if (storeType != EEPROMType::BYTE) {
-                Com::printErrorFLN(PSTR("Storing variable called for wrong type byte"));
-            } else {
-                if (var != storeVar.c) {
-                    var = storeVar.c;
-                    markChanged();
-                }
-            }
-        }
-    }
-#if EEPROM_MODE != 0
-    else if (mode == EEPROMMode::STORE) {
-        HAL::eprSetByte(pos, var);
-    } else if (mode == EEPROMMode::READ) {
-        var = HAL::eprGetByte(pos);
-    }
-#endif
-}
-
-void EEPROM::handleByte(uint pos, PGM_P text, bool& var) {
-    if (mode == EEPROMMode::REPORT && !silent && text != nullptr) {
-        Com::printF(Com::tEPR0, static_cast<int>(pos));
-        Com::print(' ');
-        Com::print((int)var);
-        Com::print(' ');
-        Com::print(prefix);
-        Com::printFLN(text);
-        HAL::delayMilliseconds(4); // reduces somehow transmission errors
-    } else if (mode == EEPROMMode::SET_VAR) {
-        if (pos == storePos) {
-            if (storeType != EEPROMType::BYTE) {
-                Com::printErrorFLN(PSTR("Storing variable called for wrong type byte"));
-            } else {
-                if (var != storeVar.c) {
-                    var = storeVar.c;
-                    markChanged();
-                }
-            }
-        }
-    }
-#if EEPROM_MODE != 0
-    else if (mode == EEPROMMode::STORE) {
-        HAL::eprSetByte(pos, var);
-    } else if (mode == EEPROMMode::READ) {
-        var = HAL::eprGetByte(pos);
-    }
-#endif
-}
-
-void EEPROM::handleByte(uint pos, PGM_P text, int32_t& var) {
-    if (mode == EEPROMMode::REPORT && !silent && text != nullptr) {
-        Com::printF(Com::tEPR0, static_cast<int>(pos));
-        Com::print(' ');
-        Com::print((int)var);
-        Com::print(' ');
-        Com::print(prefix);
-        Com::printFLN(text);
-        HAL::delayMilliseconds(4); // reduces somehow transmission errors
-    } else if (mode == EEPROMMode::SET_VAR) {
-        if (pos == storePos) {
-            if (storeType != EEPROMType::BYTE) {
-                Com::printErrorFLN(PSTR("Storing variable called for wrong type byte"));
-            } else {
-                if (static_cast<uint8_t>(var) != storeVar.c) {
-                    var = storeVar.c;
-                    markChanged();
-                }
-            }
-        }
-    }
-#if EEPROM_MODE != 0
-    else if (mode == EEPROMMode::STORE) {
-        HAL::eprSetByte(pos, static_cast<uint8_t>(var));
     } else if (mode == EEPROMMode::READ) {
         var = HAL::eprGetByte(pos);
     }

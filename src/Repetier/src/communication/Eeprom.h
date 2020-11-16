@@ -69,8 +69,22 @@ enum class EEPROMMode {
     STORE = 2,
     READ = 3
 };
-
 class EEPROM {
+    template <typename T>
+    struct is_fast {
+        using decayedType = typename std::decay<T>::type;
+        using type = T;
+        static constexpr bool value = std::__or_<std::is_same<decayedType, ufast8_t>,
+                                                 std::is_same<decayedType, fast8_t>>::value;
+    };
+
+    // todo: redo these two alias templates, they're uglyish
+    template <typename T, size_t bytes>
+    using is_size_or_fast = typename std::conditional<(sizeof(T) == bytes && std::is_pod<T>::value), T, typename is_fast<T>::type>::type;
+
+    template <typename T, size_t bytes>
+    using check_eeprom_handle_type = typename std::enable_if<!std::is_void<is_size_or_fast<T, 1>>::value>::type;
+
     friend class HAL;
     static uint storePos; // where does M206 want to store
     static bool silent;   // if true it will not write it out
@@ -112,13 +126,21 @@ public:
     static void update(GCode* com);
     static void updatePrinterUsage();
     static void handleFloat(uint pos, PGM_P text, uint8_t digits, float& var);
+    template <typename T, typename = check_eeprom_handle_type<T, sizeof(int32_t)>>
+    inline static void handleLong(uint pos, PGM_P text, T& var) {
+        handleLong(pos, text, reinterpret_cast<int32_t&>(var));
+    }
     static void handleLong(uint pos, PGM_P text, int32_t& var);
-    static void handleLong(uint pos, PGM_P text, uint32_t& var);
+    template <typename T, typename = check_eeprom_handle_type<T, sizeof(int16_t)>>
+    inline static void handleInt(uint pos, PGM_P text, T& var) {
+        handleInt(pos, text, reinterpret_cast<int16_t&>(var));
+    }
     static void handleInt(uint pos, PGM_P text, int16_t& var);
+    template <typename T, typename = check_eeprom_handle_type<T, sizeof(uint8_t)>>
+    inline static void handleByte(uint pos, PGM_P text, T& var) {
+        handleByte(pos, text, reinterpret_cast<uint8_t&>(var));
+    }
     static void handleByte(uint pos, PGM_P text, uint8_t& var);
-    static void handleByte(uint pos, PGM_P text, int8_t& var);
-    static void handleByte(uint pos, PGM_P text, int32_t& var);
-    static void handleByte(uint pos, PGM_P text, bool& var);
     static void handlePrefix(PGM_P text);
     static void handlePrefix(PGM_P text, int id);
     static void removePrefix();
