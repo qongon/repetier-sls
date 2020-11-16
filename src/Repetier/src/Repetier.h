@@ -26,6 +26,13 @@
 #include <stdint.h>
 #include <type_traits>
 
+#define USES_RYU_STRTOF 1
+#include "utilities/ryu/ryu_parse.h"
+#define strtod(s, p)
+#define strtof(s, p)
+#define atof(s)
+
+
 #ifndef REPETIER_VERSION
 #define REPETIER_VERSION "2.0.0dev"
 #endif

@@ -19,6 +19,8 @@
 #ifndef _CSVParser_H
 #define _CSVParser_H
 
+// Moses TODO: redo this old code asap.
+// Leveling::importBumpMatrix takes up 4kB right now...
 
 enum class CSVDir {
     ABOVE = 0,
@@ -288,7 +290,15 @@ public:
         if (!readCurCellPos()) {
             return false;
         }
+#ifdef USES_RYU_STRTOF
+        float out = 0.0f;
+        if(s2f_n(cellBufRaw(), maxCellSize, &out) != Status::SUCCESS) {
+            return false;
+        }
+        output = static_cast<T>(out);
+#else 
         output = static_cast<T>(strtof(cellBufRaw(), nullptr));
+#endif
         return true;
     }
 
@@ -354,7 +364,15 @@ public:
         if (!getNextCellRaw()) {
             return false;
         }
+#ifdef USES_RYU_STRTOF
+        float out = 0.0f;
+        if(s2f_n(cellBufRaw(), maxCellSize, &out) != Status::SUCCESS) {
+            return false;
+        }
+        output = static_cast<T>(out); 
+#else 
         output = static_cast<T>(strtof(cellBufRaw(), nullptr));
+#endif
         return true;
     }
 
@@ -435,7 +453,15 @@ public:
         if (!getFieldRaw(key, dir)) {
             return false;
         }
+#ifdef USES_RYU_STRTOF
+        float out = 0.0f;
+        if(s2f_n(cellBufRaw(), maxCellSize, &out) != Status::SUCCESS) {
+            return false;
+        }
+        output = static_cast<T>(out); 
+#else 
         output = static_cast<T>(strtof(cellBufRaw(), nullptr));
+#endif
         return true;
     }
 
