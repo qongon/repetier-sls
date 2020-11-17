@@ -376,7 +376,7 @@ void __attribute__((weak)) MCode_84(GCode* com) {
 }
 
 void __attribute__((weak)) MCode_85(GCode* com) {
-    maxInactiveTime = static_cast<millis_t>(com->getS(0u)) * 1000u;
+    maxInactiveTime = static_cast<millis_t>(com->getS(0l) * 1000l);
 }
 
 void __attribute__((weak)) MCode_92(GCode* com) {
@@ -1433,8 +1433,6 @@ void __attribute__((weak)) MCode_575(GCode* com) {
         int32_t curBaud = 0l;
         for (size_t i = 0ul; (curBaud = pgm_read_dword(&(baudrates[i]))); i++) {
             if (static_cast<int32_t>(com->B) == curBaud) {
-                Com::printFLN(PSTR("Setting baudrate:"), curBaud);
-                Com::printFLN(PSTR(" baud."));
                 HAL::serialFlush();
                 HAL::serialSetBaudrate((baudrate = curBaud));
                 return;
