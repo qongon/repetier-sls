@@ -19,8 +19,7 @@
     which based on Tonokip RepRap firmware rewrite based off of Hydra-mmm firmware.
 */
 
-#ifndef COMMUNICATION_H
-#define COMMUNICATION_H
+#pragma once
 
 #ifndef MAX_DATA_SOURCES
 #define MAX_DATA_SOURCES 4
@@ -31,6 +30,7 @@ extern volatile uint32_t _usbConfiguration;
 // Gets set to 1 when DTR/RTS rise on the USB port. Defined in USBCore.cpp
 #endif
 
+typedef void (*PromptDialogCallback)(int selection);
 enum class BoolFormat { TRUEFALSE,
                         ONOFF,
                         YESNO };
@@ -67,7 +67,7 @@ public:
     uint8_t wasLastCommandReceivedAsBinary; ///< Was the last successful command in binary mode?
     millis_t timeOfLastDataPacket;
     int8_t waitingForResend; ///< Waiting for line to be resend. -1 = no wait.
-
+    bool outOfOrder;         ///< True if out of order execution is allowed
     GCodeSource();
     virtual ~GCodeSource() { }
     virtual bool isOpen() = 0;
@@ -605,6 +605,13 @@ public:
         print('\r');
         print('\n');
     }
+    static void promptStart(PromptDialogCallback cb, FSTRINGPARAM(text), bool blocking = true);
+    static void promptStart(PromptDialogCallback cb, char* text, bool blocking = true);
+    static void promptStart(PromptDialogCallback cb, FSTRINGPARAM(prefix), FSTRINGPARAM(text), bool blocking = true);
+    static void promptStart(PromptDialogCallback cb, FSTRINGPARAM(prefix), char* text, bool blocking = true);
+    static void promptEnd(bool blocking = true);
+    static void promptButton(FSTRINGPARAM(text));
+    static void promptShow();
 
     template <typename T>
     static void printBinaryFLN(FSTRINGPARAM(text), T n, bool grouping = false);
@@ -622,7 +629,7 @@ private:
 template <typename T>
 void Com::printBinaryFLN(FSTRINGPARAM(text), T n, bool grouping) {
     printF(text);
-    size_t i = (sizeof(n) * 8u) - 1u; 
+    size_t i = (sizeof(n) * 8u) - 1u;
     do {
         print(((1u << i) & n) ? '1' : '0');
         if (grouping && i && !(i % 8u)) {
@@ -677,5 +684,3 @@ void Com::printBinaryFLN(FSTRINGPARAM(text), T n, bool grouping) {
 #define SHOWA(t, a, n)
 #define SHOWAM(t, a, n)
 #endif
-
-#endif // COMMUNICATION_H

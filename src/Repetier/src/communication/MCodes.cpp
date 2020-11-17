@@ -614,6 +614,7 @@ void __attribute__((weak)) MCode_115(GCode* com) {
     Com::cap(PSTR("SDCARD:0"));
     Com::cap(PSTR("AUTOREPORT_SD_STATUS:0"));
 #endif
+    Com::cap(PSTR("PROMPT_SUPPORT:1"));
 #if ENABLED(HOST_RESCUE)
     Com::cap(PSTR("HOST_RESCUE:1"));
 #else
@@ -647,8 +648,10 @@ void __attribute__((weak)) MCode_115(GCode* com) {
 #endif
 #if EMERGENCY_PARSER
     Com::cap(PSTR("EMERGENCY_PARSER:1"));
+    Com::cap(PSTR("OUT_OF_ORDER:1"));
 #else
     Com::cap(PSTR("EMERGENCY_PARSER:0"));
+    Com::cap(PSTR("OUT_OF_ORDER:0"));
 #endif
 #if EMERGENCY_PARSER && HOST_PRIORITY_CONTROLS
     Com::cap(PSTR("HOST_PRIORITY_CONTROLS:1"));
@@ -1096,6 +1099,15 @@ void __attribute__((weak)) MCode_218(GCode* com) {
     }
     if (!com->hasNoXYZ()) {
         EEPROM::markChanged();
+    } else {
+        Com::printF(PSTR("Hotend offsets:"));
+        for (int i = 0; i < NUM_TOOLS; i++) {
+            tool = Tool::getTool(i);
+            Com::printF(Com::tSpace, tool->getOffsetX(), 2);
+            Com::printF(Com::tComma, tool->getOffsetY(), 2);
+            Com::printF(Com::tComma, tool->getOffsetZ(), 3);
+        }
+        Com::println();
     }
 }
 
@@ -1442,6 +1454,16 @@ void __attribute__((weak)) MCode_575(GCode* com) {
     }
 }
 
+// M576 S1 enables out of order execution
+void __attribute__((weak)) MCode_576(GCode* com) {
+#if EMERGENCY_PARSER
+    if (com->hasS() && com->source) {
+        com->source->outOfOrder = com->S != 0;
+    }
+    Com::printFLN(PSTR("out_of_order:M108 M112 M205 M290 M416 M876"));
+#endif
+}
+
 void __attribute__((weak)) MCode_600(GCode* com) {
     // #if FEATURE_CONTROLLER != NO_CONTROLLER && FEATURE_RETRACTION
     // uid.executeAction(UI_ACTION_WIZARD_FILAMENTCHANGE, true);
@@ -1522,6 +1544,18 @@ void __attribute__((weak)) MCode_669(GCode* com) {
     GUI::refresh();
     millis_t diff = HAL::timeInMilliseconds() - t1;
     Com::printFLN(PSTR("LCD Refresh time:"), static_cast<int32_t>(diff));
+}
+
+void __attribute__((weak)) MCode_876(GCode* com) {
+    if (com->hasP()) {
+        Printer::promptSupported = com->P != 0;
+    }
+    if (com->hasS()) {
+        Com::printFLN(PSTR("DialogChoice:"), (int32_t)com->S);
+        if (Printer::activePromptDialog) {
+            Printer::activePromptDialog(static_cast<int>(com->S));
+        }
+    }
 }
 
 void __attribute__((weak)) MCode_890(GCode* com) {

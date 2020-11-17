@@ -106,73 +106,104 @@ uint8_t GCode::computeBinarySize(char* ptr) // unsigned int bitfield) {
 {
     uint8_t s = 4; // include checksum and bitfield
     uint16_t bitfield = *(uint16_t*)ptr;
-    if (bitfield & 1)
+    if (bitfield & 1) {
         s += 2;
-    if (bitfield & 8)
+    }
+    if (bitfield & 8) {
         s += 4;
-    if (bitfield & 16)
+    }
+    if (bitfield & 16) {
         s += 4;
-    if (bitfield & 32)
+    }
+    if (bitfield & 32) {
         s += 4;
-    if (bitfield & 64)
+    }
+    if (bitfield & 64) {
         s += 4;
-    if (bitfield & 256)
+    }
+    if (bitfield & 256) {
         s += 4;
-    if (bitfield & 512)
+    }
+    if (bitfield & 512) {
         s += 1;
-    if (bitfield & 1024)
+    }
+    if (bitfield & 1024) {
         s += 4;
-    if (bitfield & 2048)
+    }
+    if (bitfield & 2048) {
         s += 4;
+    }
     if (bitfield & 4096) // Version 2 or later
     {
         s += 2; // for bitfield 2
         uint16_t bitfield2 = *(uint16_t*)(ptr + 2);
-        if (bitfield & 2)
+        if (bitfield & 2) {
             s += 2;
-        if (bitfield & 4)
+        }
+        if (bitfield & 4) {
             s += 2;
-        if (bitfield2 & 1)
+        }
+        if (bitfield2 & 1) {
             s += 4;
-        if (bitfield2 & 2)
+        }
+        if (bitfield2 & 2) {
             s += 4;
-        if (bitfield2 & 4)
+        }
+        if (bitfield2 & 4) {
             s += 4;
-        if (bitfield2 & 8)
+        }
+        if (bitfield2 & 8) {
             s += 4;
-        if (bitfield2 & 16)
+        }
+        if (bitfield2 & 16) {
             s += 4;
-        if (bitfield2 & 32)
+        }
+        if (bitfield2 & 32) {
             s += 4;
-        if (bitfield2 & 64)
+        }
+        if (bitfield2 & 64) {
             s += 4;
-        if (bitfield2 & 128)
+        }
+        if (bitfield2 & 128) {
             s += 4;
-        if (bitfield2 & 256)
+        }
+        if (bitfield2 & 256) {
             s += 4;
-        if (bitfield2 & 512)
+        }
+        if (bitfield2 & 512) {
             s += 4;
-        if (bitfield2 & 1024)
+        }
+        if (bitfield2 & 1024) {
             s += 4;
-        if (bitfield2 & 2048)
+        }
+        if (bitfield2 & 2048) {
             s += 4;
-        if (bitfield2 & 4096)
+        }
+        if (bitfield2 & 4096) {
             s += 4;
-        if (bitfield2 & 8192)
+        }
+        if (bitfield2 & 8192) {
             s += 4;
-        if (bitfield2 & 16384)
+        }
+        if (bitfield2 & 16384) {
             s += 4;
-        if (bitfield2 & 32768)
+        }
+        if (bitfield2 & 32768) {
             s += 4;
-        if (bitfield & 32768)
+        }
+        if (bitfield & 32768) {
             s += RMath::min(80, (uint8_t)ptr[4] + 1);
+        }
     } else {
-        if (bitfield & 2)
+        if (bitfield & 2) {
             s += 1;
-        if (bitfield & 4)
+        }
+        if (bitfield & 4) {
             s += 1;
-        if (bitfield & 32768)
+        }
+        if (bitfield & 32768) {
             s += 16;
+        }
     }
     return s;
 }
@@ -330,6 +361,18 @@ void GCode::echoCommand() {
     }
 }
 
+void GCode::ackOutOfOrder() {
+    Com::printF(PSTR("ooo "));
+    if (hasM()) {
+        Com::print('M');
+        Com::print(M);
+    } else if (hasG()) {
+        Com::print('G');
+        Com::print(G);
+    }
+    Com::println();
+}
+
 void GCode::debugCommandBuffer() {
     Com::printF(PSTR("CommandBuffer"));
     for (int i = 0; i < commandsReceivingWritePosition; i++)
@@ -409,6 +452,7 @@ void GCode::readFromSerial() {
 
     bool lastWTA = Com::writeToAll;
     Com::writeToAll = false;
+    // Check if it is an error that we see no new data
     if (!GCodeSource::activeSource->dataAvailable()) {
         if (GCodeSource::activeSource->closeOnError()) { // this device does not support resends so all errors are final and we always expect there is a new char!
             if (commandsReceivingWritePosition > 0) {    // it's only an error if we have started reading a command
@@ -436,6 +480,7 @@ void GCode::readFromSerial() {
             GCodeSource::rotateSource();
         }
     }
+    // handle all available data on source
     while (GCodeSource::activeSource->dataAvailable() && commandsReceivingWritePosition < MAX_CMD_SIZE) // consume data until no data or buffer full
     {
         GCodeSource::activeSource->timeOfLastDataPacket = time; //HAL::timeInMilliseconds();
@@ -460,10 +505,12 @@ void GCode::readFromSerial() {
             sendAsBinary = (commandReceiving[0] & 128) != 0;
         } // first byte detection
         if (sendAsBinary) {
-            if (commandsReceivingWritePosition < 2)
+            if (commandsReceivingWritePosition < 2) {
                 continue;
-            if (commandsReceivingWritePosition == 5 || commandsReceivingWritePosition == 4)
+            }
+            if (commandsReceivingWritePosition == 5 || commandsReceivingWritePosition == 4) {
                 binaryCommandSize = computeBinarySize((char*)commandReceiving);
+            }
             if (commandsReceivingWritePosition == binaryCommandSize) {
                 GCode* act = &commandsBuffered[bufferWriteIndex];
                 act->source = GCodeSource::activeSource;                           // we need to know where to write answers to
@@ -480,11 +527,9 @@ void GCode::readFromSerial() {
                 Com::writeToAll = lastWTA;
                 return;
             }
-        } else // ASCII command
-        {
+        } else { // ASCII command
             char ch = commandReceiving[commandsReceivingWritePosition - 1];
-            if (ch == 0 || ch == '\n' || ch == '\r' || !GCodeSource::activeSource->isOpen() /*|| (!commentDetected && ch == ':')*/) // complete line read
-            {
+            if (ch == 0 || ch == '\n' || ch == '\r' || !GCodeSource::activeSource->isOpen() /*|| (!commentDetected && ch == ':')*/) { // complete line read
                 commandReceiving[commandsReceivingWritePosition - 1] = 0;
 #ifdef DEBUG_ECHO_ASCII
                 Com::printF(PSTR("Got:"));
@@ -922,8 +967,7 @@ bool GCode::parseAscii(char* line, bool fromSerial) {
         Com::printErrorFLN(PSTR("Checksum required when switching back to ASCII protocol."));
         return false;
     }
-    if (hasFormatError() /*|| (params & 518) == 0*/) // Must contain G, M or T command and parameter need to have variables!
-    {
+    if (hasFormatError() /*|| (params & 518) == 0*/) { // Must contain G, M or T command and parameter need to have variables!
         formatErrors++;
         if (Printer::debugErrors()) {
             Com::printErrorFLN(Com::tFormatError);
@@ -1172,6 +1216,7 @@ void GCodeSource::printAllFLN(FSTRINGPARAM(text)) {
     Com::printFLN(text);
     Com::writeToAll = old;
 }
+
 void GCodeSource::printAllFLN(FSTRINGPARAM(text), int32_t v) {
     bool old = Com::writeToAll;
     Com::writeToAll = true;
@@ -1182,6 +1227,7 @@ void GCodeSource::printAllFLN(FSTRINGPARAM(text), int32_t v) {
 GCodeSource::GCodeSource() {
     lastLineNumber = 0;
     wasLastCommandReceivedAsBinary = false;
+    outOfOrder = false;
     waitingForResend = -1;
 }
 
@@ -1196,12 +1242,13 @@ bool GCodeSource::hasBaudSources() {
     }
     return false;
 }
+
 // ----- serial connection source -----
 
 SerialGCodeSource::SerialGCodeSource(Stream* p) {
     stream = p;
 #if EMERGENCY_PARSER
-    bufReadPos = bufLength = bufWritePos = 0;
+    bufReadPos = bufLength = bufLengthRead = bufWritePos = 0;
     commandsReceivingWritePosition = 0;
     commentDetected = false;
 #endif
@@ -1212,15 +1259,19 @@ SerialGCodeSource::SerialGCodeSource(Stream* p) {
     }
 #endif
 }
+
 bool SerialGCodeSource::isOpen() {
     return true;
 }
+
 bool SerialGCodeSource::supportsWrite() { ///< true if write is a non dummy function
     return true;
 }
+
 bool SerialGCodeSource::closeOnError() { // return true if the channel can not interactively correct errors.
     return false;
 }
+
 bool SerialGCodeSource::dataAvailable() { // would read return a new byte?
 #if EMERGENCY_PARSER
     return bufLength > 0;
@@ -1264,46 +1315,72 @@ inline void SerialGCodeSource::writeByte(uint8_t byte) {
 #endif
     stream->write(byte);
 }
+
 void SerialGCodeSource::close() {
 }
+
 void SerialGCodeSource::prefetchContent() {
 #if EMERGENCY_PARSER
-    while (stream->available() && bufLength < SERIAL_IN_BUFFER) {
-        commandReceiving[commandsReceivingWritePosition++] = buffer[bufWritePos] = stream->read();
-        bufWritePos++;
-        if (bufWritePos == SERIAL_IN_BUFFER) {
+    while (stream->available() && bufLength + bufLengthRead < SERIAL_IN_BUFFER) {
+        commandReceiving[commandsReceivingWritePosition++] = buffer[bufWritePos++] = stream->read();
+        if (bufWritePos >= SERIAL_IN_BUFFER) {
             bufWritePos = 0;
         }
-
+        bufLengthRead++;
         if (commandsReceivingWritePosition == 1) {
             sendAsBinary = (commandReceiving[0] & 128) != 0;
         } // first byte detection
         if (sendAsBinary) {
-            if (commandsReceivingWritePosition >= 2) {
-
-                if (commandsReceivingWritePosition == 5 || commandsReceivingWritePosition == 4)
-                    binaryCommandSize = GCode::computeBinarySize((char*)commandReceiving);
-                if (commandsReceivingWritePosition == binaryCommandSize) {
+            if (commandsReceivingWritePosition >= 4) { // no command can have less then 4 byte!
+                if (commandsReceivingWritePosition == 5 || commandsReceivingWritePosition == 4) {
+                    // 5th byte can contain text length so compute again on 5th byte
+                    binaryCommandSize = GCode::computeBinarySize(reinterpret_cast<char*>(commandReceiving));
+                }
+                if (commandsReceivingWritePosition == binaryCommandSize) { // command complete
                     GCode act;
+                    bool ignoreCommand = false;
                     if (act.parseBinary(commandReceiving, binaryCommandSize, false)) { // Success
-                        testEmergency(act);
+                        if (testEmergency(act)) {
+                            if (outOfOrder && !act.hasN()) {
+                                act.ackOutOfOrder();
+                                ignoreCommand = true;
+                            }
+                        }
                     }
+                    if (ignoreCommand) { // skip this nonsense, free early
+                        bufWritePos = (bufWritePos > bufLengthRead ? bufWritePos - bufLengthRead : bufWritePos + SERIAL_IN_BUFFER - bufLengthRead);
+                    } else { // flush data to be read in main thread
+                        bufLength += bufLengthRead;
+                    }
+                    bufLengthRead = 0;
                     commandsReceivingWritePosition = 0;
                 }
             }
-        } else // ASCII command
-        {
+        } else { // ASCII command
             char ch = commandReceiving[commandsReceivingWritePosition - 1];
             if (ch == 0 || ch == '\n' || ch == '\r' || !isOpen()) //!GCodeSource::activeSource->isOpen() /*|| (!commentDetected && ch == ':')*/) // complete line read
             {
                 commandReceiving[commandsReceivingWritePosition - 1] = 0;
                 commentDetected = false;
+                bool ignoreCommand = false;
                 if (commandsReceivingWritePosition > 1) { // empty line ignore
                     GCode act;
-                    if (act.parseAscii((char*)commandReceiving, false)) { // Success
-                        testEmergency(act);
+                    if (act.parseAscii(reinterpret_cast<char*>(commandReceiving), false)) { // Success
+                        if (testEmergency(act)) {
+                            if (outOfOrder) {
+                                act.ackOutOfOrder();
+                                ignoreCommand = true;
+                            }
+                        }
                     }
                 }
+                // empty lines are pushed through so the lower reader can recover from errors!
+                if (ignoreCommand) { // skip this nonsense, free early
+                    bufWritePos = (bufWritePos > bufLengthRead ? bufWritePos - bufLengthRead : bufWritePos + SERIAL_IN_BUFFER - bufLengthRead);
+                } else { // flush data to be read in main thread
+                    bufLength += bufLengthRead;
+                }
+                bufLengthRead = 0;
                 commandsReceivingWritePosition = 0;
             } else {
                 if (ch == ';') {
@@ -1314,30 +1391,44 @@ void SerialGCodeSource::prefetchContent() {
                 }
             }
         }
-        if (commandsReceivingWritePosition >= MAX_CMD_SIZE - 1) {
+        if (commandsReceivingWritePosition >= MAX_CMD_SIZE - 1) { // should not happen! Only to recover
             commandsReceivingWritePosition = 0;
+            bufLength += bufLengthRead;
+            bufLengthRead = 0;
         }
-        bufLength++;
     }
 #endif
 }
 
-void SerialGCodeSource::testEmergency(GCode& gcode) {
+bool SerialGCodeSource::testEmergency(GCode& gcode) {
     if (gcode.hasM()) {
         if (gcode.M == 108) {
             Printer::breakLongCommand = true;
+            return true;
         } else if (gcode.M == 112) {
             Commands::emergencyStop();
+            return true;
         } else if (gcode.M == 290) { // speed up babystepping
             PrinterType::M290(&gcode);
+            return true;
+        } else if (gcode.M == 876) { // speed up babystepping
+            MCode_876(&gcode);
+            return true;
         } else if (gcode.M == 416) {
             Printer::handlePowerLoss();
+            return true;
         } else if (gcode.M == 205) {
             EEPROM::writeSettings();
+            return true;
+        } else if (gcode.M == 115) {
+            outOfOrder = false; // Hosts should enable it after M115 response
+            return false;
         } else if (gcode.isPriorityM()) {
             Commands::processMCode(&gcode);
+            return false; // these are not registered as out of order!
         }
     }
+    return false;
 }
 
 // ----- SD card source -----
@@ -1346,12 +1437,15 @@ void SerialGCodeSource::testEmergency(GCode& gcode) {
 bool SDCardGCodeSource::isOpen() {
     return (sd.sdmode > 0 && sd.sdmode < 100);
 }
+
 bool SDCardGCodeSource::supportsWrite() { ///< true if write is a non dummy function
     return false;
 }
+
 bool SDCardGCodeSource::closeOnError() { // return true if the channel can not interactively correct errors.
     return true;
 }
+
 bool SDCardGCodeSource::dataAvailable() { // would read return a new byte?
     if (sd.sdmode == 1) {
         if (sd.sdpos == sd.filesize) {
@@ -1362,6 +1456,7 @@ bool SDCardGCodeSource::dataAvailable() { // would read return a new byte?
     }
     return false;
 }
+
 int SDCardGCodeSource::readByte() {
     int n = sd.file.read();
     if (n == -1) {
@@ -1381,9 +1476,11 @@ int SDCardGCodeSource::readByte() {
     sd.sdpos++; // = file.curPosition();
     return n;
 }
+
 void SDCardGCodeSource::writeByte(uint8_t byte) {
     // dummy
 }
+
 void SDCardGCodeSource::close() {
     sd.sdmode = 0;
     GCodeSource::removeSource(this);
@@ -1398,18 +1495,23 @@ FlashGCodeSource::FlashGCodeSource()
     : GCodeSource() {
     finished = true;
 }
+
 bool FlashGCodeSource::isOpen() {
     return !finished;
 }
+
 bool FlashGCodeSource::supportsWrite() { ///< true if write is a non dummy function
     return false;
 }
+
 bool FlashGCodeSource::closeOnError() { // return true if the channel can not interactively correct errors.
     return true;
 }
+
 bool FlashGCodeSource::dataAvailable() { // would read return a new byte?
     return !finished;
 }
+
 int FlashGCodeSource::readByte() {
     if (finished) {
         return 0;
@@ -1421,6 +1523,7 @@ int FlashGCodeSource::readByte() {
     }
     return data;
 }
+
 void FlashGCodeSource::close() {
     if (!finished) {
         finished = true;
