@@ -313,7 +313,8 @@ public:
         , debug(-1)
         , otpw(false)
         , otpwCount(0)
-        , stallguardSensitivity(_stallguardSensitivity) { }
+        , stallguardSensitivity(_stallguardSensitivity)
+        , eprStart(0) { }
     inline int16_t getMicrosteps() { return microsteps; }
     inline int16_t getCurrentMillis() { return currentMillis; }
     inline bool getStealthChop() { return stealthChop; }
