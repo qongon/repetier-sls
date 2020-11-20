@@ -332,6 +332,7 @@ public:
 #ifdef DEBUG_STEPCOUNT
     FSTRINGVAR(tDBGMissedSteps)
 #endif
+    FSTRINGVAR(tProbing)
     FSTRINGVAR(tZProbe)
     FSTRINGVAR(tZProbeStartScript)
     FSTRINGVAR(tZProbeEndScript)
