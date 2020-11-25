@@ -445,6 +445,9 @@ public:
     FSTRINGVAR(tEPRPreheatTemp)
     FSTRINGVAR(tEPRPreheatBedTemp)
     FSTRINGVAR(tEPRToneVolume)
+
+
+// SDCARD RELATED    
     //FSTRINGVAR(tSDRemoved)
     //FSTRINGVAR(tSDInserted)
     FSTRINGVAR(tSDInitFail)
@@ -455,6 +458,7 @@ public:
     FSTRINGVAR(tSpaceSizeColon)
     FSTRINGVAR(tFileSelected)
     FSTRINGVAR(tFileOpenFailed)
+    FSTRINGVAR(tInvalidFiletype)
     FSTRINGVAR(tSDPrintingByte)
     FSTRINGVAR(tNotSDPrinting)
     FSTRINGVAR(tCurrentOpenFile)
@@ -466,6 +470,9 @@ public:
     FSTRINGVAR(tDirectoryCreated)
     FSTRINGVAR(tCreationFailed)
     FSTRINGVAR(tSDErrorCode)
+// END SDCARD RELATED
+
+
     FSTRINGVAR(tHeaterDecoupled)
     FSTRINGVAR(tHeaterDecoupledWarning)
 #if FEATURE_RETRACTION
