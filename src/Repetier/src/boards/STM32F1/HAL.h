@@ -146,14 +146,7 @@ typedef char prog_char;
 #define WRITE(pin, v) _WRITE(pin, v)
 #define READ_VAR(pin) (LL_GPIO_IsInputPinSet(get_GPIO_Port(STM_PORT(pin)), STM_LL_GPIO_PIN(pin)) ? 1 : 0)
 #define READ(pin) _READ(pin)
-#define WRITE_VAR(pin, v) \
-    do { \
-        if (v) { \
-            LL_GPIO_SetOutputPin(get_GPIO_Port(STM_PORT(pin)), STM_LL_GPIO_PIN(pin)); \
-        } else { \
-            LL_GPIO_ResetOutputPin(get_GPIO_Port(STM_PORT(pin)), STM_LL_GPIO_PIN(pin)); \
-        } \
-    } while (0)
+#define WRITE_VAR(pin, v) digitalWriteFast(static_cast<PinName>(pin), v)
 #define WRITE(pin, v) _WRITE(pin, v)
 
 #define SET_INPUT(pin) ::pinMode(pin, INPUT);
