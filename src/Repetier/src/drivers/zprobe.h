@@ -4,7 +4,7 @@ class ZProbeHandler {
 public:
     static bool activate() { return true; }
     static void deactivate() { }
-    static float runProbe() { return 0; }
+    static float runProbe(uint8_t repetitions = Z_PROBE_REPETITIONS, bool useMedian = Z_PROBE_USE_MEDIAN) { return 0; }
     static bool probingPossible() { return false; }
     static float xOffset() { return 0; }
     static float yOffset() { return 0; }
@@ -60,7 +60,7 @@ class ZProbeHandler {
 public:
     static bool activate();
     static void deactivate();
-    static float runProbe();
+    static float runProbe(uint8_t repetitions = Z_PROBE_REPETITIONS, bool useMedian = Z_PROBE_USE_MEDIAN);
     static bool probingPossible();
     static void init();
     static void eepromHandle();
@@ -119,7 +119,7 @@ class ZProbeHandler {
 public:
     static bool activate();
     static void deactivate();
-    static float runProbe();
+    static float runProbe(uint8_t repetitions = Z_PROBE_REPETITIONS, bool useMedian = Z_PROBE_USE_MEDIAN);
     static bool probingPossible();
     static float xOffset();
     static float yOffset();
@@ -181,7 +181,7 @@ class ZProbeHandler {
 public:
     static bool activate();
     static void deactivate();
-    static float runProbe();
+    static float runProbe(uint8_t repetitions = Z_PROBE_REPETITIONS, bool useMedian = Z_PROBE_USE_MEDIAN);
     static bool probingPossible();
     static void init();
     static void eepromHandle();
