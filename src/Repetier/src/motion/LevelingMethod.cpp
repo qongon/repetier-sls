@@ -971,6 +971,9 @@ void Leveling::execute_G33(GCode* com) {
 bool Leveling::measure(GCode* com) {
     uint8_t repetitons = com->hasR() ? static_cast<uint8_t>(com->R) : Z_PROBE_REPETITIONS;
     bool useMedian = com->hasA() ? static_cast<bool>(com->A) : Z_PROBE_USE_MEDIAN;
+    if (repetitons < 1) {
+        repetitons = 1;
+    }
     Plane plane;
     PlaneBuilder builder;
     builder.reset();
@@ -1052,6 +1055,9 @@ bool Leveling::execute_G32(GCode* com) {
 bool Leveling::measure(GCode* com) {
     uint8_t repetitons = com->hasR() ? static_cast<uint8_t>(com->R) : Z_PROBE_REPETITIONS;
     bool useMedian = com->hasA() ? static_cast<bool>(com->A) : Z_PROBE_USE_MEDIAN;
+    if (repetitons < 1) {
+        repetitons = 1;
+    }
     Plane plane;
     PlaneBuilder builder;
     builder.reset();
