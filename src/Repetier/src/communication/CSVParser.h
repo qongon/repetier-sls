@@ -216,7 +216,7 @@ public:
      * \param[in] file CSV File to parse.
      */
     CSVParser(sd_file_t* file)
-        : csvFile(file) {}
+        : csvFile(file) { }
     ~CSVParser() {};
 
     /**
@@ -292,11 +292,11 @@ public:
         }
 #ifdef USES_RYU_STRTOF
         float out = 0.0f;
-        if(s2f_n(cellBufRaw(), maxCellSize, &out) != Status::SUCCESS) {
+        if (s2f(cellBufRaw(), &out) != Status::SUCCESS) {
             return false;
         }
         output = static_cast<T>(out);
-#else 
+#else
         output = static_cast<T>(strtof(cellBufRaw(), nullptr));
 #endif
         return true;
@@ -366,11 +366,11 @@ public:
         }
 #ifdef USES_RYU_STRTOF
         float out = 0.0f;
-        if(s2f_n(cellBufRaw(), maxCellSize, &out) != Status::SUCCESS) {
+        if (s2f(cellBufRaw(), &out) != Status::SUCCESS) {
             return false;
         }
-        output = static_cast<T>(out); 
-#else 
+        output = static_cast<T>(out);
+#else
         output = static_cast<T>(strtof(cellBufRaw(), nullptr));
 #endif
         return true;
@@ -455,11 +455,11 @@ public:
         }
 #ifdef USES_RYU_STRTOF
         float out = 0.0f;
-        if(s2f_n(cellBufRaw(), maxCellSize, &out) != Status::SUCCESS) {
+        if (s2f(cellBufRaw(), &out) != Status::SUCCESS) {
             return false;
         }
-        output = static_cast<T>(out); 
-#else 
+        output = static_cast<T>(out);
+#else
         output = static_cast<T>(strtof(cellBufRaw(), nullptr));
 #endif
         return true;
@@ -525,7 +525,7 @@ public:
      * \return false Invalid name 
      * (includes dot character but no csv extension)
      */
-    static bool validCSVExt(char* filename) { 
+    static bool validCSVExt(char* filename) {
         if (strchr(filename, '.') != nullptr) {
             if (strstr_P(filename, PSTR(".csv")) == nullptr) {
                 return false;
