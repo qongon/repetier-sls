@@ -25,6 +25,11 @@
 #define MAX_DATA_SOURCES 4
 #endif
 
+#if DUE_DIRECT_USB_SERIAL && defined(DUE_BOARD)
+extern volatile uint32_t _usbConfiguration; 
+// Gets set to 1 when DTR/RTS rise on the USB port. Defined in USBCore.cpp
+#endif
+
 typedef void (*PromptDialogCallback)(int selection);
 enum class BoolFormat { TRUEFALSE,
                         ONOFF,
@@ -593,7 +598,7 @@ public:
     static inline void print(int value) { print((int32_t)value); }
     static void print(const char* text) {
 #if DUE_DIRECT_USB_SERIAL && defined(DUE_BOARD)
-        if (!Is_udd_suspend() && SerialUSB.dtr()) {
+        if (!Is_udd_suspend() && _usbConfiguration) {
             while (!Is_udd_in_send(CDC_TX)) { };
             volatile uint8_t* ptr_dest = udd_get_endpoint_fifo_access8(CDC_TX);
             while (*text) {

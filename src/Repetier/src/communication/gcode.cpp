@@ -1319,7 +1319,7 @@ inline void SerialGCodeSource::writeByte(uint8_t byte) {
     if (usbHostSource == this) {
         if (!Is_udd_suspend()
 #if DUE_DIRECT_USB_SERIAL
-            && SerialUSB.dtr()) {
+            && _usbConfiguration) {
             while (!Is_udd_in_send(CDC_TX)) { };
             *udd_get_endpoint_fifo_access8(CDC_TX) = byte;
             udd_ack_in_send(CDC_TX);
