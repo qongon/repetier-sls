@@ -442,7 +442,7 @@ public:
     FSTRINGVAR(tEPRToneVolume)
 
 
-// SDCARD RELATED    
+    // SDCARD RELATED
     //FSTRINGVAR(tSDRemoved)
     //FSTRINGVAR(tSDInserted)
     FSTRINGVAR(tSDInitFail)
@@ -454,6 +454,8 @@ public:
     FSTRINGVAR(tFileSelected)
     FSTRINGVAR(tFileOpenFailed)
     FSTRINGVAR(tInvalidFiletype)
+    FSTRINGVAR(tInvalidFilename)
+    FSTRINGVAR(tNoMountedCard)
     FSTRINGVAR(tSDPrintingByte)
     FSTRINGVAR(tNotSDPrinting)
     FSTRINGVAR(tCurrentOpenFile)
@@ -465,7 +467,7 @@ public:
     FSTRINGVAR(tDirectoryCreated)
     FSTRINGVAR(tCreationFailed)
     FSTRINGVAR(tSDErrorCode)
-// END SDCARD RELATED
+    // END SDCARD RELATED
 
 
     FSTRINGVAR(tHeaterDecoupled)

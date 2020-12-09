@@ -1480,7 +1480,6 @@ int SDCardGCodeSource::readByte() {
     int n = sd.selectedFile.read();
     if (n == -1) {
         Com::printFLN(Com::tSDReadError);
-        UI_ERROR("SD Read Error");
 
         // Second try in case of recoverable errors
         sd.selectedFile.seekSet(sd.selectedFilePos);
@@ -1490,9 +1489,8 @@ int SDCardGCodeSource::readByte() {
             close();
             return 0;
         }
-        UI_ERROR("SD error fixed");
     }
-    ++sd.selectedFilePos; // = file.curPosition();
+    ++sd.selectedFilePos;
     return n;
 }
 
@@ -1501,14 +1499,7 @@ void SDCardGCodeSource::writeByte(uint8_t byte) {
 }
 
 void SDCardGCodeSource::close() {
-    if (sd.state == SDState::SD_PRINTING) {
-        sd.state = SDState::SD_MOUNTED;
-        GCodeSource::removeSource(this);
-        Printer::setPrinting(false);
-        Printer::setMenuMode(MENU_MODE_SD_PRINTING, false);
-        Printer::setMenuMode(MENU_MODE_PAUSED, false);
-        Com::printFLN(Com::tDonePrinting);
-    }
+    sd.finishPrint();
 }
 #endif
 
