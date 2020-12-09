@@ -123,8 +123,7 @@ void Motion1::startFlush() {
     Motion2::init();
     for (size_t i = 0; i < PRINTLINE_CACHE_SIZE; i++) {
         buffers[i].flags = 0;
-        buffers[i].state = Motion1State::FREE;
-        buffers[i].fromLine = 0;
+        buffers[i].state = Motion1State::FREE; 
     } // Todo trim unnessacery inits. Just enough to kill motion
     axesTriggered = 0;
     motorTriggered = 0;

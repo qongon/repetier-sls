@@ -247,6 +247,7 @@ void Commands::printTemperatures() {
         heatedChambers[i]->reportTemperature('C', i > 0 ? i : -1);
     }
 #endif
+    /*
     if (HumiditySensor != nullptr) {
         Com::printF(PSTR(" (RH:"));
         if (!HumiditySensor->getError()) {
@@ -262,8 +263,9 @@ void Commands::printTemperatures() {
         }
         Com::printFLN(PSTR(")"));
     } else {
+        */
         Com::println();
-    }
+    //}
 }
 
 void Commands::changeFeedrateMultiply(int factor) {

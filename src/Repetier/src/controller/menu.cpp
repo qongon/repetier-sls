@@ -995,7 +995,7 @@ void __attribute__((weak)) mainMenu(GUIAction action, void* data) {
     GUI::menuSelectableP(action, PSTR("Information"), menuInfo, nullptr, GUIPageType::MENU);
     GUI::menuSelectableP(action, PSTR("Configuration"), menuConfig, nullptr, GUIPageType::MENU);
     GUI::menuSelectableP(action, PSTR("Debug"), menuDebug, nullptr, GUIPageType::MENU);
-    GUI::menuSelectableP(action, PSTR("Reboot"), directAction, (void*)GUI_DIRECT_ACTION_REBOOT, GUIPageType::ACTION);
+    //GUI::menuSelectableP(action, PSTR("Reboot"), directAction, (void*)GUI_DIRECT_ACTION_REBOOT, GUIPageType::ACTION);
     /* GUI::menuSelectableP(action, PSTR("Warning 1"), warningScreen, (void*)"Test Warning", GUIPageType::WIZARD_FIXED);
     GUI::menuSelectableP(action, PSTR("Info 1"), infoScreen, (void*)"Test Info", GUIPageType::WIZARD_FIXED);
     GUI::menuSelectableP(action, PSTR("Error 1"), errorScreen, (void*)"Test Error", GUIPageType::WIZARD_FIXED);
