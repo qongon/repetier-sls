@@ -29,8 +29,8 @@
 millis_t previousMillisCmd = 0;
 millis_t maxInactiveTime = MAX_INACTIVE_TIME * 1000L;
 millis_t stepperInactiveTime = STEPPER_INACTIVE_TIME * 1000L;
-long baudrate = BAUDRATE;   ///< Communication speed rate.
-volatile int waitRelax = 0; // Delay filament relax at the end of print, could be a simple timeout
+int32_t baudrate = BAUDRATE; ///< Communication speed rate.
+volatile int waitRelax = 0;  // Delay filament relax at the end of print, could be a simple timeout
 
 ServoInterface* servos[] = SERVO_LIST;
 constexpr int numServos = std::extent<decltype(servos)>::value;
@@ -615,9 +615,6 @@ void Printer::setup() {
     WRITE(BLUE_STATUS_LED, HIGH);
     WRITE(RED_STATUS_LED, LOW);
 #endif // RED_BLUE_STATUS_LEDS
-#if STEPPER_CURRENT_CONTROL != CURRENT_CONTROL_MANUAL
-    motorCurrentControlInit(); // Set current if it is firmware controlled
-#endif
 #if defined(NUM_MOTOR_DRIVERS) && NUM_MOTOR_DRIVERS > 0
     initializeAllMotorDrivers();
 #endif // defined

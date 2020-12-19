@@ -329,6 +329,7 @@ bool Leveling::measure(GCode* com) {
             }
 #endif
             pos[Z_AXIS] = ZProbeHandler::optimumProbingHeight();
+            pos[E_AXIS] = IGNORE_COORDINATE;
             float bedPos[2] = { px, py };
             if (PrinterType::positionOnBed(bedPos) && PrinterType::positionAllowed(pos, pos[Z_AXIS])) {
                 if (ok) {

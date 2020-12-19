@@ -1390,6 +1390,12 @@ void __attribute__((weak)) MCode_513(GCode* com) {
     // Extruder::markAllUnjammed();
 }
 
+// Abort SD Printjob
+void __attribute__((weak)) MCode_524(GCode* com) {
+    Printer::stopPrint();
+    HeatManager::disableAllHeaters();
+}
+
 void __attribute__((weak)) MCode_530(GCode* com) {
     if (com->hasL()) {
         Printer::maxLayer = static_cast<int>(com->L);
@@ -1409,14 +1415,19 @@ void __attribute__((weak)) MCode_531(GCode* com) {
 }
 
 void __attribute__((weak)) MCode_532(GCode* com) {
-    if (com->hasX())
+    if (com->hasX()) {
         Printer::progress = com->X;
-    if (Printer::progress > 100.0)
+    }
+    if (Printer::progress > 100.0) {
         Printer::progress = 100.0;
-    else if (Printer::progress < 0)
+    } else if (Printer::progress < 0) {
         Printer::progress = 0;
-    if (com->hasL())
+    }
+    if (com->hasL()) {
         Printer::currentLayer = static_cast<int>(com->L);
+    } else {
+        Com::printFLN(PSTR("M532 L:"), Motion1::currentPosition[Z_AXIS], 2);
+    }
 }
 
 void __attribute__((weak)) MCode_539(GCode* com) {
@@ -1444,8 +1455,11 @@ void __attribute__((weak)) MCode_575(GCode* com) {
         int32_t curBaud = 0l;
         for (size_t i = 0ul; (curBaud = pgm_read_dword(&(baudrates[i]))); i++) {
             if (static_cast<int32_t>(com->B) == curBaud) {
-                HAL::serialFlush();
-                HAL::serialSetBaudrate((baudrate = curBaud));
+                if (curBaud != baudrate) {
+                    EEPROM::setBaudrate(curBaud);
+                    HAL::serialFlush();
+                    HAL::serialSetBaudrate((baudrate = curBaud));
+                }
                 return;
             }
         }
@@ -1597,23 +1611,13 @@ void __attribute__((weak)) MCode_900(GCode* com) {
 }
 
 void __attribute__((weak)) MCode_907(GCode* com) {
-#if STEPPER_CURRENT_CONTROL != CURRENT_CONTROL_MANUAL
-    // If "S" is specified, use that as initial default value, then update each axis w/ specific values as found later.
-    if (com->hasS()) {
-        for (int i = 0; i < 10; i++) {
-            setMotorCurrentPercent(i, com->S);
+    if (com->hasP() && com->hasS() && com->P >= 0 && com->P < NUM_MOTORS) {
+        if (Motion1::drivers[com->P]->implementsSetMaxCurrent()) {
+            Motion1::drivers[com->P]->setMaxCurrent((int)com->S);
+        } else {
+            Com::printWarningFLN(PSTR("This driver does not support setting current by software!"));
         }
     }
-
-    if (com->hasX())
-        setMotorCurrentPercent(0, (float)com->X);
-    if (com->hasY())
-        setMotorCurrentPercent(1, (float)com->Y);
-    if (com->hasZ())
-        setMotorCurrentPercent(2, (float)com->Z);
-    if (com->hasE())
-        setMotorCurrentPercent(3, (float)com->E);
-#endif
 }
 
 void __attribute__((weak)) MCode_908(GCode* com) {
@@ -1627,15 +1631,9 @@ void __attribute__((weak)) MCode_908(GCode* com) {
 }
 
 void __attribute__((weak)) MCode_909(GCode* com) {
-#if STEPPER_CURRENT_CONTROL == CURRENT_CONTROL_MCP4728
-    dacPrintValues();
-#endif
 }
 
 void __attribute__((weak)) MCode_910(GCode* com) {
-#if STEPPER_CURRENT_CONTROL == CURRENT_CONTROL_MCP4728
-    dacCommitEeprom();
-#endif
 }
 
 void __attribute__((weak)) MCode_998(GCode* com) {

@@ -78,6 +78,7 @@ void SDCard::automount() {
     }
 #endif
 }
+
 void SDCard::mount() {
 #if SDSS > -1
     if (state > SDState::SD_SAFE_EJECTED) {
@@ -150,6 +151,7 @@ void SDCard::mount() {
 #endif
 #endif
 }
+
 void SDCard::printCardStats() {
     if (state < SDState::SD_MOUNTED) {
         return;
@@ -367,12 +369,14 @@ bool SDCard::validGCodeExtension(const char* filename) {
             && (!rfstrncasecmp_P(extPtr, PSTR(".gcode"), 7u)
                 || !rfstrncasecmp_P(extPtr, PSTR(".gco"), 5u)
                 || !rfstrncasecmp_P(extPtr, PSTR(".gc"), 4u)
-                || !rfstrncasecmp_P(extPtr, PSTR(".g"), 3u))) {
+                || !rfstrncasecmp_P(extPtr, PSTR(".g"), 3u)
+                || !rfstrncasecmp_P(extPtr, PSTR(".nc"), 4u))) {
             return true;
         }
     }
     return false;
 }
+
 bool SDCard::selectFile(const char* filename, const bool silent) {
     if (state != SDState::SD_MOUNTED || Printer::failedMode) {
         if (!silent && (state < SDState::SD_MOUNTED)) {
@@ -409,6 +413,7 @@ bool SDCard::selectFile(const char* filename, const bool silent) {
     }
     return false;
 }
+
 bool SDCard::printIfCardErrCode() {
     if (fileSystem.card()->errorCode()) {
         Com::printF(Com::tSDErrorCode, "0X");
@@ -420,6 +425,7 @@ bool SDCard::printIfCardErrCode() {
     }
     return false;
 }
+
 void SDCard::startPrint() {
     if (state != SDState::SD_MOUNTED
         || !selectedFile.isOpen()
@@ -477,6 +483,7 @@ void SDCard::printFullyPaused() {
     }
     EVENT_SD_PAUSE_END(internal);
 }
+
 void SDCard::continuePrint(const bool internal) {
     if (state != SDState::SD_PRINTING
         && Printer::isMenuMode(MENU_MODE_PAUSED)) {
@@ -699,7 +706,7 @@ void SDCard::writeCommand(GCode* code) {
             if (GUI::statusLevel == GUIStatusLevel::BUSY) {
                 float kB = writtenBytes / 1000.0f;
                 GUI::flashToStringFloat(GUI::status, PSTR("Received @ B"), kB > 1000.0f ? kB / 1000.0f : kB, 1);
-                size_t len = strlen(GUI::status); 
+                size_t len = strlen(GUI::status);
                 GUI::status[len - 2] = kB > 1000.0f ? 'M' : 'k';
                 static float lastKBytes = 0.0f;
                 if (!lastWriteTimeMS) {
@@ -720,6 +727,70 @@ void SDCard::ls(const char* lsDir, const bool json) {
     fileSystem.chdir();
     ls(fileSystem.open(lsDir), json);
 }
+void SDCard::ls(sd_file_t rootDir, const bool json) {
+    if (state < SDState::SD_MOUNTED || !rootDir.isDir()) {
+        return;
+    }
+    if (!json) {
+        Com::printFLN(Com::tBeginFileList);
+    }
+    fullName[0u] = '\0'; // Used to keep track of long nested directory names
+    size_t lastDepth = 0u;
+#if JSON_OUTPUT
+    bool firstFile = true;
+#endif
+    auto action = [&](sd_file_t& file, sd_file_t& dir, size_t depth) {
+        if (!dir.isHidden() && !file.isHidden()) {
+            if (!json) {
+                if (depth > lastDepth) {
+                    if (lastDepth) {
+                        fullName[strlen(fullName)] = '/';
+                    }
+                    strcat(fullName, getFN(dir));
+                } else if (depth < lastDepth) {
+                    char* p = strrchr(fullName, '/');
+                    if (p) {
+                        *(++p) = '\0';
+                    } else {
+                        fullName[0u] = '\0';
+                    }
+                }
+                lastDepth = depth;
+                if (depth) {
+                    Com::print(fullName);
+                    Com::print('/');
+                }
+                Com::print(getFN(file));
+                if (file.isDir()) {
+                    Com::print('/');
+                } else {
+                    Com::print(' ');
+                    Com::print(static_cast<int32_t>(file.fileSize()));
+                }
+                Com::println();
+            } else {
+#if JSON_OUTPUT
+                if (!firstFile) {
+                    Com::print(',');
+                }
+                firstFile = false;
+                Com::print('"');
+                if (file.isDir()) {
+                    Com::print('*');
+                }
+                SDCard::printEscapeChars(getFN(file));
+                Com::print('"');
+#endif
+            }
+        }
+        return true;
+    };
+
+void SDCard::ls(const char* lsDir, const bool json) {
+    fileSystem.chdir();
+    ls(fileSystem.open(lsDir), json);
+}
+
 void SDCard::ls(sd_file_t rootDir, const bool json) {
     if (state < SDState::SD_MOUNTED || !rootDir.isDir()) {
         return;
@@ -833,6 +904,7 @@ void SDCard::finishWrite() {
     Com::printFLN(Com::tDoneSavingFile);
     GUI::pop();
 }
+
 void SDCard::finishPrint() {
     if (sd.state != SDState::SD_PRINTING) {
         return;
@@ -844,6 +916,7 @@ void SDCard::finishPrint() {
     Printer::setMenuMode(MENU_MODE_SD_PRINTING, false);
     Printer::setMenuMode(MENU_MODE_PAUSED, false);
     if (!printingSilent) {
+        Com::writeToAll = true; // tell all listeners that we are finished
         Com::printFLN(Com::tDonePrinting);
     }
     printingSilent = false;
