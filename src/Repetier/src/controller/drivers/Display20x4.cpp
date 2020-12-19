@@ -714,7 +714,7 @@ void printRowCentered(uint8_t r, char* text) {
 }
 
 millis_t init100msTicks = 0;
-void GUI::init() {
+void GUI::driverInit() {
     // Function called immediately at bootup
     init100msTicks = 0;
 }
@@ -1208,7 +1208,7 @@ void GUI::showValue(char* text, PGM_P unit, char* value) {
     printRowCentered(3, GUI::buf);
 }
 
-// No scrollbars for the 20x4's 
+// No scrollbars for the 20x4's
 void GUI::showScrollbar(GUIAction& action) {
 }
 void GUI::showScrollbar(GUIAction& action, float percent, uint16_t min, uint16_t max) {
