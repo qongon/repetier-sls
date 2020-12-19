@@ -66,12 +66,8 @@ inline void SdSpiArduinoDriver::send(uint8_t data) {
 }
 //------------------------------------------------------------------------------
 inline void SdSpiArduinoDriver::send(const uint8_t* buf, size_t count) {
-#if (!defined(STM32F4) && !defined(STM32F1))
   for (size_t i = 0; i < count; i++) {
     m_spi->transfer(buf[i]);
   }
-#else // M - TODO: find out if any other platforms also accept a buffer and size 
-  m_spi->transfer(const_cast<uint8_t*>(buf), count);
-#endif
 }
 #endif  // SdSpiLibDriver_h

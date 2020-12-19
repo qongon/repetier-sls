@@ -63,10 +63,10 @@ FsFile FsVolume::open(const char *path, oflag_t oflag) {
 uint32_t FsVolume::rootDirStartSector() const {
     if (m_fVol) {
         if (fatType() == FAT_TYPE_FAT16) {
-            return m_fVol->rootDirStart() - m_fVol->sectorsPerFat();
+            return m_fVol->rootDirStart();
         } else if (fatType() == FAT_TYPE_FAT32) {
-            return (m_fVol->dataStartSector()
-                + ((m_fVol->rootDirStart() - 2ul) << m_fVol->sectorsPerClusterShift())) - m_fVol->sectorsPerFat();
+            return m_fVol->dataStartSector()
+                + ((m_fVol->rootDirStart() - 2ul) << m_fVol->sectorsPerClusterShift());
         }
     } else if (m_xVol) {
         return m_xVol->clusterHeapStartSector()
