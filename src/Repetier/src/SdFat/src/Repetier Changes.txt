@@ -45,3 +45,6 @@ Any special Repetier Firmware V2 specific changes made to the SdFat library:
 -12/7/20
     - Created new fatMbrSector & fatPartBootSector functions to pull this data from the cache in exFat and FAT16/32 modes. supported through FSVolume. 
     - Included missing FsStructs.h in ExFatPartition.h for certain types.
+-12/18/20
+    - Removed a redundant buffer traversal in SdSpiLibDriver.h for STM32Duino platforms. Improved performance. 
+    - Fixed rootDirStartSector
