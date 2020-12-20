@@ -789,7 +789,7 @@ void GUI::menuStart(GUIAction action) {
     }
 }
 
-void GUI::menuEnd(GUIAction action, bool scrollbar) {
+void GUI::menuEnd(GUIAction action) {
     if (action == GUIAction::NEXT) {
         if (cursorRow[level] - topRow[level] >= UI_ROWS) {
             topRow[level] = cursorRow[level] + 1 - UI_ROWS;
