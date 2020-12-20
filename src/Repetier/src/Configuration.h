@@ -72,6 +72,9 @@
 #define Z_PROBE_BORDER 2        // Safety border to ensure position is allowed
 #define Z_PROBE_TEMPERATURE 170 // Temperature for type 2
 
+#define Z_PROBE_PAUSE_HEATERS 0         // Pause all heaters when probing to reduce EMI artifacts
+#define Z_PROBE_PAUSE_BED_REHEAT_TEMP 5 // Stop and reheat the bed if we leave the target temp by this much.
+
 
 // 0 = Cartesian, 1 = CoreXYZ, 2 = delta, 3 = Dual X-Axis
 #define PRINTER_TYPE 0

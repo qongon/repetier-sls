@@ -409,6 +409,10 @@ extern ServoInterface* servos[];
 #define Z_PROBE_PAUSE_HEATERS 0
 #endif
 
+#ifndef Z_PROBE_PAUSE_BED_REHEAT_TEMP
+#define Z_PROBE_PAUSE_BED_REHEAT_TEMP 5
+#endif
+
 #ifndef Z_PROBE_BLTOUCH_DEPLOY_DELAY
 #define Z_PROBE_BLTOUCH_DEPLOY_DELAY 1000
 #endif
@@ -666,7 +670,7 @@ public:
     sd_file_t selectedFile;
     sd_fsys_t fileSystem;
     SDState state;
- 
+
     char volumeLabel[21];
 
     bool scheduledPause;
