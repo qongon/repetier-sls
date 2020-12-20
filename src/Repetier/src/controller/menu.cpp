@@ -895,12 +895,12 @@ void __attribute__((weak)) menuSDPrint(GUIAction action, void* data) {
             }
         }
         uint16_t curScrollPos = lastRowDirItem;
-        curScrollPos += !lastRowDirItem ? (GUI::topRow[GUI::level] + 1u) : 3u; 
+        curScrollPos += !lastRowDirItem ? (GUI::topRow[GUI::level] + 1u) : 3u;
         GUI::showScrollbar(action, static_cast<float>(curScrollPos - 1u) / static_cast<float>(dirItemCount - 3u), 5u, dirItemCount);
     }
     curDir.close();
     lastRow = curRow; // For scrolling to the last row without doing a scan/moving the list.
-    GUI::menuEnd(action);
+    GUI::menuEnd(action, false);
 }
 #else
 void __attribute__((weak)) menuSDPrint(GUIAction action, void* data) {
@@ -936,9 +936,6 @@ void __attribute__((weak)) menuSDPrint(GUIAction action, void* data) {
         }
         return true;
     });
-    if (count > 3u) {
-        GUI::showScrollbar(action);
-    }
     curDir.close();
     GUI::menuEnd(action);
 }

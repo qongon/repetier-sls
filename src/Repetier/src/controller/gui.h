@@ -222,7 +222,7 @@ public:
     // Draw menu functions - driver specific
 
     static void menuStart(GUIAction action);
-    static void menuEnd(GUIAction action);
+    static void menuEnd(GUIAction action, bool scrollbar = true);
     static void menuTextP(GUIAction& action, PGM_P text, bool highlight = false);
     static void menuFloatP(GUIAction& action, PGM_P text, float val, int precision, GuiCallback cb, void* cData, GUIPageType tp);
     static void menuLongP(GUIAction& action, PGM_P text, long val, GuiCallback cb, void* cData, GUIPageType tp);

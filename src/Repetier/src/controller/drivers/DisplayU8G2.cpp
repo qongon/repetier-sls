@@ -135,7 +135,7 @@ void GUI::refresh() {
 void __attribute__((weak)) drawStatusLine() {
     GUI::bufClear();
     Tool* t = Tool::getActiveTool();
-    HeatManager* hm = t->getHeater();
+    HeatManager* hm = t ? t->getHeater() : nullptr;
     if (hm != nullptr) { // E1:210/210°C
         GUI::bufAddChar('E');
         GUI::bufAddInt(t->getToolId() + 1, 1);
@@ -213,7 +213,10 @@ void GUI::menuStart(GUIAction action) {
     }
 }
 
-void GUI::menuEnd(GUIAction action) {
+void GUI::menuEnd(GUIAction action, bool scrollbar) {
+    if (scrollbar) {
+        GUI::showScrollbar(action);
+    }
     if (action == GUIAction::NEXT) {
         if (cursorRow[level] - topRow[level] > 4) {
             topRow[level] = cursorRow[level] - 4;
