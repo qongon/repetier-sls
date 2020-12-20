@@ -892,7 +892,7 @@ void directAction(GUIAction action, void* data) {
         if (sd.state == SDState::SD_HAS_ERROR) {
             sd.unmount(true);
         }
-        sd.mount();
+        sd.mount(true);
 #endif
         break;
     case GUI_DIRECT_ACTION_STOP_PRINT:

@@ -64,7 +64,7 @@ void SDCard::automount() {
             mountRetries = 0ul;
         } else {
             if ((HAL::timeInMilliseconds() - mountDebounceTimeMS) > 250ul) {
-                mount();
+                mount(false);
             }
         }
     } else if (!pinLevel) {
@@ -79,9 +79,14 @@ void SDCard::automount() {
 #endif
 }
 
-void SDCard::mount() {
+void SDCard::mount(const bool manual) {
 #if SDSS > -1
     if (state > SDState::SD_SAFE_EJECTED) {
+        if (manual && state >= SDState::SD_MOUNTED) {
+            // Some hosts (BTT TFT's) require a response after M21 or they'll hang.
+            Com::writeToAll = true;
+            Com::printFLN(PSTR("SD card ok"));
+        }
         return;
     }
 #if SDCARDDETECT > -1
@@ -98,9 +103,9 @@ void SDCard::mount() {
     if (!fileSystem.begin(spiConfig)) {
         if (mountRetries < 2u) {
             mountRetries++;
-#if SDCARDDETECT < 0
-            mount(); // Try auto remounting 3 times if manually mounted with no sdcarddetect
-#endif
+            if (manual) {
+                mount(true); // Try recursively remounting 3 times if manually mounted
+            }
             return;
         }
         state = SDState::SD_HAS_ERROR;
@@ -116,7 +121,7 @@ void SDCard::mount() {
             Com::printFLN(PSTR("Card detect pin:"),
                           HAL::digitalRead(SDCARDDETECT) ? Com::tH : Com::tL);
 #endif
-        } else if (!fileSystem.vol()->fatType()) {
+        } else if (!fileSystem.fatType()) {
 #if SDFAT_FILE_TYPE == 3
             Com::printFLN(PSTR("Can't find a valid FAT16/FAT32/exFAT partition."));
 #elif SDFAT_FILE_TYPE == 1
@@ -295,8 +300,8 @@ bool SDCard::getCardInfo(char* volumeLabelBuf, uint8_t volumeLabelSize, uint64_t
         root.rewind();
         volumeLabelBuf[0u] = '\0';
         uint8_t buf[32u] = { 0u };
-        while (root.read(buf, 32ul) == 32ul) {
-            if (fileSystem.fatType() == FAT_TYPE_EXFAT) {
+        if (fileSystem.fatType() == FAT_TYPE_EXFAT) {
+            while (root.read(buf, 32ul) == 32ul) {
                 // Special exFat volume label directory entry in the root directory
                 DirLabel_t* exFatDir = reinterpret_cast<DirLabel_t*>(buf);
                 if (!exFatDir->type) {
@@ -310,7 +315,9 @@ bool SDCard::getCardInfo(char* volumeLabelBuf, uint8_t volumeLabelSize, uint64_t
                     }
                     break;
                 }
-            } else {
+            }
+        } else {
+            while (root.read(buf, 32ul) == 32ul) {
                 // FAT32/16's own label directory entry in the root directory.
                 DirFat_t* fatDir = reinterpret_cast<DirFat_t*>(buf);
                 if (fatDir->name[0u] == FAT_NAME_FREE) {
@@ -318,6 +325,7 @@ bool SDCard::getCardInfo(char* volumeLabelBuf, uint8_t volumeLabelSize, uint64_t
                 } else if (fatDir->name[0u] != FAT_NAME_DELETED && fatDir->attributes == FAT_ATTRIB_LABEL) {
                     volumeLabelSize = volumeLabelSize > 11u ? 11u : volumeLabelSize;
                     memcpy(volumeLabelBuf, fatDir->name, volumeLabelSize);
+                    volumeLabelBuf[volumeLabelSize - 1u] = '\0';
                     break;
                 }
             }
@@ -327,6 +335,7 @@ bool SDCard::getCardInfo(char* volumeLabelBuf, uint8_t volumeLabelSize, uint64_t
         if (fileSystem.fatType() != FAT_TYPE_EXFAT && !volumeLabelBuf[0u]) {
             volumeLabelSize = volumeLabelSize > 11u ? 11u : volumeLabelSize;
             fileSystem.getVolumeLabel(volumeLabelBuf, volumeLabelSize);
+            volumeLabelBuf[volumeLabelSize - 1u] = '\0';
             // returns "NO NAME" for missing labels.
         }
 
@@ -522,8 +531,7 @@ void SDCard::stopPrint(const bool silent) {
     }
     scheduledStop = true;
     state = SDState::SD_MOUNTED;
-    Printer::setMenuMode(MENU_MODE_SD_PRINTING, false);
-    Printer::setMenuMode(MENU_MODE_PAUSED, false);
+    Printer::setMenuMode(MENU_MODE_SD_PRINTING + MENU_MODE_PAUSED, false);
     Printer::setPrinting(false);
     if (!silent) {
         Com::printFLN(PSTR("SD print stopped by user."));
@@ -709,7 +717,7 @@ void SDCard::writeCommand(GCode* code) {
                 size_t len = strlen(GUI::status);
                 GUI::status[len - 2] = kB > 1000.0f ? 'M' : 'k';
                 static float lastKBytes = 0.0f;
-                if (!lastWriteTimeMS) {
+                if (kB < lastKBytes) {
                     lastKBytes = 0.0f;
                 }
                 GUI::flashToStringFloat(GUI::tmpString, PSTR("\n @kB/s"), kB - lastKBytes, 1);
@@ -723,75 +731,14 @@ void SDCard::writeCommand(GCode* code) {
         Com::printFLN(Com::tErrorWritingToFile);
     }
 }
-void SDCard::ls(const char* lsDir, const bool json) {
-    fileSystem.chdir();
-    ls(fileSystem.open(lsDir), json);
-}
-void SDCard::ls(sd_file_t rootDir, const bool json) {
-    if (state < SDState::SD_MOUNTED || !rootDir.isDir()) {
-        return;
-    }
-    if (!json) {
-        Com::printFLN(Com::tBeginFileList);
-    }
-    fullName[0u] = '\0'; // Used to keep track of long nested directory names
-    size_t lastDepth = 0u;
-#if JSON_OUTPUT
-    bool firstFile = true;
-#endif
-    auto action = [&](sd_file_t& file, sd_file_t& dir, size_t depth) {
-        if (!dir.isHidden() && !file.isHidden()) {
-            if (!json) {
-                if (depth > lastDepth) {
-                    if (lastDepth) {
-                        fullName[strlen(fullName)] = '/';
-                    }
-                    strcat(fullName, getFN(dir));
-                } else if (depth < lastDepth) {
-                    char* p = strrchr(fullName, '/');
-                    if (p) {
-                        *(++p) = '\0';
-                    } else {
-                        fullName[0u] = '\0';
-                    }
-                }
-                lastDepth = depth;
-                if (depth) {
-                    Com::print(fullName);
-                    Com::print('/');
-                }
-                Com::print(getFN(file));
-                if (file.isDir()) {
-                    Com::print('/');
-                } else {
-                    Com::print(' ');
-                    Com::print(static_cast<int32_t>(file.fileSize()));
-                }
-                Com::println();
-            } else {
-#if JSON_OUTPUT
-                if (!firstFile) {
-                    Com::print(',');
-                }
-                firstFile = false;
-                Com::print('"');
-                if (file.isDir()) {
-                    Com::print('*');
-                }
-                SDCard::printEscapeChars(getFN(file));
-                Com::print('"');
-#endif
-            }
-        }
-        return true;
-    };
 
 void SDCard::ls(const char* lsDir, const bool json) {
     fileSystem.chdir();
-    ls(fileSystem.open(lsDir), json);
+    sd_file_t dir = fileSystem.open(lsDir);
+    ls(dir, json);
 }
 
-void SDCard::ls(sd_file_t rootDir, const bool json) {
+void SDCard::ls(sd_file_t& rootDir, const bool json) {
     if (state < SDState::SD_MOUNTED || !rootDir.isDir()) {
         return;
     }
@@ -888,7 +835,7 @@ void SDCard::startWrite(const char* filename) {
         writtenBytes = 0ul;
         GUI::setStatusP(PSTR("Receiving file..."), GUIStatusLevel::BUSY);
         Com::printFLN(Com::tWritingToFile, filename);
-        lastWriteTimeMS = 0ul;
+        lastWriteTimeMS = HAL::timeInMilliseconds();
         state = SDState::SD_WRITING;
     }
 }

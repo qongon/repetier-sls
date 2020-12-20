@@ -589,8 +589,9 @@ public:
     static void printEscapeChars(const char* s);
 #endif
     void ls(const char* lsDir = Com::tSlash, const bool json = false);
-    void ls(sd_file_t rootDir, const bool json = false); // Will auto close rootdir
-    void mount();
+    void ls(sd_file_t& rootDir, const bool json = false); // Will auto close rootdir
+
+    void mount(const bool manual);
     void unmount(const bool manual);
     void automount();
 
@@ -670,8 +671,8 @@ public:
 
     bool scheduledPause;
     bool scheduledStop;
-    millis_t lastWriteTimeMS; 
-    uint32_t writtenBytes; // M Todo: Display written bytes recieved during the process.
+    millis_t lastWriteTimeMS;
+    uint32_t writtenBytes;
 #if JSON_OUTPUT
     GCodeFileInfo fileInfo;
 #endif

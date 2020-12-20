@@ -639,15 +639,18 @@ void Printer::setup() {
     SET_INPUT(MOTOR_FAULT_PIGGY_PIN);
 #endif              //(MOTHERBOARD == 501) || (MOTHERBOARD == 502)
     GUI::init();
+
+#if SDSUPPORT // Try mounting the SDCard first in case it has an eeprom file.
+    sd.mount(true);
+#endif
+
     EEPROM::init(); // Read settings from eeprom if wanted, run after initialization!
     updateDerivedParameter();
     Commands::checkFreeMemory();
     Commands::writeLowestFreeRAM();
     HAL::setupTimer();
 
-#if SDSUPPORT
-    sd.mount();
-#endif
+
 #if FEATURE_WATCHDOG
     HAL::startWatchdog();
 #endif
