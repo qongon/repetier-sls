@@ -297,6 +297,9 @@ public:
         }
         output = static_cast<T>(out);
 #else
+#if CPU_ARCH == ARCH_AVR
+        output = static_cast<T>(atof(cellBufRaw()));
+#else
         output = static_cast<T>(strtof(cellBufRaw(), nullptr));
 #endif
         return true;
@@ -370,6 +373,9 @@ public:
             return false;
         }
         output = static_cast<T>(out);
+#else
+#if CPU_ARCH == ARCH_AVR
+        output = static_cast<T>(atof(cellBufRaw()));
 #else
         output = static_cast<T>(strtof(cellBufRaw(), nullptr));
 #endif
@@ -459,6 +465,9 @@ public:
             return false;
         }
         output = static_cast<T>(out);
+#else
+#if CPU_ARCH == ARCH_AVR
+        output = static_cast<T>(atof(cellBufRaw()));
 #else
         output = static_cast<T>(strtof(cellBufRaw(), nullptr));
 #endif

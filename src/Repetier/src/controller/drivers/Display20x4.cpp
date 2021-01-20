@@ -1209,6 +1209,7 @@ void GUI::showValue(char* text, PGM_P unit, char* value) {
 }
 
 // No scrollbars for the 20x4's
+void GUI::resetScrollbarTimer() { }
 void GUI::showScrollbar(GUIAction& action) {
 }
 void GUI::showScrollbar(GUIAction& action, float percent, uint16_t min, uint16_t max) {

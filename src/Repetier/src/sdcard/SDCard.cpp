@@ -817,6 +817,8 @@ void SDCard::printStatus(const bool getFilename) {
         if (state == SDState::SD_PRINTING) {
             Com::printF(Com::tSDPrintingByte, selectedFilePos);
             Com::printFLN(Com::tSlash, selectedFileSize);
+        } else if (Printer::isMenuMode(MENU_MODE_PAUSED)) {
+            Com::printFLN(Com::tSDPrintingPaused);
         } else {
             Com::printFLN(Com::tNotSDPrinting);
         }
@@ -985,7 +987,7 @@ void SDCard::JSONFileInfo(const char* filename) {
     targetFile.close();
 };
 
-#endif
+#endif // JSON_OUTPUT
 #ifdef GLENN_DEBUG
 void SDCard::writeToFile() {
     size_t nbyte;
@@ -1002,7 +1004,7 @@ void SDCard::writeToFile() {
 
 #endif
 
-#if JSON_OUTPUT
+#if JSON_OUTPUT && SDSUPPORT
 
 // --------------------------------------------------------------- //
 // Code that gets gcode information is adapted from RepRapFirmware //

@@ -169,6 +169,14 @@ public:
     FSTRINGVAR(tUnitMilliWatt)
     FSTRINGVAR(tUnitPWM)
     FSTRINGVAR(tUnitRPM)
+    FSTRINGVAR(tMatPLA)
+    FSTRINGVAR(tMatPET)
+    FSTRINGVAR(tMatASA)
+    FSTRINGVAR(tMatPC)
+    FSTRINGVAR(tMatABS)
+    FSTRINGVAR(tMatHIPS)
+    FSTRINGVAR(tMatPP)
+    FSTRINGVAR(tMatFLEX)
     FSTRINGVAR(tJSONDir)
     FSTRINGVAR(tJSONFiles)
     FSTRINGVAR(tJSONArrayEnd)
@@ -441,7 +449,6 @@ public:
     FSTRINGVAR(tEPRPreheatBedTemp)
     FSTRINGVAR(tEPRToneVolume)
 
-
     // SDCARD RELATED
     //FSTRINGVAR(tSDRemoved)
     //FSTRINGVAR(tSDInserted)
@@ -458,6 +465,7 @@ public:
     FSTRINGVAR(tNoMountedCard)
     FSTRINGVAR(tSDPrintingByte)
     FSTRINGVAR(tNotSDPrinting)
+    FSTRINGVAR(tSDPrintingPaused)
     FSTRINGVAR(tCurrentOpenFile)
     FSTRINGVAR(tOpenFailedFile)
     FSTRINGVAR(tWritingToFile)
@@ -468,7 +476,6 @@ public:
     FSTRINGVAR(tCreationFailed)
     FSTRINGVAR(tSDErrorCode)
     // END SDCARD RELATED
-
 
     FSTRINGVAR(tHeaterDecoupled)
     FSTRINGVAR(tHeaterDecoupledWarning)
