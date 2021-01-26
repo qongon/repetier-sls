@@ -38,10 +38,7 @@ void __attribute__((weak)) menuMoveAxis(GUIAction action, void* data) {
     if (!Tool::getActiveTool()->showMachineCoordinates()) {
         v -= Motion1::g92Offsets[axis];
     }
-    if (action == GUIAction::CLICK) { // catch default action
-        GUI::replace(menuMoveAxisFine, data, GUIPageType::FIXED_CONTENT);
-        return;
-    }
+    GUI::replaceOn(GUIAction::CLICK, menuMoveAxisFine, data, GUIPageType::FIXED_CONTENT);
     if (GUI::handleFloatValueAction(action, v, Motion1::minPos[axis], Motion1::maxPos[axis], 1.0)) {
         Motion1::copyCurrentOfficial(Motion1::tmpPosition);
         Motion1::tmpPosition[axis] = v;
@@ -70,10 +67,7 @@ void __attribute__((weak)) menuStepsPerMM(GUIAction action, void* data) {
     int axis = reinterpret_cast<int>(data);
     GUI::flashToStringFlash(GUI::tmpString, PSTR("Resolution @ Coarse:"), axisNames[axis]);
     DRAW_FLOAT(GUI::tmpString, Com::tUnitStepsPerMM, Motion1::resolution[axis], 2);
-    if (action == GUIAction::CLICK) { // catch default action
-        GUI::replace(menuStepsPerMMFine, data, GUIPageType::FIXED_CONTENT);
-        return;
-    }
+    GUI::replaceOn(GUIAction::CLICK, menuStepsPerMMFine, data, GUIPageType::FIXED_CONTENT);
     if (GUI::handleFloatValueAction(action, v, 0, 100000, 1.0)) {
         Motion1::resolution[axis] = v;
     }
@@ -92,10 +86,7 @@ void __attribute__((weak)) menuMinPos(GUIAction action, void* data) {
     int axis = reinterpret_cast<int>(data);
     GUI::flashToStringFlash(GUI::tmpString, PSTR("Min Pos @ Coarse:"), axisNames[axis]);
     DRAW_FLOAT(GUI::tmpString, Com::tUnitMM, Motion1::minPos[axis], 2);
-    if (action == GUIAction::CLICK) { // catch default action
-        GUI::replace(menuMinPosFine, data, GUIPageType::FIXED_CONTENT);
-        return;
-    }
+    GUI::replaceOn(GUIAction::CLICK, menuMinPosFine, data, GUIPageType::FIXED_CONTENT);
     if (GUI::handleFloatValueAction(action, v, -2000, 2000, 1.0)) {
         Motion1::minPos[axis] = v;
     }
@@ -114,10 +105,7 @@ void __attribute__((weak)) menuMaxPos(GUIAction action, void* data) {
     int axis = reinterpret_cast<int>(data);
     GUI::flashToStringFlash(GUI::tmpString, PSTR("Max Pos @ Coarse:"), axisNames[axis]);
     DRAW_FLOAT(GUI::tmpString, Com::tUnitMM, Motion1::maxPos[axis], 2);
-    if (action == GUIAction::CLICK) { // catch default action
-        GUI::replace(menuMaxPosFine, data, GUIPageType::FIXED_CONTENT);
-        return;
-    }
+    GUI::replaceOn(GUIAction::CLICK, menuMaxPosFine, data, GUIPageType::FIXED_CONTENT);
     if (GUI::handleFloatValueAction(action, v, -2000, 2000, 1.0)) {
         Motion1::maxPos[axis] = v;
     }
@@ -266,7 +254,7 @@ void __attribute__((weak)) menuConfigRetraction(GUIAction action, void* data) {
     GUI::menuBack(action);
 
     if (!Motion1::retractLength) {
-        GUI::menuSelectableP(action, PSTR("Length:Off"), menuRetractLength, nullptr, GUIPageType::FIXED_CONTENT);
+        GUI::menuOnOffP(action, PSTR("Length:"), Motion1::retractLength, menuRetractLength, nullptr, GUIPageType::FIXED_CONTENT);
     } else {
         GUI::menuFloatP(action, PSTR("Length:"), Motion1::retractLength, 2, menuRetractLength, nullptr, GUIPageType::FIXED_CONTENT);
 
