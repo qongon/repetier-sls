@@ -25,11 +25,6 @@
 #define MAX_DATA_SOURCES 4
 #endif
 
-#if DUE_DIRECT_USB_SERIAL && defined(DUE_BOARD)
-extern volatile uint32_t _usbConfiguration; 
-// Gets set to 1 when DTR/RTS rise on the USB port. Defined in USBCore.cpp
-#endif
-
 typedef void (*PromptDialogCallback)(int selection);
 enum class BoolFormat { TRUEFALSE,
                         ONOFF,
@@ -573,11 +568,7 @@ public:
     static void printLogFLN(FSTRINGPARAM(text));
     static void printLogF(FSTRINGPARAM(text));
     static void printFLN(FSTRINGPARAM(text));
-#if defined(AVR_BOARD)
     static void printF(FSTRINGPARAM(text));
-#else
-    inline static void printF(FSTRINGPARAM(ptr)) { print(ptr); }
-#endif
     static void printF(FSTRINGPARAM(text), bool value, BoolFormat format = BoolFormat::TRUEFALSE);
     static void printF(FSTRINGPARAM(text), int value);
     static void printF(FSTRINGPARAM(text), const char* msg);
@@ -596,29 +587,13 @@ public:
     static void print(long value);
     static inline void print(uint32_t value) { printNumber(value); }
     static inline void print(int value) { print((int32_t)value); }
-    static void print(const char* text) {
-#if DUE_DIRECT_USB_SERIAL && defined(DUE_BOARD)
-        if (!Is_udd_suspend() && _usbConfiguration) {
-            while (!Is_udd_in_send(CDC_TX)) { };
-            volatile uint8_t* ptr_dest = udd_get_endpoint_fifo_access8(CDC_TX);
-            while (*text) {
-                *ptr_dest++ = *text++;
-            }
-            udd_ack_in_send(CDC_TX);
-            udd_ack_fifocon(CDC_TX);
-        }
-#else
-        while (*text) {
-            GCodeSource::writeToAll(*text++);
-        }
-#endif
-    }
+    static void print(const char* text);
     static inline void print(char c) { GCodeSource::writeToAll(c); }
     static void printFloat(float number, uint8_t digits);
     static inline void print(float number) { printFloat(number, 6); }
     static inline void println() {
-        print('\r');
-        print('\n');
+        GCodeSource::writeToAll('\r');
+        GCodeSource::writeToAll('\n');
     }
     static void promptStart(PromptDialogCallback cb, FSTRINGPARAM(text), bool blocking = true);
     static void promptStart(PromptDialogCallback cb, char* text, bool blocking = true);
