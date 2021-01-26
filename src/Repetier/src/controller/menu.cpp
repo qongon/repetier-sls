@@ -429,6 +429,8 @@ void __attribute__((weak)) menuInfo(GUIAction action, void* data) {
     if (Printer::isNativeUSB()) {
         GUI::menuTextP(action, PSTR("Using Native USB"));
     }
+    GUI::flashToStringLong(GUI::tmpString, PSTR("@ Bytes free RAM"), HAL::getFreeRam());
+    GUI::menuText(action, GUI::tmpString);
     GUI::menuEnd(action);
 }
 
