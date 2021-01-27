@@ -302,6 +302,7 @@ public:
 #else
         output = static_cast<T>(strtof(cellBufRaw(), nullptr));
 #endif
+#endif
         return true;
     }
 
@@ -378,6 +379,7 @@ public:
         output = static_cast<T>(atof(cellBufRaw()));
 #else
         output = static_cast<T>(strtof(cellBufRaw(), nullptr));
+#endif
 #endif
         return true;
     }
@@ -470,6 +472,7 @@ public:
         output = static_cast<T>(atof(cellBufRaw()));
 #else
         output = static_cast<T>(strtof(cellBufRaw(), nullptr));
+#endif
 #endif
         return true;
     }
