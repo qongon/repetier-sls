@@ -45,7 +45,8 @@ void GUI::init() { ///< Initialize display
 }
 void GUI::processInit() { ///< Function repeatedly called if curBootState isn't at least IN_INTRO
 }
-
+void GUI::resetScrollbarTimer() {
+}
 void GUI::refresh() {
 }
 
