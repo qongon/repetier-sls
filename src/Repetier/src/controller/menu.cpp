@@ -1,7 +1,10 @@
 #include "Repetier.h"
 
-const char* const axisNames[] PROGMEM = {
-    "X", "Y", "Z", "E", "A", "B", "C"
+/*const char* const axisNames[] PROGMEM = {
+    Com::tXLetter, Com::tYLetter, Com::tZLetter, Com::tELetter, Com::tALetter, Com::tBLetter, Com::tCLetter
+};*/
+const char* const axisNames[] = {
+    Com::tXLetter, Com::tYLetter, Com::tZLetter, Com::tELetter, Com::tALetter, Com::tBLetter, Com::tCLetter
 };
 
 const int32_t baudrates[] PROGMEM = {

@@ -956,7 +956,7 @@ void __attribute__((weak)) startScreen(GUIAction action, void* data) {
         }
         if (NUM_TOOLS > 1 && tool->getToolType() == ToolTypes::EXTRUDER && tool->hasSecondary() && tool->secondaryIsFan() && n < 6) {
             GUI::bufClear();
-            GUI::bufAddStringP("Fan:");
+            GUI::bufAddStringP(PSTR("Fan:"));
             GUI::bufAddInt(tool->secondaryPercent(), 3);
             GUI::bufAddChar('%');
             lcd.drawUTF8(1, 16 + n * 7, GUI::buf);
@@ -964,7 +964,7 @@ void __attribute__((weak)) startScreen(GUIAction action, void* data) {
         }
         if (NUM_TOOLS > 1 && tool->getToolType() == ToolTypes::EXTRUDER && n < 6) {
             GUI::bufClear();
-            GUI::bufAddStringP("Ditto:");
+            GUI::bufAddStringP(PSTR("Ditto:"));
             GUI::bufAddInt(Motion1::dittoMode, 1);
             if (Motion1::dittoMirror) {
                 GUI::bufAddChar('M');
@@ -974,7 +974,7 @@ void __attribute__((weak)) startScreen(GUIAction action, void* data) {
         }
         if (NUM_TOOLS > 1 && tool->getToolType() == ToolTypes::EXTRUDER && n < 6) {
             GUI::bufClear();
-            GUI::bufAddStringP("Flow:");
+            GUI::bufAddStringP(PSTR("Flow:"));
             GUI::bufAddInt(Printer::extrudeMultiply, 3);
             GUI::bufAddChar('%');
             lcd.drawUTF8(1, 16 + n * 7, GUI::buf);
@@ -982,7 +982,7 @@ void __attribute__((weak)) startScreen(GUIAction action, void* data) {
         }
         if (n < 6 && Printer::areAllSteppersDisabled()) {
             GUI::bufClear();
-            GUI::bufAddStringP("Motors off");
+            GUI::bufAddStringP(PSTR("Motors off"));
             lcd.drawUTF8(1, 16 + n * 7, GUI::buf);
             n++;
         }
@@ -1071,7 +1071,7 @@ void __attribute__((weak)) printProgress(GUIAction action, void* data) {
             }
             if (NUM_TOOLS > 1 && tool->getToolType() == ToolTypes::EXTRUDER && tool->hasSecondary() && tool->secondaryIsFan() && n < 6) {
                 GUI::bufClear();
-                GUI::bufAddStringP("Fan:");
+                GUI::bufAddStringP(PSTR("Fan:"));
                 GUI::bufAddInt(tool->secondaryPercent(), 3);
                 GUI::bufAddChar('%');
                 lcd.drawUTF8(66, y0 + n * 7, GUI::buf);
