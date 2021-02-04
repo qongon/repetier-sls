@@ -575,10 +575,6 @@ extern ServoInterface* servos[];
 #define KEEP_ALIVE_INTERVAL 2000
 #endif
 
-#ifndef IMMEDIATE_STEPPER_PAUSE
-#define IMMEDIATE_STEPPER_PAUSE 0
-#endif
-
 #undef min
 #undef max
 

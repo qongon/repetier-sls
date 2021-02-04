@@ -24,14 +24,6 @@ uint8_t allAxes;
 uint Motion1::eprStart;
 Motion1Buffer Motion1::buffers[PRINTLINE_CACHE_SIZE]; // Buffer storage
 volatile bool Motion1::flushing = false; 
-
-#if IMMEDIATE_STEPPER_PAUSE
-uint32_t Motion1::haltedLine = 0;
-float Motion1::haltedPos[NUM_AXES];
-volatile float Motion1::haltStepModifier = 1.0f;
-volatile bool Motion1::haltRequested = false;
-#endif
-
 float Motion1::currentPosition[NUM_AXES]; // Current printer position
 float Motion1::currentPositionTransformed[NUM_AXES];
 float Motion1::destinationPositionTransformed[NUM_AXES];
@@ -353,55 +345,6 @@ void Motion1::setFromConfig() {
     autolevelActive = false;
 }
 
-#if IMMEDIATE_STEPPER_PAUSE
-void motionHalted() {
-    if (!Motion1::haltRequested) {
-        return;
-    }
-    InterruptProtectedBlock noInts;
-    int32_t stepPos[NUM_AXES] = { 0 };
-    Motion2::copyMotorPos(stepPos);
-    FOR_ALL_AXES(i) {
-        Motion1::haltedPos[i] = (static_cast<float>(stepPos[i]) / Motion1::resolution[i]);
-    }
-    Motion3Buffer* act = Motion3::act;
-    if (!act) {
-        Motion3::activateNext();
-        act = Motion3::act;
-    }
-
-    if (act) {
-        Motion2Buffer& m2 = Motion2::buffers[act->parentId];
-    }
-    Motion1::startFlush();
-    PrinterType::transformedToOfficial(Motion1::haltedPos, Motion1::currentPosition);
-    Motion1::updatePositionsFromCurrent();
-    Motion2::setMotorPositionFromTransformed();
-
-    HAL::transitionStepFrequency(&Motion1::haltStepModifier, 1.0f, 150, [] {
-        // Lambada function to stop flushing once our stepper timer is restored
-        InterruptProtectedBlock noInts;
-        Motion1::stopFlush();
-        Motion1::haltRequested = false;
-    });
-}
-#endif
-
-bool Motion1::haltMotion(millis_t duration) {
-#if IMMEDIATE_STEPPER_PAUSE
-    if (!haltRequested) {
-        if (buffersUsed() <= 0) {
-            return true;
-        }
-        InterruptProtectedBlock noInts;
-        Printer::breakLongCommand = true;
-        stopFlush();
-        haltRequested = true;
-        return HAL::transitionStepFrequency(&(haltStepModifier = 1.0f), 0.0f, duration, motionHalted);
-    }
-#endif
-    return false;
-}
 void Motion1::setAutolevelActive(bool state, bool silent) {
     if (state != autolevelActive) {
         autolevelActive = state;

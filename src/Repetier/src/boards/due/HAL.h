@@ -38,7 +38,7 @@
 #define SERIAL_RX_BUFFER_SIZE 128
 #endif
 #endif
-
+ 
 
 #ifndef HAL_H
 #define HAL_H
@@ -784,7 +784,6 @@ public:
     static unsigned int servoTimings[4];
     static void servoMicroseconds(uint8_t servo, int ms, uint16_t autoOff);
 #endif
-    static bool transitionStepFrequency(volatile float* userFadePtr, float endFade, millis_t millis, void (*callback)());
 
     static void analogStart(void);
     static void analogEnable(int channel);
