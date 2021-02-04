@@ -23,8 +23,7 @@ uint8_t allAxes;
 
 uint Motion1::eprStart;
 Motion1Buffer Motion1::buffers[PRINTLINE_CACHE_SIZE]; // Buffer storage
-volatile bool Motion1::flushing = false; 
-float Motion1::currentPosition[NUM_AXES]; // Current printer position
+float Motion1::currentPosition[NUM_AXES];             // Current printer position
 float Motion1::currentPositionTransformed[NUM_AXES];
 float Motion1::destinationPositionTransformed[NUM_AXES];
 float Motion1::tmpPosition[NUM_AXES];
@@ -103,31 +102,6 @@ constexpr int numMotors = NUM_MOTORS;
 constexpr int numMotors = std::extent<decltype(Motion1::drivers)>::value;
 static_assert(numMotors == NUM_MOTORS, "NUM_MOTORS not defined correctly");
 #endif
-
-void Motion1::stopFlush() {
-    InterruptProtectedBlock noInts;
-    Motion1::flushing = false;
-}
-bool Motion1::isFlushing() {
-    InterruptProtectedBlock noInts;
-    return Motion1::flushing;
-}
-void Motion1::startFlush() {
-    InterruptProtectedBlock noInts;
-    Motion1::flushing = true;
-    Motion3::init();
-    Motion2::init();
-    for (size_t i = 0; i < PRINTLINE_CACHE_SIZE; i++) {
-        buffers[i].flags = 0;
-        buffers[i].state = Motion1State::FREE; 
-    } // Todo trim unnessacery inits. Just enough to kill motion
-    axesTriggered = 0;
-    motorTriggered = 0;
-    last = first = length = 0;
-    process = lengthUnprocessed = 0;
-    intLengthBuffered = 0;
-    endstopMode = EndstopMode::DISABLED;
-}
 
 void Motion1::init() {
 
@@ -925,9 +899,6 @@ bool Motion1::moveRelativeByPrinter(float coords[NUM_AXES], float feedrate, bool
  * It assumes that we can move all axes in parallel.
  */
 void Motion1::moveRelativeBySteps(int32_t coords[NUM_AXES]) {
-    if (isFlushing()) {
-        return;
-    }
     Printer::unparkSafety();
     fast8_t axesUsed = 0;
     FOR_ALL_AXES(i) {
@@ -942,10 +913,6 @@ void Motion1::moveRelativeBySteps(int32_t coords[NUM_AXES]) {
     int32_t lpos[NUM_AXES];
     Motion2::copyMotorPos(lpos);
     waitForXFreeMoves(1);
-
-    if (isFlushing()) {
-        return;
-    }
     Motion1Buffer& buf = reserve();
     buf.flags = 0;
     buf.action = Motion1Action::MOVE_STEPS;
@@ -988,9 +955,6 @@ void Motion1::correctBumpOffset() {
 }
 
 bool Motion1::queueMove(float feedrate, bool secondaryMove) {
-    if (isFlushing()) {
-        return true;
-    }
     if (!PrinterType::positionAllowed(destinationPositionTransformed, currentPosition[Z_AXIS])) {
         Com::printWarningFLN(PSTR("Move to illegal position prevented! Position should not be trusted any more!"));
         if (Printer::debugEcho()) {
@@ -1046,11 +1010,6 @@ bool Motion1::queueMove(float feedrate, bool secondaryMove) {
         wasLastSecondary = secondaryMove;
     }
     waitForXFreeMoves(1);
-
-    if (isFlushing()) { // Frequently caught here!
-        return true;
-    }
-
     Motion1Buffer& buf = reserve(); // Buffer is blocked because state is set to FREE!
 
     buf.length = sqrtf(length2);
@@ -1182,16 +1141,11 @@ bool Motion1::queueMove(float feedrate, bool secondaryMove) {
 }
 
 void Motion1::insertWaitIfNeeded() {
-    if (buffersUsed() > 0 || isFlushing()) { // already printing, do not wait
+    if (buffersUsed() > 0) { // already printing, do not wait
         return;
     }
     for (fast8_t i = 0; i <= NUM_MOTION2_BUFFER; i++) {
         waitForXFreeMoves(1);
-
-        if (isFlushing()) {
-            return;
-        }
-
         Motion1Buffer& buf = reserve();
         buf.action = Motion1Action::WAIT;
         if (i == 0) {
@@ -1296,7 +1250,7 @@ void Motion1::backplan(fast8_t actId) {
 
 // Called from motion2 timer interrupt, so only needs to protect for motion3 timer changes!
 Motion1Buffer* Motion1::forward(Motion2Buffer* m2) {
-    if (lengthUnprocessed == 0 || isFlushing()) {
+    if (lengthUnprocessed == 0) {
         return nullptr;
     }
     Motion1Buffer* f = &buffers[process];
