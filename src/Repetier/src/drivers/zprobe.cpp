@@ -351,7 +351,7 @@ void __attribute__((weak)) menuProbeCoating(GUIAction action, void* data) {
 }
 void __attribute__((weak)) menuProbeOffset(GUIAction action, void* data) {
     int axis = reinterpret_cast<int>(data); // 0 = x, 1 = y
-    GUI::flashToStringFlash(GUI::tmpString, PSTR("@ Offset:"), axis ? axisNames[Y_AXIS] : axisNames[X_AXIS]);
+    GUI::flashToStringFlash(GUI::tmpString, PSTR("@ Offset:"), (const char*)HAL::readFlashAddress(&axisNames[axis]));
     DRAW_FLOAT(GUI::tmpString, Com::tUnitMM,
                axis ? ZProbeHandler::yOffset() : ZProbeHandler::xOffset(), 1);
     if (GUI::handleFloatValueAction(action, v, -100.0f, 100.0f, 0.5f)) {
@@ -1120,7 +1120,7 @@ void ZProbeHandler::disableAlarmIfOn() {
 
 void menuProbeOffset(GUIAction action, void* data) {
     int axis = reinterpret_cast<int>(data); // 0 = x, 1 = y
-    GUI::flashToStringFlash(GUI::tmpString, PSTR("@ Offset:"), axis ? axisNames[Y_AXIS] : axisNames[X_AXIS]);
+    GUI::flashToStringFlash(GUI::tmpString, PSTR("@ Offset:"), (const char*)HAL::readFlashAddress(&axisNames[axis]));
     DRAW_FLOAT(GUI::tmpString, Com::tUnitMM,
                axis ? ZProbeHandler::yOffset() : ZProbeHandler::xOffset(), 1);
     if (GUI::handleFloatValueAction(action, v, -100.0f, 100.0f, 0.5f)) {

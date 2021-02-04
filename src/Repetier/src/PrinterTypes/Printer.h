@@ -111,7 +111,7 @@ public:
 #define PRINTER_FLAG0_ZPROBEING 64
 // #define PRINTER_FLAG0_LARGE_MACHINE 128
 #define PRINTER_FLAG1_HOMED_ALL 1
-#define PRINTER_FLAG1_AUTOMOUNT 2
+#define PRINTER_FLAG1_FREE2 2
 #define PRINTER_FLAG1_ANIMATION 4
 #define PRINTER_FLAG1_ALLKILLED 8
 #define PRINTER_FLAG1_UI_ERROR_MESSAGE 16
@@ -432,14 +432,6 @@ public:
         flag1 = (b ? flag1 | PRINTER_FLAG1_ALLKILLED : flag1 & ~PRINTER_FLAG1_ALLKILLED);
     }
 
-    static INLINE uint8_t isAutomount() {
-        return flag1 & PRINTER_FLAG1_AUTOMOUNT;
-    }
-
-    static INLINE void setAutomount(uint8_t b) {
-        flag1 = (b ? flag1 | PRINTER_FLAG1_AUTOMOUNT : flag1 & ~PRINTER_FLAG1_AUTOMOUNT);
-    }
-
     static INLINE uint8_t isAnimation() {
         return flag1 & PRINTER_FLAG1_ANIMATION;
     }
@@ -498,7 +490,7 @@ public:
     }
 
     static INLINE void setAutoretract(uint8_t b, bool silent = false) {
-        flag2 = (b ? flag2 | PRINTER_FLAG2_AUTORETRACT : flag2 & ~PRINTER_FLAG2_AUTORETRACT); 
+        flag2 = (b ? flag2 | PRINTER_FLAG2_AUTORETRACT : flag2 & ~PRINTER_FLAG2_AUTORETRACT);
         if (!silent) {
             Com::printFLN(PSTR("Autoretract:"), b);
         }
@@ -650,7 +642,7 @@ public:
     \return true if queuing was successful.
     */
     static uint8_t moveToReal(float x, float y, float z, float e, float f, bool pathOptimize = true);
-    static void kill(uint8_t only_steppers);
+    static void kill(uint8_t only_steppers, bool motors = true);
     static void setup();
     static void defaultLoopActions();
     static void setOrigin(float xOff, float yOff, float zOff);

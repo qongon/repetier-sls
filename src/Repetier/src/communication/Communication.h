@@ -558,6 +558,7 @@ public:
     FSTRINGVAR(tMotorSpaceStallguardSensitivityColon)
     FSTRINGVAR(tMotorStallguardResult)
     FSTRINGVAR(tMotorSpaceRMSCurrentMAColon)
+    FSTRINGVAR(tHomingFailed)
 
     static void cap(FSTRINGPARAM(text));
     static void config(FSTRINGPARAM(text));

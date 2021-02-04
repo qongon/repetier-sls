@@ -39,6 +39,7 @@
 #define GUI_DIRECT_ACTION_TOGGLE_PROBE_PAUSE 33
 #define GUI_DIRECT_ACTION_TOGGLE_AUTORETRACTIONS 34
 #define GUI_DIRECT_ACTION_TOGGLE_ENCODER_AFFECT_MENUS_BY_SPEED 35
+#define GUI_EXIT_FATAL 36
 
 enum class GUIBootState {
     DISPLAY_INIT = 0,
@@ -164,7 +165,6 @@ public:
     static uint16_t maxActionRepeatTimeMS;       ///< Clicks longer than this will not recieve any extra steps
     static uint16_t minActionRepeatTimeMS;       ///
     static millis_t lastActionRepeatDiffMS;      ///< Just used to display the time diff in the encoder speed menu
-
 
     static uint16_t eprStart;
     static GUIStatusLevel statusLevel;

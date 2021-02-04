@@ -362,10 +362,9 @@ void HAL::setupTimer() {
 #endif
 }
 
-// Called within checkForPeriodicalActions (main loop, more or less) 
+// Called within checkForPeriodicalActions (main loop, more or less)
 // as fast as possible
 void HAL::handlePeriodical() {
-
 }
 
 // Try to initialize pinNumber as hardware PWM. Returns internal
@@ -476,7 +475,7 @@ fast8_t HAL::initHardwareDAC(fast8_t dacPin) {
 }
 
 void HAL::setHardwareDAC(fast8_t id, fast8_t value) {
-    if (id < 0 || id > (NUM_DACS - 1)) {
+    if (id < 0 || id > (static_cast<int>(NUM_DACS) - 1)) {
         return;
     }
     if (value > 255) {
@@ -958,7 +957,7 @@ void TIMER_VECTOR(PWM_TIMER_NUM) {
     pwm_count4 += 16;
 
     if (__HAL_DMA_GET_FLAG(&hdma_adc, __HAL_DMA_GET_TC_FLAG_INDEX(&hdma_adc))) {
-#ifdef DEBUG_TIMING
+#if DEBUG_TIMING
         WRITE(DEBUG_ISR_ANALOG_PIN, 1);
 #endif
         for (int i = 0; i < numAnalogInputs; i++) {
@@ -968,7 +967,7 @@ void TIMER_VECTOR(PWM_TIMER_NUM) {
 #define IO_TARGET IO_TARGET_ANALOG_INPUT_LOOP
 #include "io/redefine.h"
         __HAL_DMA_CLEAR_FLAG(&hdma_adc, __HAL_DMA_GET_TC_FLAG_INDEX(&hdma_adc));
-#ifdef DEBUG_TIMING
+#if DEBUG_TIMING
         WRITE(DEBUG_ISR_ANALOG_PIN, 0);
 #endif
     }

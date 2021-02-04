@@ -418,6 +418,15 @@ void Motion1::setAutolevelActive(bool state, bool silent) {
     }
 }
 
+void Motion1::emergencyStop() {
+    InterruptProtectedBlock block;
+    Motion3::init();
+    Motion2::init();
+    last = first = length = 0;
+    axesHomed = 0;
+    endstopMode = EndstopMode::DISABLED;
+    Printer::setHomedAll(false);
+}
 /// Compute safety margin required by rotation and sheer to not leave allowed region
 void Motion1::updateRotMinMax() {
     bool old = autolevelActive;
@@ -716,6 +725,9 @@ void Motion1::setTmpPositionXYZE(float x, float y, float z, float e) {
 
 // Move with coordinates in official coordinates (before offset, transform, ...)
 bool Motion1::moveByOfficial(float coords[NUM_AXES], float feedrate, bool secondaryMove) {
+    if (Printer::failedMode) {
+        return false;
+    }
     bool movingEAxis = (coords[E_AXIS] != currentPosition[E_AXIS]);
     Printer::unparkSafety();
     FOR_ALL_AXES(i) {
@@ -903,6 +915,9 @@ void Motion1::setToolOffset(float ox, float oy, float oz) {
 
 // Move to the printer coordinates (after offset, transform, ...)
 bool Motion1::moveByPrinter(float coords[NUM_AXES], float feedrate, bool secondaryMove) {
+    if (Printer::failedMode) {
+        return false;
+    }
     bool movingEAxis = (coords[E_AXIS] != destinationPositionTransformed[E_AXIS]);
     Printer::unparkSafety();
     FOR_ALL_AXES(i) {
@@ -1237,9 +1252,9 @@ void Motion1::insertWaitIfNeeded() {
         Motion1Buffer& buf = reserve();
         buf.action = Motion1Action::WAIT;
         if (i == 0) {
-            buf.feedrate = ceilf((300.0 * 1000000.0) * invStepperFrequency);
+            buf.feedrate = ceilf(0.1 * STEPPER_FREQUENCY);
         } else {
-            buf.feedrate = ceilf((20.0 * 1000000.0) * invStepperFrequency);
+            buf.feedrate = ceilf(0.02 * STEPPER_FREQUENCY);
         }
         buf.flags = 0;
         Tool* tool = Tool::getActiveTool();
@@ -1256,7 +1271,7 @@ void Motion1::WarmUp(uint32_t wait, int secondary) {
     waitForXFreeMoves(1);
     Motion1Buffer& buf = reserve();
     buf.action = Motion1Action::WARMUP;
-    buf.feedrate = ceilf((wait * 1000000.0) * invStepperFrequency);
+    buf.feedrate = ceilf(static_cast<float>(wait) * STEPPER_FREQUENCY * 0.000001);
     buf.flags = 0;
     buf.state = Motion1State::FORWARD_PLANNED;
     buf.secondSpeed = secondary;
@@ -2037,7 +2052,7 @@ bool Motion1::simpleHome(fast8_t axis) {
         waitForEndOfMoves();
     } else if (ok) {
         Com::printWarningF(PSTR("Endstop for axis "));
-        Com::printF(axisNames[axis]);
+        Com::printF((const char*)HAL::readFlashAddress(&axisNames[axis]));
         Com::printFLN(PSTR(" did not untrigger for retest!"));
         ok = false;
     }
