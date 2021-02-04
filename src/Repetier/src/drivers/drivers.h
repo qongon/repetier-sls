@@ -34,12 +34,56 @@ public:
     virtual bool isDefect() = 0; /// Return true if sensor is defect
 };
 
-class Sensors {
+class Sensor {
 public:
-    virtual float getTemperature() = 0;
-    virtual float getHumidity() = 0;
-    virtual uint16_t getError() = 0;
+    enum class State : size_t {
+        STATE_OK = 0,
+        STATE_ERROR
+    };
+    virtual bool implementsTachometer() const = 0;
+    virtual bool implementsTemperature() const = 0;
+    virtual bool implementsHumidity() const = 0;
+    virtual PGM_P getName() const = 0;
+    virtual State getState() const = 0;
+    virtual bool start() = 0;
+    virtual bool stop() = 0;
+    virtual bool reset() = 0;
+    virtual bool isBusy() const = 0;
+    virtual bool isStopped() const = 0;
+
+protected:
+    PGM_P name;
+    Sensor(PGM_P _name)
+        : name(_name) { }
+    ~Sensor() { }
 };
+
+class HumiditySensor : public Sensor {
+public:
+    virtual bool implementsTachometer() const final override { return false; }
+    virtual bool implementsTemperature() const final override { return true; }
+    virtual bool implementsHumidity() const final override { return true; }
+    virtual float getTemperature() const = 0;
+    virtual float getHumidity() const = 0;
+protected:
+    HumiditySensor(PGM_P _name)
+        : Sensor(_name) { }
+    ~HumiditySensor() { }
+};
+
+class TachometerSensor : public Sensor {
+public:
+    virtual bool implementsTachometer() const final override { return true; }
+    virtual bool implementsTemperature() const final override { return false; }
+    virtual bool implementsHumidity() const final override { return false; }
+    virtual uint32_t getRPM() const = 0;
+protected:
+    TachometerSensor(PGM_P _name)
+        : Sensor(_name) { }
+    ~TachometerSensor() { }
+};
+
+
 extern void motorEndstopTriggered(fast8_t axis, bool dir);
 extern void endstopTriggered(fast8_t axis, bool dir);
 

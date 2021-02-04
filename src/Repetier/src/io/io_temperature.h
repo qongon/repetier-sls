@@ -43,6 +43,7 @@ IO_TEMPERATURE_TABLE(name,analog,table)
 #undef IO_TEMP_TABLE_PTC
 #undef IO_TEMPERATURE_TABLE
 #undef IO_TEMPERATURE_BETA
+#undef IO_TEMPERATURE_DHT
 #undef IO_TEMPERATURE_MAX31855
 #undef IO_TEMPERATURE_MAX6675
 #undef IO_TEMPERATURE_FAKE
@@ -55,6 +56,7 @@ IO_TEMPERATURE_TABLE(name,analog,table)
 #define IO_TEMP_TABLE_PTC(name, dataname)
 #define IO_TEMPERATURE_TABLE(name, analog, table)
 #define IO_TEMPERATURE_BETA(name, analog, beta, seriesResistance, thermistorR25, cCoefficient)
+#define IO_TEMPERATURE_DHT(name, dhtDriver)
 #define IO_TEMPERATURE_MAX31855(name, spiDriver)
 #define IO_TEMPERATURE_MAX6675(name, spiDriver)
 
@@ -127,6 +129,17 @@ public:
     }; \
     extern name##Class name;
 
+#define IO_TEMPERATURE_DHT(name, dhtDriver) \
+    class name##Class : public IOTemperature { \
+    public: \
+        float get() { \
+            return dhtDriver.getTemperature(); \
+        } \
+        bool isDefect() { \
+            return (dhtDriver.getState() == Sensor::State::STATE_ERROR); \
+        } \
+    }; \
+    extern name##Class name;
 // https://datasheets.maximintegrated.com/en/ds/MAX31855.pdf
 #define IO_TEMPERATURE_MAX31855(name, spiDriver) \
     class name##Class : public IOTemperature { \
@@ -270,6 +283,9 @@ public:
 #define IO_TEMPERATURE_BETA(name, analog, beta, seriesResistance, thermistorR25, cCoefficient) \
     name##Class name;
 
+#define IO_TEMPERATURE_DHT(name, dhtDriver) \
+    name##Class name;
+
 #define IO_TEMPERATURE_MAX31855(name, spiDriver) \
     name##Class name;
 
@@ -298,6 +314,9 @@ public:
 #endif
 #ifndef IO_TEMPERATURE_BETA
 #define IO_TEMPERATURE_BETA(name, analog, beta, seriesResistance, thermistorR25, cCoefficient)
+#endif
+#ifndef IO_TEMPERATURE_DHT
+#define IO_TEMPERATURE_DHT(name, dhtDriver)
 #endif
 #ifndef IO_TEMPERATURE_MAX31855
 #define IO_TEMPERATURE_MAX31855(name, spiDriver)

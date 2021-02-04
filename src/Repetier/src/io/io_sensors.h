@@ -29,18 +29,6 @@
         name.process(); \
     }
 
-#elif IO_TARGET == IO_TARGET_INIT
-
-#define SENSOR_DHT_22(name, signalPin) \
-    name.reattachIntFunc = +[] { \
-        attachInterrupt( \
-            (CPU_ARCH != ARCH_AVR) ? signalPin::pin() : digitalPinToInterrupt(signalPin::pin()), \
-            [] { \
-                name.pinInterrupt(); \
-            }, \
-            CHANGE); \
-    };
-
 #elif IO_TARGET == IO_TARGET_CLASS_DEFINITION
 
 #define SENSOR_DHT_22(name, signalPin) \
@@ -49,7 +37,8 @@
 #elif IO_TARGET == IO_TARGET_DEFINE_VARIABLES
 
 #define SENSOR_DHT_22(name, signalPin) \
-    SensorDHT22<signalPin> name;
+    SensorDHT22<signalPin> name(PSTR(#name), [] { name.pinInterrupt(); });
+
 
 #elif IO_TARGET == IO_TARGET_TOOLS_TEMPLATES
 
