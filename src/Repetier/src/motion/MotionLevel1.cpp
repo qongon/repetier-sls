@@ -529,6 +529,8 @@ void Motion1::waitForXFreeMoves(fast8_t n, bool allowMoves) {
 }
 
 Motion1Buffer& Motion1::reserve() {
+    // DEBUG_MSG_FAST("RES");
+    waitForXFreeMoves(1);
     InterruptProtectedBlock noInts;
     fast8_t idx = first;
     first++;
@@ -912,7 +914,6 @@ void Motion1::moveRelativeBySteps(int32_t coords[NUM_AXES]) {
     waitForEndOfMoves();
     int32_t lpos[NUM_AXES];
     Motion2::copyMotorPos(lpos);
-    waitForXFreeMoves(1);
     Motion1Buffer& buf = reserve();
     buf.flags = 0;
     buf.action = Motion1Action::MOVE_STEPS;
@@ -1009,7 +1010,6 @@ bool Motion1::queueMove(float feedrate, bool secondaryMove) {
         }
         wasLastSecondary = secondaryMove;
     }
-    waitForXFreeMoves(1);
     Motion1Buffer& buf = reserve(); // Buffer is blocked because state is set to FREE!
 
     buf.length = sqrtf(length2);
@@ -1145,7 +1145,6 @@ void Motion1::insertWaitIfNeeded() {
         return;
     }
     for (fast8_t i = 0; i <= NUM_MOTION2_BUFFER; i++) {
-        waitForXFreeMoves(1);
         Motion1Buffer& buf = reserve();
         buf.action = Motion1Action::WAIT;
         if (i == 0) {
@@ -1165,7 +1164,6 @@ void Motion1::insertWaitIfNeeded() {
 }
 
 void Motion1::WarmUp(uint32_t wait, int secondary) {
-    waitForXFreeMoves(1);
     Motion1Buffer& buf = reserve();
     buf.action = Motion1Action::WARMUP;
     buf.feedrate = ceilf(static_cast<float>(wait) * STEPPER_FREQUENCY * 0.000001);
