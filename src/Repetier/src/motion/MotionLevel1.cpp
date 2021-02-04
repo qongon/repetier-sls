@@ -1638,10 +1638,6 @@ void Motion1::homeAxes(fast8_t axes) {
     if (axes == 0) {
         axes = 127; // default is home all axes
     }
-    if (Printer::breakLongCommand) {
-        GUI::popBusy();
-        return;
-    }
     waitForEndOfMoves();
     float oldCoordinates[NUM_AXES];
     copyCurrentOfficial(oldCoordinates); // store to redo position when finished
@@ -1656,12 +1652,6 @@ void Motion1::homeAxes(fast8_t axes) {
             waitForEndOfMoves();
             // zAmountRaised = ZHOME_PRE_RAISE_DISTANCE;
         }
-    }
-
-    if (Printer::breakLongCommand) {
-        Printer::setHoming(false);
-        GUI::popBusy();
-        return;
     }
 #endif
     // We measure in printer coordinates, so deactivate all corrections
@@ -1685,7 +1675,7 @@ void Motion1::homeAxes(fast8_t axes) {
 #endif
     for (int priority = 0; priority <= 10; priority++) {
         FOR_ALL_AXES(i) {
-            if (((axisBits[i] & axes) == 0 && axes != 0) || Printer::breakLongCommand) {
+            if ((axisBits[i] & axes) == 0 && axes != 0) {
                 continue;
             }
             if (homePriority[i] == priority) {
@@ -1728,27 +1718,24 @@ void Motion1::homeAxes(fast8_t axes) {
     Printer::setHoming(false);
 
     // Test if all axes are homed
-    bool ok = !Printer::breakLongCommand;
-    if (ok) {
-        FOR_ALL_AXES(i) {
-            if (homePriority[i] >= 0 && isAxisHomed(i) == false) {
-                ok = false;
-                break;
-            }
+    bool ok = true;
+    FOR_ALL_AXES(i) {
+        if (homePriority[i] >= 0 && isAxisHomed(i) == false) {
+            ok = false;
         }
-        Printer::setHomedAll(ok);
-        // Reactivate corrections
-        setAutolevelActive(isAL, true);
-        // Todo: how to properly handle a break but prevent autolevel's moves?
-        Leveling::setDistortionEnabled(bcActive);
     }
-    if ((axes & axisBits[Z_AXIS]) && !Printer::breakLongCommand) {
+    Printer::setHomedAll(ok);
+    // Reactivate corrections
+    setAutolevelActive(isAL);
+    Leveling::setDistortionEnabled(bcActive);
+
+    if (axes & axisBits[Z_AXIS]) {
         Motion1::correctBumpOffset(); // activate bump offset, needs distorion enabled to have an effect!
         // Add z probe correctons
-        waitForEndOfMoves();
         int32_t motorPos[NUM_AXES];
         float oldPos[NUM_AXES];
         copyCurrentPrinter(oldPos);
+        waitForEndOfMoves();
         int32_t* lp = Motion2::lastMotorPos[Motion2::lastMotorIdx];
         FOR_ALL_AXES(i) {
             motorPos[i] = lp[i];
@@ -1768,7 +1755,7 @@ void Motion1::homeAxes(fast8_t axes) {
         if (homeDir[Z_AXIS] < 0 && ZProbe != nullptr) {
             zpCorr += ZProbeHandler::getCoating() - ZProbeHandler::getZProbeHeight();
         }
-        if (zpCorr != 0.0f && !Printer::breakLongCommand) { // anything to do?
+        if (zpCorr != 0.0f) { // anything to do?
             setTmpPositionXYZ(IGNORE_COORDINATE, IGNORE_COORDINATE, zpCorr);
             bool isNoDest = Printer::isNoDestinationCheck();
             Printer::setNoDestinationCheck(true);
@@ -1801,7 +1788,6 @@ void Motion1::homeAxes(fast8_t axes) {
     if (Tool::getActiveTool() != nullptr && ok && (axes & 7) != 0) { // select only if all is homed or we get unwanted moves! Also only do it if position has changed allowing homing of non position axis in extruder selection.
         Tool::selectTool(activeToolId, true);
     }
-
     Motion1::printCurrentPosition();
     GUI::popBusy();
     setHardwareEndstopsAttached(ALWAYS_CHECK_ENDSTOPS, nullptr);
@@ -1897,10 +1883,7 @@ bool Motion1::simpleHome(fast8_t axis) {
         Motion2::setMotorPositionFromTransformed();
         return true;
     }
-    bool ok = !Printer::breakLongCommand;
-    if (!ok) {
-        return false;
-    }
+    bool ok = true;
     EndstopDriver& eStop = endstopForAxisDir(axis, homeDir[axis] > 0);
     const float secureDistance = (maxPosOff[axis] - minPosOff[axis]) * 1.5f;
     const EndstopMode oldMode = endstopMode;
@@ -1913,12 +1896,6 @@ bool Motion1::simpleHome(fast8_t axis) {
     }
     setHardwareEndstopsAttached(true, &eStop);
     waitForEndOfMoves(); // defined starting condition
-    ok = !Printer::breakLongCommand;
-    // First test
-    if (!ok) {
-        endstopMode = oldMode;
-        return false;
-    }
 
     // First test
     dest[axis] = homeDir[axis] * secureDistance;
@@ -1937,7 +1914,7 @@ bool Motion1::simpleHome(fast8_t axis) {
     Motion1::axesTriggered = 0;
     moveRelativeByOfficial(dest, homingFeedrate[axis], false);
     waitForEndOfMoves();
-    ok = !Printer::breakLongCommand;
+
     // retest
     endstopMode = newMode;
     dest[axis] = homeDir[axis] * homeRetestDistance[axis] * 1.5f;
@@ -1945,13 +1922,12 @@ bool Motion1::simpleHome(fast8_t axis) {
     if (!eStop.update()) {
         moveRelativeByOfficial(dest, homingFeedrate[axis] / homeRetestReduction[axis], false);
         waitForEndOfMoves();
-    } else if (ok) {
+    } else {
         Com::printWarningF(PSTR("Endstop for axis "));
         Com::printF((const char*)HAL::readFlashAddress(&axisNames[axis]));
         Com::printFLN(PSTR(" did not untrigger for retest!"));
         ok = false;
     }
-
     updatePositionsFromCurrent();
     Motion2::setMotorPositionFromTransformed();
     HAL::delayMilliseconds(30);
@@ -1993,19 +1969,14 @@ bool Motion1::simpleHome(fast8_t axis) {
     }
     endstopMode = EndstopMode::DISABLED;
     setHardwareEndstopsAttached(false, &eStop);
-    if (Printer::breakLongCommand) {
-        ok = false;
-    }
 
-    if (ok) {
-        moveRelativeByOfficial(dest, homingFeedrate[axis], false); // also adds toolOffset!
-        waitForEndOfMoves();
-        currentPosition[axis] = curPos;
-        updatePositionsFromCurrent();
-        Motion2::setMotorPositionFromTransformed();
-        setAxisHomed(axis, true);
-    }
+    moveRelativeByOfficial(dest, homingFeedrate[axis], false); // also adds toolOffset!
+    waitForEndOfMoves();
+    currentPosition[axis] = curPos;
+    updatePositionsFromCurrent();
+    Motion2::setMotorPositionFromTransformed();
     endstopMode = oldMode;
+    setAxisHomed(axis, true);
     Motion1::axesTriggered = 0;
     return ok;
 }
