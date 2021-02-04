@@ -15,6 +15,7 @@ bool GUI::contentChanged = false;                                 ///< set to tr
 GUIAction GUI::nextAction = GUIAction::NONE;                      ///< Next action to execute on opdate
 int GUI::nextActionRepeat = 0;                                    ///< Increment for next/previous
 
+bool GUI::internalContentChanged = false;    ///< content was changed inside refresh() but needs to wait until following menu completely renders
 #if ENCODER_MAX_REPEAT_STEPS != 0
 uint8_t GUI::maxActionRepeatStep = ENCODER_MAX_REPEAT_STEPS;      ///< Max amount of extra encoder repeat steps
 uint16_t GUI::maxActionRepeatTimeMS = ENCODER_MAX_REPEAT_TIME_MS; ///< Clicks longer than this will not recieve any extra steps
@@ -154,6 +155,11 @@ void GUI::update() {
     }
     if ((statusLevel == GUIStatusLevel::BUSY || textIsScrolling) && timeDiff > 500) {
         contentChanged = true; // for faster spinning icon
+    }
+    if (internalContentChanged) {
+        // Content was changed inside refresh() but needs to wait until following menu completely renders
+        internalContentChanged = false;
+        contentChanged = true;
     }
     if (timeDiff < 60000 && (timeDiff > 1000 || contentChanged)) {
         // Com::printFLN(PSTR("upd:"), (int32_t)timeDiff);

@@ -94,6 +94,7 @@ U8G2_KS0108_128X64_2 lcd(DISPLAY_ROTATION, UI_DISPLAY_D0_PIN, UI_DISPLAY_D1_PIN,
 #endif
 #endif
 
+static bool showingScrollbar;
 static millis_t init100msTicks;
 void GUI::driverInit() {
     init100msTicks = 0;
@@ -303,16 +304,24 @@ void GUI::menuFloatP(GUIAction& action, PGM_P text, float val, int precision, Gu
         if (guiLine >= topRow[level] && guiLine < topRow[level] + 5) {
             bufClear();
             bufAddStringP(text);
-            bufAddFloat(val, 0, precision);
             guiY += 10;
             if (guiLine == cursorRow[level]) {
                 lcd.drawBox(0, guiY - 8, 128, 10);
                 lcd.setDrawColor(0);
-                lcd.drawUTF8(10, guiY, GUI::buf);
+                lcd.drawUTF8(8, guiY, GUI::buf);
                 lcd.drawGlyph(0, guiY, '>');
-                lcd.setDrawColor(1);
             } else {
-                lcd.drawUTF8(10, guiY, GUI::buf);
+                lcd.drawUTF8(2, guiY, GUI::buf);
+            }
+            bufClear();
+            bufAddFloat(val, 0, precision);
+            if (!showingScrollbar) {
+                lcd.drawUTF8(128 - (6 * GUI::bufPos), guiY, GUI::buf);
+            } else {
+                lcd.drawUTF8((118 + 4) - (6 * GUI::bufPos), guiY, GUI::buf);
+            }
+            if (guiLine == cursorRow[level]) {
+                lcd.setDrawColor(1);
             }
         }
     } else if (action == GUIAction::NEXT) {
@@ -340,16 +349,24 @@ void GUI::menuLongP(GUIAction& action, PGM_P text, long val, GuiCallback cb, voi
         if (guiLine >= topRow[level] && guiLine < topRow[level] + 5) {
             bufClear();
             bufAddStringP(text);
-            bufAddLong(val, 0);
             guiY += 10;
             if (guiLine == cursorRow[level]) {
                 lcd.drawBox(0, guiY - 8, 128, 10);
                 lcd.setDrawColor(0);
-                lcd.drawUTF8(10, guiY, GUI::buf);
+                lcd.drawUTF8(8, guiY, GUI::buf);
                 lcd.drawGlyph(0, guiY, '>');
-                lcd.setDrawColor(1);
             } else {
-                lcd.drawUTF8(10, guiY, GUI::buf);
+                lcd.drawUTF8(2, guiY, GUI::buf);
+            }
+            bufClear();
+            bufAddLong(val, 0);
+            if (!showingScrollbar) {
+                lcd.drawUTF8(128 - (6 * GUI::bufPos), guiY, GUI::buf);
+            } else {
+                lcd.drawUTF8((118 + 4) - (6 * GUI::bufPos), guiY, GUI::buf);
+            }
+            if (guiLine == cursorRow[level]) {
+                lcd.setDrawColor(1);
             }
         }
     } else if (action == GUIAction::NEXT) {
@@ -377,20 +394,28 @@ void GUI::menuOnOffP(GUIAction& action, PGM_P text, bool val, GuiCallback cb, vo
         if (guiLine >= topRow[level] && guiLine < topRow[level] + 5) {
             bufClear();
             bufAddStringP(text);
+            guiY += 10;
+            if (guiLine == cursorRow[level]) {
+                lcd.drawBox(0, guiY - 8, 128, 10);
+                lcd.setDrawColor(0);
+                lcd.drawUTF8(8, guiY, GUI::buf);
+                lcd.drawGlyph(0, guiY, '>');
+            } else {
+                lcd.drawUTF8(2, guiY, GUI::buf);
+            }
+            bufClear();
             if (val) {
                 bufAddStringP(PSTR("On"));
             } else {
                 bufAddStringP(PSTR("Off"));
             }
-            guiY += 10;
-            if (guiLine == cursorRow[level]) {
-                lcd.drawBox(0, guiY - 8, 128, 10);
-                lcd.setDrawColor(0);
-                lcd.drawUTF8(10, guiY, GUI::buf);
-                lcd.drawGlyph(0, guiY, '>');
-                lcd.setDrawColor(1);
+            if (!showingScrollbar) {
+                lcd.drawUTF8(128 - (6 * GUI::bufPos), guiY, GUI::buf);
             } else {
-                lcd.drawUTF8(10, guiY, GUI::buf);
+                lcd.drawUTF8((118 + 4) - (6 * GUI::bufPos), guiY, GUI::buf);
+            }
+            if (guiLine == cursorRow[level]) {
+                lcd.setDrawColor(1);
             }
         }
     } else if (action == GUIAction::NEXT) {
@@ -426,11 +451,11 @@ void GUI::menuSelectableP(GUIAction& action, PGM_P text, GuiCallback cb, void* c
             if (guiLine == cursorRow[level]) {
                 lcd.drawBox(0, guiY - 8, 128, 10);
                 lcd.setDrawColor(0);
-                scrollSelectedText(10, guiY);
+                scrollSelectedText(8, guiY);
                 lcd.drawGlyph(0, guiY, '>');
                 lcd.setDrawColor(1);
             } else {
-                lcd.drawUTF8(10, guiY, GUI::buf);
+                lcd.drawUTF8(2, guiY, GUI::buf);
             }
         }
     } else if (action == GUIAction::NEXT) {
@@ -499,16 +524,24 @@ void GUI::menuFloat(GUIAction& action, char* text, float val, int precision, Gui
         if (guiLine >= topRow[level] && guiLine < topRow[level] + 5) {
             bufClear();
             bufAddString(text);
-            bufAddFloat(val, 0, precision);
             guiY += 10;
             if (guiLine == cursorRow[level]) {
                 lcd.drawBox(0, guiY - 8, 128, 10);
                 lcd.setDrawColor(0);
-                lcd.drawUTF8(10, guiY, GUI::buf);
+                lcd.drawUTF8(8, guiY, GUI::buf);
                 lcd.drawGlyph(0, guiY, '>');
-                lcd.setDrawColor(1);
             } else {
-                lcd.drawUTF8(10, guiY, GUI::buf);
+                lcd.drawUTF8(2, guiY, GUI::buf);
+            }
+            bufClear();
+            bufAddFloat(val, 0, precision);
+            if (!showingScrollbar) {
+                lcd.drawUTF8(128 - (6 * GUI::bufPos), guiY, GUI::buf);
+            } else {
+                lcd.drawUTF8((118 + 4) - (6 * GUI::bufPos), guiY, GUI::buf);
+            }
+            if (guiLine == cursorRow[level]) {
+                lcd.setDrawColor(1);
             }
         }
     } else if (action == GUIAction::NEXT) {
@@ -536,16 +569,24 @@ void GUI::menuLong(GUIAction& action, char* text, long val, GuiCallback cb, void
         if (guiLine >= topRow[level] && guiLine < topRow[level] + 5) {
             bufClear();
             bufAddString(text);
-            bufAddLong(val, 0);
             guiY += 10;
             if (guiLine == cursorRow[level]) {
                 lcd.drawBox(0, guiY - 8, 128, 10);
                 lcd.setDrawColor(0);
-                lcd.drawUTF8(10, guiY, GUI::buf);
+                lcd.drawUTF8(8, guiY, GUI::buf);
                 lcd.drawGlyph(0, guiY, '>');
-                lcd.setDrawColor(1);
             } else {
-                lcd.drawUTF8(10, guiY, GUI::buf);
+                lcd.drawUTF8(2, guiY, GUI::buf);
+            }
+            bufClear();
+            bufAddLong(val, 0);
+            if (!showingScrollbar) {
+                lcd.drawUTF8(128 - (6 * GUI::bufPos), guiY, GUI::buf);
+            } else {
+                lcd.drawUTF8((118 + 4) - (6 * GUI::bufPos), guiY, GUI::buf);
+            }
+            if (guiLine == cursorRow[level]) {
+                lcd.setDrawColor(1);
             }
         }
     } else if (action == GUIAction::NEXT) {
@@ -573,20 +614,28 @@ void GUI::menuOnOff(GUIAction& action, char* text, bool val, GuiCallback cb, voi
         if (guiLine >= topRow[level] && guiLine < topRow[level] + 5) {
             bufClear();
             bufAddString(text);
+            guiY += 10;
+            if (guiLine == cursorRow[level]) {
+                lcd.drawBox(0, guiY - 8, 128, 10);
+                lcd.setDrawColor(0);
+                lcd.drawUTF8(8, guiY, GUI::buf);
+                lcd.drawGlyph(0, guiY, '>');
+            } else {
+                lcd.drawUTF8(2, guiY, GUI::buf);
+            }
+            bufClear();
             if (val) {
                 bufAddStringP(PSTR("On"));
             } else {
                 bufAddStringP(PSTR("Off"));
             }
-            guiY += 10;
-            if (guiLine == cursorRow[level]) {
-                lcd.drawBox(0, guiY - 8, 128, 10);
-                lcd.setDrawColor(0);
-                lcd.drawUTF8(10, guiY, GUI::buf);
-                lcd.drawGlyph(0, guiY, '>');
-                lcd.setDrawColor(1);
+            if (!showingScrollbar) {
+                lcd.drawUTF8(128 - (6 * GUI::bufPos), guiY, GUI::buf);
             } else {
-                lcd.drawUTF8(10, guiY, GUI::buf);
+                lcd.drawUTF8((118 + 4) - (6 * GUI::bufPos), guiY, GUI::buf);
+            }
+            if (guiLine == cursorRow[level]) {
+                lcd.setDrawColor(1);
             }
         }
     } else if (action == GUIAction::NEXT) {
@@ -622,11 +671,11 @@ void GUI::menuSelectable(GUIAction& action, char* text, GuiCallback cb, void* cD
             if (guiLine == cursorRow[level]) {
                 lcd.drawBox(0, guiY - 8, 128, 10);
                 lcd.setDrawColor(0);
-                scrollSelectedText(10, guiY);
+                scrollSelectedText(8, guiY);
                 lcd.drawGlyph(0, guiY, '>');
                 lcd.setDrawColor(1);
             } else {
-                lcd.drawUTF8(10, guiY, GUI::buf);
+                lcd.drawUTF8(2, guiY, GUI::buf);
             }
         }
     } else if (action == GUIAction::NEXT) {
@@ -722,10 +771,10 @@ void GUI::resetScrollbarTimer() {
 void GUI::showScrollbar(GUIAction& action, float percent, uint16_t min, uint16_t max) {
     if (action == GUIAction::DRAW) {
         if (min == max) {
+            showingScrollbar = false;
             return;
         }
         static float lastPos = 0.0f;
-        
         uint16_t pxSize = static_cast<uint16_t>((static_cast<float>(min) / static_cast<float>(max)) * 35.0f);
         if (pxSize < 5.0f) {
             pxSize = 5.0f;
@@ -734,7 +783,15 @@ void GUI::showScrollbar(GUIAction& action, float percent, uint16_t min, uint16_t
         if (percent != lastPos) {
             lastScrollUpdate = HAL::timeInMilliseconds();
         } else if ((HAL::timeInMilliseconds() - lastScrollUpdate) > 750ul) {
+            if (showingScrollbar) {
+                showingScrollbar = false;
+                internalContentChanged = true; // Force any right-side values to readjust positions
+            }
             return;
+        }
+        if (!showingScrollbar) {
+            showingScrollbar = true;
+            internalContentChanged = true;
         }
         lastPos = percent;
         lcd.setDrawColor(0u);
@@ -750,6 +807,8 @@ void GUI::showScrollbar(GUIAction& action) {
         if (length[level] > 5) {
             float percent = static_cast<float>(topRow[level]) / static_cast<float>(length[level] - 5);
             showScrollbar(action, percent, 5u, static_cast<uint16_t>(length[level]));
+        } else {
+            showingScrollbar = false;
         }
     }
 }

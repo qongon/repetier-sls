@@ -154,6 +154,7 @@ public:
     static millis_t lastAction;                  ///< Last action time for autoreturn to display
     static GUIBootState curBootState;            ///< GUI boot sequence state
     static bool contentChanged;                  ///< set to true if forced refresh is wanted
+    static bool internalContentChanged;          ///< content was changed inside refresh() but needs to wait until following menu completely renders
     static char status[MAX_COLS + 1];            ///< Status Line
     static char buf[MAX_COLS + 1];               ///< Buffer to build strings
     static char tmpString[MAX_COLS + 1];         ///< Buffer to build strings

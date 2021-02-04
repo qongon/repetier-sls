@@ -294,24 +294,30 @@
 #elif IO_TARGET == IO_TARGET_GUI_CONTROLS // Control tools manipulate menu
 
 #define TOOL_EXTRUDER(name, offx, offy, offz, heater, stepper, diameter, resolution, yank, maxSpeed, acceleration, advance, startScript, endScript, fan) \
-    GUI::menuLongP(action, PSTR("Extruder "), name.getToolId() + 1, menuControl##name, nullptr, GUIPageType::MENU);
+    GUI::flashToStringLong(GUI::tmpString, PSTR("Extruder @"), name.getToolId() + 1); \
+    GUI::menuSelectable(action, GUI::tmpString, menuControl##name, nullptr, GUIPageType::MENU);
 
 #define TOOL_LASER(name, offx, offy, offz, output, toolPin, enablePin, milliWatt, warmupUS, warmupPWM, bias, gamma, startScript, endScript) \
-    GUI::menuLongP(action, PSTR("Laser "), name.getToolId() + 1, menuControl##name, nullptr, GUIPageType::MENU);
+    GUI::flashToStringLong(GUI::tmpString, PSTR("Laser @"), name.getToolId() + 1); \
+    GUI::menuSelectable(action, GUI::tmpString, menuControl##name, nullptr, GUIPageType::MENU); 
 
 #define TOOL_CNC(name, offx, offy, offz, output, dirPin, toolPin, enablePin, rpm, startStopDelay, startScript, endScript) \
-    GUI::menuLongP(action, PSTR("CNC "), name.getToolId() + 1, menuControl##name, nullptr, GUIPageType::MENU);
+    GUI::flashToStringLong(GUI::tmpString, PSTR("CNC @"), name.getToolId() + 1); \
+    GUI::menuSelectable(action, GUI::tmpString, menuControl##name, nullptr, GUIPageType::MENU); 
 
 #elif IO_TARGET == IO_TARGET_GUI_CONFIG // config menu
 
 #define TOOL_EXTRUDER(name, offx, offy, offz, heater, stepper, diameter, resolution, yank, maxSpeed, acceleration, advance, startScript, endScript, fan) \
-    GUI::menuLongP(action, PSTR("Extruder "), name.getToolId() + 1, menuConfig##name, nullptr, GUIPageType::MENU);
+    GUI::flashToStringLong(GUI::tmpString, PSTR("Extruder @"), name.getToolId() + 1); \
+    GUI::menuSelectable(action, GUI::tmpString, menuConfig##name, nullptr, GUIPageType::MENU);
 
 #define TOOL_LASER(name, offx, offy, offz, output, toolPin, enablePin, milliWatt, warmupUS, warmupPWM, bias, gamma, startScript, endScript) \
-    GUI::menuLongP(action, PSTR("Laser "), name.getToolId() + 1, menuConfig##name, nullptr, GUIPageType::MENU);
+    GUI::flashToStringLong(GUI::tmpString, PSTR("Laser @"), name.getToolId() + 1); \
+    GUI::menuSelectable(action, GUI::tmpString, menuConfig##name, nullptr, GUIPageType::MENU); 
 
 #define TOOL_CNC(name, offx, offy, offz, output, dirPin, toolPin, enablePin, rpm, startStopDelay, startScript, endScript) \
-    GUI::menuLongP(action, PSTR("CNC "), name.getToolId() + 1, menuConfig##name, nullptr, GUIPageType::MENU);
+    GUI::flashToStringLong(GUI::tmpString, PSTR("CNC @"), name.getToolId() + 1); \
+    GUI::menuSelectable(action, GUI::tmpString, menuConfig##name, nullptr, GUIPageType::MENU); 
 
 #define JAM_DETECTOR_HW(name, observer, inputPin, tool, distanceSteps, jitterSteps, jamPercentage) \
     GUI::menuLongP(action, PSTR("Jam Detector "), tool.getToolId() + 1, menuConfig##name, nullptr, GUIPageType::MENU);
@@ -319,13 +325,16 @@
 #elif IO_TARGET == IO_TARGET_GUI_TUNE // Control tune manipulate menu
 
 #define TOOL_EXTRUDER(name, offx, offy, offz, heater, stepper, diameter, resolution, yank, maxSpeed, acceleration, advance, startScript, endScript, fan) \
-    GUI::menuLongP(action, PSTR("Extruder "), name.getToolId() + 1, menuTune##name, nullptr, GUIPageType::MENU);
+    GUI::flashToStringLong(GUI::tmpString, PSTR("Extruder @"), name.getToolId() + 1); \
+    GUI::menuSelectable(action, GUI::tmpString, menuTune##name, nullptr, GUIPageType::MENU);
 
 #define TOOL_LASER(name, offx, offy, offz, output, toolPin, enablePin, milliWatt, warmupUS, warmupPWM, bias, gamma, startScript, endScript) \
-    GUI::menuLongP(action, PSTR("Laser "), name.getToolId() + 1, menuTune##name, nullptr, GUIPageType::MENU);
+    GUI::flashToStringLong(GUI::tmpString, PSTR("Laser @"), name.getToolId() + 1); \
+    GUI::menuSelectable(action, GUI::tmpString, menuTune##name, nullptr, GUIPageType::MENU); 
 
 #define TOOL_CNC(name, offx, offy, offz, output, dirPin, toolPin, enablePin, rpm, startStopDelay, startScript, endScript) \
-    GUI::menuLongP(action, PSTR("CNC "), name.getToolId() + 1, menuTune##name, nullptr, GUIPageType::MENU);
+    GUI::flashToStringLong(GUI::tmpString, PSTR("CNC @"), name.getToolId() + 1); \
+    GUI::menuSelectable(action, GUI::tmpString, menuTune##name, nullptr, GUIPageType::MENU); 
 
 #endif
 

@@ -1014,7 +1014,8 @@ void __attribute__((weak)) menuConfig(GUIAction action, void* data) {
     GUI::menuBack(action);
 #if EEPROM_MODE > 0
     if (!Printer::isNativeUSB()) {
-        GUI::menuLongP(action, PSTR("Baudrate:"), baudrate, menuBaudrate, nullptr, GUIPageType::FIXED_CONTENT);
+        GUI::flashToStringLong(GUI::tmpString, PSTR("Baudrate: @"), baudrate);
+        GUI::menuSelectable(action, GUI::tmpString, menuBaudrate, nullptr, GUIPageType::FIXED_CONTENT);
     }
 #endif
 #if NUM_BEEPERS > 0
