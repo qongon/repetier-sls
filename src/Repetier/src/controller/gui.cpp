@@ -915,7 +915,7 @@ void directAction(GUIAction action, void* data) {
         break;
     case GUI_DIRECT_ACTION_FACTORY_RESET:
         EEPROM::restoreEEPROMSettingsFromConfiguration();
-        GUI::setStatusP(PSTR("Factory Setting Act."), GUIStatusLevel::INFO);
+        GUI::setStatusP(PSTR("Reset\nTo factory defaults."), GUIStatusLevel::INFO);
         break;
     case GUI_DIRECT_ACTION_STORE_EEPROM:
 #if EEPROM_MODE > 0
