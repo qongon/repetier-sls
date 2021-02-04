@@ -159,7 +159,7 @@ void __attribute__((weak)) menuToolOffsetX(GUIAction action, void* data) {
         ext->setOffsetForAxis(X_AXIS, v);
         Tool::updateDerivedTools();
     } else {
-        GUI::replaceOn(GUIAction::CLICK, menuToolOffsetXFine, data, GUIPageType::FIXED_CONTENT);
+        GUI::pushOn(GUIAction::CLICK, menuToolOffsetXFine, data, GUIPageType::FIXED_CONTENT);
     }
 }
 
@@ -179,7 +179,7 @@ void __attribute__((weak)) menuToolOffsetY(GUIAction action, void* data) {
         ext->setOffsetForAxis(Y_AXIS, v);
         Tool::updateDerivedTools();
     } else {
-        GUI::replaceOn(GUIAction::CLICK, menuToolOffsetYFine, data, GUIPageType::FIXED_CONTENT);
+        GUI::pushOn(GUIAction::CLICK, menuToolOffsetYFine, data, GUIPageType::FIXED_CONTENT);
     }
 }
 
@@ -199,7 +199,7 @@ void __attribute__((weak)) menuToolOffsetZ(GUIAction action, void* data) {
         ext->setOffsetForAxis(Z_AXIS, v);
         Tool::updateDerivedTools();
     } else {
-        GUI::replaceOn(GUIAction::CLICK, menuToolOffsetZFine, data, GUIPageType::FIXED_CONTENT);
+        GUI::pushOn(GUIAction::CLICK, menuToolOffsetZFine, data, GUIPageType::FIXED_CONTENT);
     }
 }
 
@@ -219,7 +219,7 @@ void __attribute__((weak)) menuExtruderStepsPerMM(GUIAction action, void* data) 
         ext->setResolution(v);
         Tool::updateDerivedTools();
     } else {
-        GUI::replaceOn(GUIAction::CLICK, menuExtruderStepsPerMMFine, data, GUIPageType::FIXED_CONTENT);
+        GUI::pushOn(GUIAction::CLICK, menuExtruderStepsPerMMFine, data, GUIPageType::FIXED_CONTENT);
     }
 }
 

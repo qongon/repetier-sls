@@ -43,7 +43,7 @@ void __attribute__((weak)) menuMoveAxis(GUIAction action, void* data) {
         Motion1::tmpPosition[axis] = v;
         Motion1::moveByOfficial(Motion1::tmpPosition, Motion1::moveFeedrate[axis], false);
     } else {
-        GUI::replaceOn(GUIAction::CLICK, menuMoveAxisFine, data, GUIPageType::FIXED_CONTENT);
+        GUI::pushOn(GUIAction::CLICK, menuMoveAxisFine, data, GUIPageType::FIXED_CONTENT);
     }
 }
 
@@ -71,7 +71,7 @@ void __attribute__((weak)) menuStepsPerMM(GUIAction action, void* data) {
     if (GUI::handleFloatValueAction(action, v, 0, 100000, 1.0)) {
         Motion1::resolution[axis] = v;
     } else {
-        GUI::replaceOn(GUIAction::CLICK, menuStepsPerMMFine, data, GUIPageType::FIXED_CONTENT);
+        GUI::pushOn(GUIAction::CLICK, menuStepsPerMMFine, data, GUIPageType::FIXED_CONTENT);
     }
 }
 
@@ -91,7 +91,7 @@ void __attribute__((weak)) menuMinPos(GUIAction action, void* data) {
     if (GUI::handleFloatValueAction(action, v, -2000, 2000, 1.0)) {
         Motion1::minPos[axis] = v;
     } else {
-        GUI::replaceOn(GUIAction::CLICK, menuMinPosFine, data, GUIPageType::FIXED_CONTENT);
+        GUI::pushOn(GUIAction::CLICK, menuMinPosFine, data, GUIPageType::FIXED_CONTENT);
     }
 }
 
@@ -111,7 +111,7 @@ void __attribute__((weak)) menuMaxPos(GUIAction action, void* data) {
     if (GUI::handleFloatValueAction(action, v, -2000, 2000, 1.0)) {
         Motion1::maxPos[axis] = v;
     } else {
-        GUI::replaceOn(GUIAction::CLICK, menuMaxPosFine, data, GUIPageType::FIXED_CONTENT);
+        GUI::pushOn(GUIAction::CLICK, menuMaxPosFine, data, GUIPageType::FIXED_CONTENT);
     }
 }
 
