@@ -359,6 +359,7 @@ public:
     static void eepromReset();
     static void callBeforeHomingOnSteppers();
     static void callAfterHomingOnSteppers();
+    static void emergencyStop();
     static void updateRotMinMax();
     static int32_t getBufferedLengthMM();
 

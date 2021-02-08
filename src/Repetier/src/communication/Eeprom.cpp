@@ -474,6 +474,7 @@ void EEPROM::handleInt(uint pos, PGM_P text, int16_t& var) {
 #endif
 }
 
+/*
 void EEPROM::handleInt(uint pos, PGM_P text, uint16_t& var) {
     if (mode == EEPROMMode::REPORT && !silent && text != nullptr) {
         Com::printF(Com::tEPR1, static_cast<int>(pos));
@@ -503,6 +504,7 @@ void EEPROM::handleInt(uint pos, PGM_P text, uint16_t& var) {
     }
 #endif
 }
+*/
 
 void EEPROM::handleByte(uint pos, PGM_P text, uint8_t& var) {
     if (mode == EEPROMMode::REPORT && !silent && text != nullptr) {
