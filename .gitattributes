@@ -29,4 +29,5 @@ doc/* linguist-documentation
 src/Repetier/src/u8g2/* linguist-vendored
 
 *.cpp linguist-language=cpp 
+*.h linguist-language=cpp
 *.c linguist-language=c
