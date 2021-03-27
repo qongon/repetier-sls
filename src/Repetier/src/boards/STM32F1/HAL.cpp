@@ -401,10 +401,9 @@ void HAL::setupTimer() {
 #endif
 }
 
-// Called within checkForPeriodicalActions (main loop, more or less) 
+// Called within checkForPeriodicalActions (main loop, more or less)
 // as fast as possible
 void HAL::handlePeriodical() {
-
 }
 // Try to initialize pinNumber as hardware PWM. Returns internal
 // id if it succeeds or -1 if it fails. Typical reasons to fail
@@ -624,6 +623,9 @@ void HAL::analogEnable(int pinId) {
 }
 
 int HAL::analogRead(int pin) {
+    if (pin < 0) {
+        return 0;
+    }
     AnalogFunction* af = analogMap[pin];
     if (af == nullptr) { // protect for config errors
         return 0;
@@ -657,7 +659,7 @@ void HAL::eprBurnValue(unsigned int pos, int size, union eeval_t newvalue) {
 #endif
 }
 
-#if EEPROM_AVAILABLE == EEPROM_FLASH
+#if EEPROM_AVAILABLE == EEPROM_FLASH && EEPROM_MODE != EEPROM_NONE
 millis_t eprSyncTime = 0; // in sync
 void HAL::syncEEPROM() {  // store to disk if changed
     millis_t time = millis();
@@ -851,7 +853,7 @@ int HAL::i2cRead(void) {
     return -1; // should never happen, but better then blocking
 }
 
-#if NUM_SERVOS > 0
+#if NUM_SERVOS > 0 || NUM_BEEPERS > 0
 unsigned int HAL::servoTimings[4] = { 0, 0, 0, 0 };
 static unsigned int servoAutoOff[4] = { 0, 0, 0, 0 };
 static uint8_t servoId = 0;
@@ -869,7 +871,7 @@ void HAL::servoMicroseconds(uint8_t servoId, int microsec, uint16_t autoOff) {
 
 ServoInterface* analogServoSlots[4] = { nullptr, nullptr, nullptr, nullptr };
 FORCE_INLINE void servoOffTimer() {
-#if NUM_SERVOS > 0
+#if NUM_SERVOS > 0 || NUM_BEEPERS > 0
     if (actServo) {
         actServo->disable();
         if (servoAutoOff[servoId]) {
