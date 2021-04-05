@@ -29,6 +29,7 @@
 #if IO_TARGET == IO_TARGET_CLASS_DEFINITION
 
 static constexpr fast8_t beepBufSize = 10;
+extern bool hasSoftwareBeepers;
 
 struct TonePacket {
     //If the frequency is 0, it'll behave as putting a G4 P(duration) command in between M300's.
@@ -48,7 +49,7 @@ public:
         memcpy_P(&beep, &savedTheme[index], sizeof(TonePacket));
         return beep;
     }
-    inline fast8_t getSize() { return themeSize; }
+    inline const fast8_t getSize() { return themeSize; }
 
 private:
     const TonePacket* savedTheme;
@@ -84,7 +85,7 @@ public:
     inline fast8_t getHeadDist() {
         return !isPlaying() ? 0 : (toneHead >= toneTail ? (toneHead - toneTail) : (beepBufSize - toneTail + toneHead));
     }
-    virtual ufast8_t getOutputType() { return 0u; };
+    virtual const ufast8_t getOutputType() { return 0u; };
     inline uint16_t getCurFreq() { return playingFreq; }
     inline bool isPlaying() { return playing; }
     inline bool isHalted() { return halted; }
@@ -137,9 +138,10 @@ public:
         , freqCnt(0u)
         , freqDiv(0u)
         , lastPinState(false) {
+        hasSoftwareBeepers = true;
         IOPin::off();
     }
-    inline ufast8_t getOutputType() final { return 1u; }
+    inline const ufast8_t getOutputType() final { return 1u; }
     inline ufast8_t getFreqDiv() final { return freqDiv; }
     inline void setFreqDiv(ufast8_t div) final { freqDiv = div * 2u; }
     INLINE void toggle(bool state) {
@@ -172,7 +174,7 @@ public:
         , pwmPin(pwm) {
         pwmPin.set(0);
     };
-    inline ufast8_t getOutputType() final { return 2u; }
+    inline const ufast8_t getOutputType() final { return 2u; }
     inline ufast8_t getFreqDiv() final { return 0u; }
     inline void setFreqDiv(ufast8_t div) final { }
     virtual ~BeeperSourcePWM() {};
@@ -201,6 +203,7 @@ private:
     extern ToneCondition name##_cond;
 
 #elif IO_TARGET == IO_TARGET_DEFINE_VARIABLES
+bool hasSoftwareBeepers = false;
 
 #define TONES(...) \
     { __VA_ARGS__ }

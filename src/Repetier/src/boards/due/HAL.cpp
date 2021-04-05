@@ -78,6 +78,77 @@ uint32_t dwt_init(void) {
     return (DWT->CYCCNT) ? 0 : 1;
 }
 
+extern "C" void SERVO_TIMER_VECTOR();
+extern "C" void MOTION2_TIMER_VECTOR();
+extern "C" void MOTION3_TIMER_VECTOR();
+extern "C" void PWM_TIMER_VECTOR();
+extern "C" void BEEPER_TIMER_VECTOR();
+
+using vector_handler_t = decltype(_DeviceVectors::pfnReset_Handler);
+struct { // VTOR IRQ table saved in RAM. Allows us to change IRQ handlers at runtime.
+    union {
+        _DeviceVectors vector; // Access helper (eg. ramVTOR.vector.pfnUsageFault_Handler = blah;)
+        vector_handler_t irq[sizeof(vector) / sizeof(vector_handler_t)];
+    };
+} static ramVTOR __attribute__((used, aligned(128ul), section(".ramfunc")));
+
+
+struct TimerPWMPin;
+struct TimerPWMChannel {
+    uint8_t used_io;
+    TimerPWMPin* timer_A;
+    TimerPWMPin* timer_B;
+};
+
+static TimerPWMChannel timer_channel[9] = {
+    { 0u, nullptr, nullptr },
+    { 0u, nullptr, nullptr }, // TC0
+    { 0u, nullptr, nullptr },
+
+    { 0u, nullptr, nullptr },
+    { 0u, nullptr, nullptr }, // TC1
+    { 0u, nullptr, nullptr },
+
+    { 0u, nullptr, nullptr },
+    { 0u, nullptr, nullptr }, // TC2
+    { 0u, nullptr, nullptr }
+};
+static uint8_t freeTimerChannels = sizeof(timer_channel) / sizeof(timer_channel[0]);
+static bool getNextFreeTimer(int8_t& chanIRQn, uint8_t& chanGroup, Tc*& chanReg) {
+    for (size_t i = 0u; i != 9u; i++) {
+        if (!timer_channel[i].used_io) {
+            chanIRQn = i;
+            break;
+        } else if (i == 8u) {
+            return false;
+        }
+    }
+
+    chanGroup = (chanIRQn % 3);
+    switch (chanIRQn / 3) {
+    case 0:
+        chanReg = TC0;
+        break;
+    case 1:
+        chanReg = TC1;
+        break;
+    case 2:
+        chanReg = TC2;
+        break;
+    default:
+        return false;
+    }
+
+    chanIRQn += TC0_IRQn;
+    return true;
+}
+
+static TcChannel* pwmIRQChanReg;
+static TcChannel* motion2IRQChanReg;
+static TcChannel* motion3IRQChanReg;
+static TcChannel* beeperIRQChanReg;
+static TcChannel* servoIRQChanReg;
+
 
 // Set up all timer interrupts
 void HAL::setupTimer() {
@@ -87,99 +158,119 @@ void HAL::setupTimer() {
     SET_OUTPUT(DEBUG_ISR_TEMP_PIN);
 #endif
 
+    InterruptProtectedBlock noInts;
+    if ((SCB->VTOR & SCB_VTOR_TBLBASE_Msk)) {
+        // Check if the VTOR table has already been moved to RAM.
+        return;
+    }
+
     uint32_t tc_count, tc_clock;
     pmc_set_writeprotect(false);
-    // set 3 bits for interrupt group priority, 1 bits for sub-priority
-    //NVIC_SetPriorityGrouping(4);
 
-    // Timer for extruder control
+    // Copy the vtor table to our own ramVTOR table and update SCB.
+    memcpy(ramVTOR.irq, reinterpret_cast<const uint32_t*>(SCB->VTOR), sizeof(ramVTOR));
+    SCB->VTOR = reinterpret_cast<uint32_t>(ramVTOR.irq);
+    __DSB();
+
+    // Turn on divide by 0/unaligned access errors?
+    //SCB->CCR = SCB_CCR_DIV_0_TRP_Msk | SCB_CCR_UNALIGN_TRP_Msk;
+    //SCB->SHCSR = SCB_SHCSR_USGFAULTENA_Msk | SCB_SHCSR_BUSFAULTENA_Msk;
+    //__DSB();
+
+    int8_t tcChanIRQn = 0u;   // tc irqn id 0-8, eg. TC0_IRQn TC1_IRQn... Offset by 27 (TC0_IRQn)
+    uint8_t tcInnerChan = 0u; // inner tc channel 0..2 (each tc has 3 of these)
+    Tc* tcReg = nullptr;      // tc register (TC0, TC1, TC2)
+
 #if (DISABLED(MOTION2_USE_REALTIME_TIMER) || PREPARE_FREQUENCY > (PWM_CLOCK_FREQ / 2))
-    pmc_enable_periph_clk(MOTION2_TIMER_IRQ); // enable power to timer
-    //NVIC_SetPriority((IRQn_Type)EXTRUDER_TIMER_IRQ, NVIC_EncodePriority(4, 4, 1));
-    NVIC_SetPriority((IRQn_Type)MOTION2_TIMER_IRQ, 2);
+    if (getNextFreeTimer(tcChanIRQn, tcInnerChan, tcReg)) { // MOTION2_TIMER_IRQ
+        timer_channel[tcChanIRQn - TC0_IRQn].used_io = 255u;
 
-    // count up to value in RC register using given clock
-    TC_Configure(MOTION2_TIMER, MOTION2_TIMER_CHANNEL, TC_CMR_WAVSEL_UP_RC | TC_CMR_WAVE | TC_CMR_TCCLKS_TIMER_CLOCK1);
-
-    TC_SetRC(MOTION2_TIMER, MOTION2_TIMER_CHANNEL, (F_CPU_TRUE / 2) / PREPARE_FREQUENCY); // set frequency 43 for 60000Hz
-    TC_Start(MOTION2_TIMER, MOTION2_TIMER_CHANNEL);                                       // start timer running
-
-    // enable RC compare interrupt
-    MOTION2_TIMER->TC_CHANNEL[MOTION2_TIMER_CHANNEL].TC_IER = TC_IER_CPCS;
-    // clear the "disable RC compare" interrupt
-    MOTION2_TIMER->TC_CHANNEL[MOTION2_TIMER_CHANNEL].TC_IDR = ~TC_IER_CPCS;
-
-    // allow interrupts on timer
-    NVIC_EnableIRQ((IRQn_Type)MOTION2_TIMER_IRQ);
+        pmc_enable_periph_clk(tcChanIRQn);
+        NVIC_SetPriority(static_cast<IRQn_Type>(tcChanIRQn), 2ul);
+        TC_Configure(tcReg, tcInnerChan, TC_CMR_WAVSEL_UP_RC | TC_CMR_WAVE | TC_CMR_TCCLKS_TIMER_CLOCK1);
+        TC_SetRC(tcReg, tcInnerChan, (F_CPU_TRUE / 2ul) / PREPARE_FREQUENCY);
+        TC_Start(tcReg, tcInnerChan);
+        motion2IRQChanReg = &tcReg->TC_CHANNEL[tcInnerChan];
+        motion2IRQChanReg->TC_IER = TC_IER_CPCS;
+        motion2IRQChanReg->TC_IDR = ~TC_IER_CPCS;
+        // VTOR table also contains the Cortex Exceptions, which stop at index 16. So offset any atmel IRQn_Type's by 16.
+        ramVTOR.irq[tcChanIRQn + 16u] = reinterpret_cast<vector_handler_t>(MOTION2_TIMER_VECTOR);
+        NVIC_EnableIRQ(static_cast<IRQn_Type>(tcChanIRQn));
+    }
 #else
     RTT_SetPrescaler(RTT, (32768 / PREPARE_FREQUENCY) - 1);
     RTT_EnableIT(RTT, RTT_MR_RTTINCIEN);
-    NVIC_SetPriority(RTT_IRQn, 2);
+    NVIC_SetPriority(RTT_IRQn, 2ul);
     NVIC_EnableIRQ(RTT_IRQn);
 #endif
 
-    // Regular interrupts for heater control etc
-    pmc_enable_periph_clk(PWM_TIMER_IRQ);
-    //NVIC_SetPriority((IRQn_Type)PWM_TIMER_IRQ, NVIC_EncodePriority(4, 6, 0));
-    NVIC_SetPriority((IRQn_Type)PWM_TIMER_IRQ, 6);
+    if (getNextFreeTimer(tcChanIRQn, tcInnerChan, tcReg)) { // PWM_TIMER
+        timer_channel[tcChanIRQn - TC0_IRQn].used_io = 255u;
+        pmc_enable_periph_clk(tcChanIRQn);
+        NVIC_SetPriority(static_cast<IRQn_Type>(tcChanIRQn), 6ul);
+        TC_FindMckDivisor(PWM_CLOCK_FREQ, F_CPU_TRUE, &tc_count, &tc_clock, F_CPU_TRUE);
+        TC_Configure(tcReg, tcInnerChan, TC_CMR_WAVSEL_UP_RC | TC_CMR_WAVE | tc_clock);
+        TC_SetRC(tcReg, tcInnerChan, (F_CPU_TRUE / tc_count) / PWM_CLOCK_FREQ);
+        TC_Start(tcReg, tcInnerChan);
+        pwmIRQChanReg = &tcReg->TC_CHANNEL[tcInnerChan];
+        pwmIRQChanReg->TC_IER = TC_IER_CPCS;
+        pwmIRQChanReg->TC_IDR = ~TC_IER_CPCS;
 
-    TC_FindMckDivisor(PWM_CLOCK_FREQ, F_CPU_TRUE, &tc_count, &tc_clock, F_CPU_TRUE);
-    TC_Configure(PWM_TIMER, PWM_TIMER_CHANNEL, TC_CMR_WAVSEL_UP_RC | TC_CMR_WAVE | tc_clock);
+        ramVTOR.irq[tcChanIRQn + 16u] = reinterpret_cast<vector_handler_t>(PWM_TIMER_VECTOR);
+        NVIC_EnableIRQ(static_cast<IRQn_Type>(tcChanIRQn));
+    }
 
-    TC_SetRC(PWM_TIMER, PWM_TIMER_CHANNEL, (F_CPU_TRUE / tc_count) / PWM_CLOCK_FREQ);
-    TC_Start(PWM_TIMER, PWM_TIMER_CHANNEL);
+    if (getNextFreeTimer(tcChanIRQn, tcInnerChan, tcReg)) { // MOTION3_TIMER_IRQ
+        timer_channel[tcChanIRQn - TC0_IRQn].used_io = 255u;
 
-    PWM_TIMER->TC_CHANNEL[PWM_TIMER_CHANNEL].TC_IER = TC_IER_CPCS;
-    PWM_TIMER->TC_CHANNEL[PWM_TIMER_CHANNEL].TC_IDR = ~TC_IER_CPCS;
-    NVIC_EnableIRQ((IRQn_Type)PWM_TIMER_IRQ);
+        pmc_enable_periph_clk(tcChanIRQn);
+        NVIC_SetPriority(static_cast<IRQn_Type>(tcChanIRQn), 0ul);
+        TC_Configure(tcReg, tcInnerChan, TC_CMR_WAVSEL_UP_RC | TC_CMR_WAVE | TC_CMR_TCCLKS_TIMER_CLOCK1);
+        TC_SetRC(tcReg, tcInnerChan, (F_CPU_TRUE / 2ul) / STEPPER_FREQUENCY);
+        TC_Start(tcReg, tcInnerChan);
 
-    // Timer for stepper motor control
-    pmc_enable_periph_clk(MOTION3_TIMER_IRQ);
-    //NVIC_SetPriority((IRQn_Type)MOTION3_TIMER_IRQ, NVIC_EncodePriority(4, 7, 1)); // highest priority - no surprises here wanted
-    NVIC_SetPriority((IRQn_Type)MOTION3_TIMER_IRQ, 0); // highest priority - no surprises here wanted
-    TC_Configure(MOTION3_TIMER, MOTION3_TIMER_CHANNEL,
-                 TC_CMR_WAVSEL_UP_RC | TC_CMR_WAVE | TC_CMR_TCCLKS_TIMER_CLOCK1);
-    TC_SetRC(MOTION3_TIMER, MOTION3_TIMER_CHANNEL, (F_CPU_TRUE / 2) / STEPPER_FREQUENCY);
-    TC_Start(MOTION3_TIMER, MOTION3_TIMER_CHANNEL);
+        motion3IRQChanReg = &tcReg->TC_CHANNEL[tcInnerChan];
+        motion3IRQChanReg->TC_IER = TC_IER_CPCS;
+        motion3IRQChanReg->TC_IDR = ~TC_IER_CPCS;
 
-    MOTION3_TIMER->TC_CHANNEL[MOTION3_TIMER_CHANNEL].TC_IER = TC_IER_CPCS;
-    MOTION3_TIMER->TC_CHANNEL[MOTION3_TIMER_CHANNEL].TC_IDR = ~TC_IER_CPCS;
-    NVIC_EnableIRQ((IRQn_Type)MOTION3_TIMER_IRQ);
+        ramVTOR.irq[tcChanIRQn + 16u] = reinterpret_cast<vector_handler_t>(MOTION3_TIMER_VECTOR);
 
-    NVIC_SetPriority(PIOA_IRQn, 1);
-    NVIC_SetPriority(PIOB_IRQn, 1);
-    NVIC_SetPriority(PIOC_IRQn, 1);
-    NVIC_SetPriority(PIOD_IRQn, 1);
+        NVIC_EnableIRQ(static_cast<IRQn_Type>(tcChanIRQn));
+    }
+
+    NVIC_SetPriority(PIOA_IRQn, 1ul);
+    NVIC_SetPriority(PIOB_IRQn, 1ul);
+    NVIC_SetPriority(PIOC_IRQn, 1ul);
+    NVIC_SetPriority(PIOD_IRQn, 1ul);
     // Servo control
 #if NUM_SERVOS > 0 || NUM_BEEPERS > 0
-    pmc_enable_periph_clk(SERVO_TIMER_IRQ);
-    //NVIC_SetPriority((IRQn_Type)SERVO_TIMER_IRQ, NVIC_EncodePriority(4, 5, 0));
-    NVIC_SetPriority((IRQn_Type)SERVO_TIMER_IRQ, 3);
+    if (getNextFreeTimer(tcChanIRQn, tcInnerChan, tcReg)) { // SERVO_TIMER_IRQ
+        timer_channel[tcChanIRQn - TC0_IRQn].used_io = 255u;
 
-    TC_Configure(SERVO_TIMER, SERVO_TIMER_CHANNEL, TC_CMR_WAVSEL_UP_RC | TC_CMR_WAVE | TC_CMR_TCCLKS_TIMER_CLOCK1);
-
-    TC_SetRC(SERVO_TIMER, SERVO_TIMER_CHANNEL, (F_CPU_TRUE / SERVO_PRESCALE) / SERVO_CLOCK_FREQ);
-    TC_Start(SERVO_TIMER, SERVO_TIMER_CHANNEL);
-
-    SERVO_TIMER->TC_CHANNEL[SERVO_TIMER_CHANNEL].TC_IER = TC_IER_CPCS;
-    SERVO_TIMER->TC_CHANNEL[SERVO_TIMER_CHANNEL].TC_IDR = ~TC_IER_CPCS;
-    NVIC_EnableIRQ((IRQn_Type)SERVO_TIMER_IRQ);
+        pmc_enable_periph_clk(tcChanIRQn);
+        NVIC_SetPriority(static_cast<IRQn_Type>(tcChanIRQn), 3ul);
+        TC_Configure(tcReg, tcInnerChan, TC_CMR_WAVSEL_UP_RC | TC_CMR_WAVE | TC_CMR_TCCLKS_TIMER_CLOCK1);
+        TC_SetRC(tcReg, tcInnerChan, (F_CPU_TRUE / SERVO_PRESCALE) / SERVO_CLOCK_FREQ);
+        TC_Start(tcReg, tcInnerChan);
+        servoIRQChanReg = &tcReg->TC_CHANNEL[tcInnerChan];
+        servoIRQChanReg->TC_IER = TC_IER_CPCS;
+        servoIRQChanReg->TC_IDR = ~TC_IER_CPCS;
+        ramVTOR.irq[tcChanIRQn + 16u] = reinterpret_cast<vector_handler_t>(SERVO_TIMER_VECTOR);
+        NVIC_EnableIRQ(static_cast<IRQn_Type>(tcChanIRQn));
+    }
 #endif
+
 #if NUM_BEEPERS > 0
-    for (int i = 0; i < NUM_BEEPERS; i++) {
-        if (beepers[i]->getOutputType() == 1) {
-            // If we have any SW beepers, enable the beeper IRQ
-            pmc_set_writeprotect(false);
-            pmc_enable_periph_clk((uint32_t)BEEPER_TIMER_IRQ);
-            NVIC_SetPriority((IRQn_Type)BEEPER_TIMER_IRQ, 1);
-
-            TC_Configure(BEEPER_TIMER, BEEPER_TIMER_CHANNEL, TC_CMR_WAVE | TC_CMR_WAVSEL_UP_RC | TC_CMR_TCCLKS_TIMER_CLOCK1);
-
-            BEEPER_TIMER->TC_CHANNEL[BEEPER_TIMER_CHANNEL].TC_IER = TC_IER_CPCS | TC_IER_CPAS;
-            BEEPER_TIMER->TC_CHANNEL[BEEPER_TIMER_CHANNEL].TC_IDR = ~TC_IER_CPCS & ~TC_IER_CPAS;
-            NVIC_EnableIRQ((IRQn_Type)BEEPER_TIMER_IRQ);
-            break;
-        }
+    if (hasSoftwareBeepers && getNextFreeTimer(tcChanIRQn, tcInnerChan, tcReg)) { // BEEPER_TIMER_IRQ
+        timer_channel[tcChanIRQn - TC0_IRQn].used_io = 255u;
+        pmc_enable_periph_clk(tcChanIRQn);
+        NVIC_SetPriority(static_cast<IRQn_Type>(tcChanIRQn), 1ul);
+        TC_Configure(tcReg, tcInnerChan, TC_CMR_WAVSEL_UP_RC | TC_CMR_WAVE | TC_CMR_TCCLKS_TIMER_CLOCK1);
+        beeperIRQChanReg = &tcReg->TC_CHANNEL[tcInnerChan];
+        beeperIRQChanReg->TC_IER = TC_IER_CPCS | TC_IER_CPAS;
+        beeperIRQChanReg->TC_IDR = ~TC_IER_CPCS & ~TC_IER_CPAS;
+        ramVTOR.irq[tcChanIRQn + 16u] = reinterpret_cast<vector_handler_t>(BEEPER_TIMER_VECTOR);
+        NVIC_EnableIRQ(static_cast<IRQn_Type>(tcChanIRQn));
     }
 #endif
 }
@@ -198,18 +289,10 @@ struct TimerPWMPin {
         , tc_local_chan((_tc_channel >> 1) % 3)
         , peripheral_A(_peripheral_A)
         , tio_line_AB(_tc_channel & 1)
+        , tc_base_address((_tc_channel / 6) == 2       ? TC2
+                              : (_tc_channel / 6) == 1 ? TC1
+                                                       : TC0)
         , lastSetDuty(0) {
-        switch (_tc_channel / 6) {
-        case 1:
-            tc_base_address = TC1;
-            break;
-        case 2:
-            tc_base_address = TC2;
-            break;
-        default:
-            tc_base_address = TC0;
-            break;
-        }
     }
     int pin;
     Pio* pio;
@@ -251,25 +334,6 @@ static TimerPWMPin timer_pins[NUM_POSSIBLE_TIMER_PINS] = {
     { 12, PIOD, PIO_PD8B_TIOB8, TC2_CHB8, false }
 };
 
-struct TimerPWMChannel {
-    byte used_io;
-    TimerPWMPin* timer_A;
-    TimerPWMPin* timer_B;
-};
-
-static TimerPWMChannel timer_channel[9] = {
-    { false, nullptr, nullptr },
-    { false, nullptr, nullptr }, // TC0
-    { false, nullptr, nullptr },
-
-    { false, nullptr, nullptr },
-    { false, nullptr, nullptr }, // TC1
-    { false, nullptr, nullptr },
-
-    { false, nullptr, nullptr },
-    { false, nullptr, nullptr }, // TC2
-    { false, nullptr, nullptr }
-};
 struct PWMPin {
     int pin;
     Pio* pio;
@@ -417,9 +481,18 @@ int HAL::initHardwarePWM(int pinNumber, uint32_t frequency) {
     }
 
     if (foundTimer) {
+        // Motion3 IRQ + PWM IRQ + Servo IRQ + SWBeeper IRQ + Motion2 IRQ
+        const uint8_t neededIQRTimers = 2u + static_cast<bool>(NUM_SERVOS || NUM_BEEPERS) + hasSoftwareBeepers + !static_cast<bool>(MOTION2_USE_REALTIME_TIMER);
+
+        if (freeTimerChannels == neededIQRTimers) {
+            // We can't use up any more timers, there's not enough left for everything else
+            return -1;
+        }
+        --freeTimerChannels;
+
         TimerPWMPin& t = timer_pins[foundPin];
         TimerPWMChannel& c = timer_channel[t.tc_global_chan];
-        c.used_io |= (1 << t.tio_line_AB);
+        c.used_io |= (1u + t.tio_line_AB);
 
         if (!t.tio_line_AB) {
             c.timer_A = &t;
@@ -435,7 +508,7 @@ int HAL::initHardwarePWM(int pinNumber, uint32_t frequency) {
             t.pio->PIO_ABSR &= ~t.pio_pin;
         }
 
-        pmc_enable_periph_clk(ID_TC0 + t.tc_global_chan);
+        pmc_enable_periph_clk(TC0_IRQn + t.tc_global_chan);
         TC_Configure(t.tc_base_address, t.tc_local_chan,
                      TC_CMR_WAVSEL_UP_RC | TC_CMR_WAVE | TC_CMR_TCCLKS_TIMER_CLOCK1 | TC_CMR_EEVT_XC0);
 
@@ -504,6 +577,9 @@ void HAL::setHardwarePWM(int id, int value) {
         return;
     }
     TimerPWMChannel& c = timer_channel[(id >> 1)];
+    if (c.used_io == 255u) {
+        return;
+    }
     TimerPWMPin& t = *((id & 0x1) ? c.timer_B : c.timer_A);
 
     t.lastSetDuty = value;
@@ -548,6 +624,9 @@ void HAL::setHardwareFrequency(int id, uint32_t frequency) {
     }
 
     TimerPWMChannel& c = timer_channel[(id >> 1)];
+    if (c.used_io == 255u) {
+        return;
+    }
     TimerPWMPin t = *((id & 0x1) ? c.timer_B : c.timer_A);
 
     TC_Stop(t.tc_base_address, t.tc_local_chan);
@@ -1030,18 +1109,17 @@ ServoInterface* analogServoSlots[4] = { nullptr, nullptr, nullptr, nullptr };
 // Servo timer Interrupt handler
 void SERVO_TIMER_VECTOR() {
     // apparently have to read status register
-    SERVO_TIMER->TC_CHANNEL[SERVO_TIMER_CHANNEL].TC_SR;
+    servoIRQChanReg->TC_SR;
 #if NUM_SERVOS > 0 || NUM_BEEPERS > 0
     static uint32_t interval = 0;
     fast8_t servoId = servoIndex >> 1;
     ServoInterface* act = analogServoSlots[servoId];
     if (act == nullptr) {
-        TC_SetRC(SERVO_TIMER, SERVO_TIMER_CHANNEL, SERVO2500US);
+        servoIRQChanReg->TC_RC = SERVO2500US;
     } else {
         if (servoIndex & 1) { // disable
             act->disable();
-            TC_SetRC(SERVO_TIMER, SERVO_TIMER_CHANNEL,
-                     SERVO5000US - interval);
+            servoIRQChanReg->TC_RC = SERVO5000US - interval;
             if (servoAutoOff[servoId]) {
                 servoAutoOff[servoId]--;
                 if (servoAutoOff[servoId] == 0) {
@@ -1053,10 +1131,10 @@ void SERVO_TIMER_VECTOR() {
             if (HAL::servoTimings[servoId]) {
                 act->enable();
                 interval = HAL::servoTimings[servoId];
-                TC_SetRC(SERVO_TIMER, SERVO_TIMER_CHANNEL, interval);
+                servoIRQChanReg->TC_RC = interval;
             } else {
                 interval = SERVO2500US;
-                TC_SetRC(SERVO_TIMER, SERVO_TIMER_CHANNEL, interval);
+                servoIRQChanReg->TC_RC = interval;
             }
         }
     }
@@ -1072,26 +1150,18 @@ void SERVO_TIMER_VECTOR() {
 }
 #endif
 
-TcChannel* stepperChannel = (MOTION3_TIMER->TC_CHANNEL + MOTION3_TIMER_CHANNEL);
 #ifndef STEPPERTIMER_EXIT_TICKS
 #define STEPPERTIMER_EXIT_TICKS 105 // at least 2,5us pause between stepper calls
 #endif
 
 /** \brief Timer interrupt routine to drive the stepper motors.
 */
-void MOTION3_TIMER_VECTOR() {
+__attribute__((no_instrument_function)) void MOTION3_TIMER_VECTOR() {
 #if DEBUG_TIMING
     WRITE(DEBUG_ISR_STEPPER_PIN, 1);
 #endif
-    // apparently have to read status register
-    stepperChannel->TC_SR;
-    /*  static bool inside = false; // prevent double call when not finished
-    if(inside) {
-        return;
-    }    
-    inside = true;*/
+    motion3IRQChanReg->TC_SR;
     Motion3::timer();
-    // inside = false;
 #if DEBUG_TIMING
     WRITE(DEBUG_ISR_STEPPER_PIN, 0);
 #endif
@@ -1110,7 +1180,7 @@ void PWM_TIMER_VECTOR() {
 #endif
     //InterruptProtectedBlock noInt;
     // apparently have to read status register
-    PWM_TIMER->TC_CHANNEL[PWM_TIMER_CHANNEL].TC_SR;
+    pwmIRQChanReg->TC_SR;
 
     static uint8_t pwm_count0 = 0; // Used my IO_PWM_SOFTWARE!
     static uint8_t pwm_count1 = 0;
@@ -1162,14 +1232,12 @@ void PWM_TIMER_VECTOR() {
 }
 
 #if (DISABLED(MOTION2_USE_REALTIME_TIMER) || PREPARE_FREQUENCY > (PWM_CLOCK_FREQ / 2))
-TcChannel* motion2Channel = (MOTION2_TIMER->TC_CHANNEL + MOTION2_TIMER_CHANNEL);
-
 // MOTION2_TIMER IRQ handler
 void MOTION2_TIMER_VECTOR() {
 #if DEBUG_TIMING
     WRITE(DEBUG_ISR_MOTION_PIN, 1);
 #endif
-    motion2Channel->TC_SR; // faster replacement for above line!
+    motion2IRQChanReg->TC_SR;
     Motion2::timer();
 #if DEBUG_TIMING
     WRITE(DEBUG_ISR_MOTION_PIN, 0);
@@ -1199,14 +1267,10 @@ void BEEPER_TIMER_VECTOR() {
     // beeper turns ON at at max counter timer hit. Turns OFF at RA compare
     // (our timer's "duty" counter)
 
-    bool beeperIRQPhase = false;
-    if ((BEEPER_TIMER->TC_CHANNEL[BEEPER_TIMER_CHANNEL].TC_SR) & TC_SR_CPCS) {
-        beeperIRQPhase = true;
-    }
+    bool beeperIRQPhase __attribute__((unused)) = static_cast<bool>((beeperIRQChanReg->TC_SR) & TC_SR_CPCS);
 #undef IO_TARGET
 #define IO_TARGET IO_TARGET_BEEPER_LOOP
 #include "io/redefine.h"
-    (void)beeperIRQPhase; // avoid gcc unused warning
 }
 #endif
 
@@ -1246,17 +1310,17 @@ void HAL::tone(uint32_t frequency) {
     if (frequency < 1) {
         return;
     }
-    if (!(TC_GetStatus(BEEPER_TIMER, BEEPER_TIMER_CHANNEL) & TC_SR_CLKSTA)) {
-        TC_Start(BEEPER_TIMER, BEEPER_TIMER_CHANNEL);
+    if (!(beeperIRQChanReg->TC_SR & TC_SR_CLKSTA)) {
+        beeperIRQChanReg->TC_CCR = TC_CCR_CLKEN | TC_CCR_SWTRG;
     }
     // 100% volume is 50% duty
-    float percent = (static_cast<float>(Printer::toneVolume) * 50.0f) * 0.0001f;
-    uint32_t rc = (F_CPU_TRUE / 2) / frequency;
-    uint32_t ra = static_cast<uint32_t>(static_cast<float>(rc) * percent);
-    TC_SetRC(BEEPER_TIMER, BEEPER_TIMER_CHANNEL, rc);
-    TC_SetRA(BEEPER_TIMER, BEEPER_TIMER_CHANNEL, ra);
-    if (TC_ReadCV(BEEPER_TIMER, BEEPER_TIMER_CHANNEL) > rc) {
-        BEEPER_TIMER->TC_CHANNEL[BEEPER_TIMER_CHANNEL].TC_CCR = TC_CCR_SWTRG;
+    const float percent = (static_cast<float>(Printer::toneVolume) * 50.0f) * 0.0001f;
+    const uint32_t rc = (F_CPU_TRUE / 2) / frequency;
+    const uint32_t ra = static_cast<uint32_t>(static_cast<float>(rc) * percent);
+    beeperIRQChanReg->TC_RC = rc;
+    beeperIRQChanReg->TC_RA = ra;
+    if (beeperIRQChanReg->TC_CV > rc) {
+        beeperIRQChanReg->TC_CCR = TC_CCR_SWTRG;
     }
 #endif
 }
@@ -1269,14 +1333,14 @@ void HAL::noTone() {
         if (beepers[i]->getOutputType() == 1 && beepers[i]->isPlaying()) {
             constexpr uint32_t maxFreq = (F_CPU_TRUE / 2) / 100000;
             // if we're nearing/at our freq limit, refresh the divisors
-            if (maxFreq == BEEPER_TIMER->TC_CHANNEL[BEEPER_TIMER_CHANNEL].TC_RC) {
+            if (maxFreq == beeperIRQChanReg->TC_RC) {
                 HAL::tone(0);
             }
             return;
         }
     }
 #endif
-    TC_Stop(BEEPER_TIMER, BEEPER_TIMER_CHANNEL);
+    beeperIRQChanReg->TC_CCR = TC_CCR_CLKDIS;
 #endif
 }
 
