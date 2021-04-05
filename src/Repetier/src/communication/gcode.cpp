@@ -1302,14 +1302,6 @@ int SerialGCodeSource::readByte() {
 }
 
 void SerialGCodeSource::writeByte(uint8_t byte) {
-#if defined(DUE_BOARD)
-    if (usbHostSource == this) {
-        if (!Is_udd_suspend()) {
-            stream->write(byte);
-        }
-        return;
-    }
-#endif
     stream->write(byte);
 }
 
