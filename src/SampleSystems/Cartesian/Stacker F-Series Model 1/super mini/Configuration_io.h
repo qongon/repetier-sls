@@ -120,8 +120,8 @@ ENDSTOP_SWITCH_HW(endstopAMax, IOEndstopAMax, A_AXIS, true)
 #endif
 
 #ifdef STACKER_2_Z_END_STOPS
-IO_INPUT_INVERTED_PULLUP(IOEndstopZMax1, ORIG_Z_MAX_PIN) // TODO: Set correct pin
-IO_INPUT_INVERTED_PULLUP(IOEndstopZMax2, ORIG_Z_MAX_PIN) // TODO: Set correct pin
+IO_INPUT_INVERTED_PULLUP(IOEndstopZMax1, ORIG_Z_MAX_PIN) 
+IO_INPUT_INVERTED_PULLUP(IOEndstopZMax2, ORIG_Z2_MAX_PIN)
 ENDSTOP_SWITCH_HW(endstopZMax1, IOEndstopZMax1, -1, true)
 ENDSTOP_SWITCH_HW(endstopZMax2, IOEndstopZMax2, -1, true)
 ENDSTOP_MERGE2(endstopZMax, endstopZMax1, endstopZMax2, Z_AXIS, true)
@@ -178,7 +178,7 @@ IO_PWM_HARDWARE(PWMBed1, HEATER_1_PIN, 500)
 // therefore the max endstops of a delta need to be entered as
 // minimum endstop here!
 STEPPER_TMC2130_HW_SPI(XMotor, IOX1Step, IOX1Dir, IOX1Enable, ORIG_X_CS_PIN, 0.11, 1, 64, 900, true, 100, 8, 12500000, endstopNone, endstopNone)
-STEPPER_TMC2130_HW_SPI(AMotor, IOAStep, IOADir, IOAEnable, ORIG_X_CS_PIN, 0.11, 1, 64, 900, true, 100, 8, 12500000, endstopNone, endstopNone)
+STEPPER_TMC2130_HW_SPI(AMotor, IOAStep, IOADir, IOAEnable, ORIG_A_CS_PIN, 0.11, 1, 64, 900, true, 100, 8, 12500000, endstopNone, endstopNone)
 #if DUAL_Y
 STEPPER_TMC2130_HW_SPI(Y1Motor, IOY1Step, IOY1Dir, IOY1Enable, ORIG_Y_CS_PIN, 0.11, 1, 64, 900, true, 100, 8, 12500000, endstopNone, endstopNone)
 STEPPER_TMC2130_HW_SPI(Y2Motor, IOY2Step, IOY2Dir, IOY2Enable, ORIG_Y2_CS_PIN, 0.11, 1, 64, 900, true, 100, 8, 12500000, endstopNone, endstopNone)

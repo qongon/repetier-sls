@@ -37,9 +37,15 @@ public:
     virtual void setAttached(bool attach) { }
     virtual bool isAttached() { return true; } // SW Endstops always "attached".
     virtual ~EndstopDriver() { }
-    void resetHistory() { historyFlag = 0; }
-    bool historyWasTriggered() { return historyFlag & 1; }
-    bool historyWasUntriggered() { return historyFlag & 2; }
+    virtual void resetHistory() { historyFlag = 0; }
+    virtual bool historyWasTriggered() {
+        update();
+        return historyFlag & 1;
+    }
+    virtual bool historyWasUntriggered() {
+        update();
+        return historyFlag & 2;
+    }
     void historyUpdate(bool val) { historyFlag |= (val ? 1 : 2); }
 };
 
@@ -67,7 +73,7 @@ class EndstopSwitchDriver : public EndstopDriver {
 
 public:
     EndstopSwitchDriver()
-        : state(false)
+        : state(inp::get())
         , parent(nullptr) { }
     virtual bool update() final;
     inline virtual bool triggered() final {
@@ -108,6 +114,10 @@ public:
     inline virtual bool isAttached() final {
         return attached;
     }
+    void report() override {
+        updateReal();
+        Com::printF(update() ? Com::tHSpace : Com::tLSpace);
+    }
 };
 
 template <class inp, int level>
@@ -116,7 +126,7 @@ class EndstopSwitchDebounceDriver : public EndstopDriver {
 
 public:
     EndstopSwitchDebounceDriver()
-        : state(0) { }
+        : state(inp::get()) { }
     inline virtual bool update() final;
     inline virtual bool triggered() final {
         return state == level;
@@ -136,16 +146,16 @@ class EndstopStepperControlledDriver : public EndstopDriver {
 public:
     EndstopStepperControlledDriver()
         : state(false) { }
-    inline virtual bool update() final {
+    inline virtual bool update() override final {
         return state;
     }
-    inline virtual bool triggered() final {
+    inline virtual bool triggered() override final {
         return state;
     }
-    inline virtual bool implemented() final {
+    inline virtual bool implemented() override final {
         return true;
     }
-    virtual void set(bool triggered) final;
+    virtual void set(bool triggered) override final;
 };
 
 /** Merge 2 endstops into 1. Returns only true if both endstops are triggered. */
@@ -165,30 +175,33 @@ public:
         e1->setParent(this);
         e2->setParent(this);
     }
-    inline virtual bool update() final {
+    inline virtual bool update() override final {
         return (state = (e1->update() && e2->update()));
     }
-    inline virtual bool triggered() final {
+    inline virtual bool triggered() override final {
         return state;
     }
-    inline virtual bool implemented() final {
+    inline virtual bool implemented() override final {
         return true;
     }
-    inline virtual void setAttached(bool attach) final {
+    inline virtual void setAttached(bool attach) override final {
         e1->setAttached(attach);
         e2->setAttached(attach);
     }
-    inline virtual bool isAttached() final {
+    inline virtual bool isAttached() override final {
         return (e1->isAttached() && e2->isAttached());
     }
-    virtual void report() final {
+    virtual void report() override final {
+        bool attache = isAttached();
+        setAttached(true);
         Com::printF(update() ? Com::tHSpace : Com::tLSpace);
         Com::print('(');
         e1->report();
         e2->report();
         Com::print(')');
+        setAttached(attache);
     }
-    virtual void updateMaster() final {
+    virtual void updateMaster() override final {
         fast8_t oldState = state;
         update();
         if (state != oldState) {
@@ -196,6 +209,20 @@ public:
                 endstopTriggered(axis, dir);
             }
         }
+    }
+    virtual void resetHistory() override final {
+        e1->resetHistory();
+        e2->resetHistory();
+    }
+    virtual bool historyWasTriggered() override final {
+        e1->update();
+        e2->update();
+        return e1->historyWasTriggered() && e2->historyWasTriggered();
+    }
+    virtual bool historyWasUntriggered() override final {
+        e1->update();
+        e2->update();
+        return e1->historyWasUntriggered() && e2->historyWasUntriggered();
     }
 };
 
@@ -220,32 +247,35 @@ public:
         e2->setParent(this);
         e3->setParent(this);
     }
-    inline virtual bool update() final {
+    inline virtual bool update() override final {
         return (state = (e1->update() && e2->update() && e3->update()));
     }
-    inline virtual bool triggered() final {
+    inline virtual bool triggered() override final {
         return state;
     }
-    inline virtual bool implemented() final {
+    inline virtual bool implemented() override final {
         return true;
     }
-    inline virtual void setAttached(bool attach) final {
+    inline virtual void setAttached(bool attach) override final {
         e1->setAttached(attach);
         e2->setAttached(attach);
         e3->setAttached(attach);
     }
-    inline virtual bool isAttached() final {
+    inline virtual bool isAttached() override final {
         return (e1->isAttached() && e2->isAttached() && e3->isAttached());
     }
-    virtual void report() final {
+    virtual void report() override final {
+        bool attache = isAttached();
+        setAttached(true);
         Com::printF(update() ? Com::tHSpace : Com::tLSpace);
         Com::print('(');
         e1->report();
         e2->report();
         e3->report();
         Com::print(')');
+        setAttached(attache);
     }
-    virtual void updateMaster() final {
+    virtual void updateMaster() override final {
         fast8_t oldState = state;
         update();
         if (state != oldState) {
@@ -254,6 +284,23 @@ public:
             }
             // Com::printFLN(PSTR("MState:"), (int)state); // TEST
         }
+    }
+    virtual void resetHistory() override final {
+        e1->resetHistory();
+        e2->resetHistory();
+        e3->resetHistory();
+    }
+    virtual bool historyWasTriggered() override final {
+        e1->update();
+        e2->update();
+        e3->update();
+        return e1->historyWasTriggered() && e2->historyWasTriggered() && e3->historyWasTriggered();
+    }
+    virtual bool historyWasUntriggered() override final {
+        e1->update();
+        e2->update();
+        e3->update();
+        return e1->historyWasUntriggered() && e2->historyWasUntriggered() && e3->historyWasUntriggered();
     }
 };
 
@@ -280,25 +327,27 @@ public:
         e3->setParent(this);
         e4->setParent(this);
     }
-    inline virtual bool update() final {
+    inline virtual bool update() override final {
         return (state = (e1->update() && e2->update() && e3->update() && e4->update()));
     }
-    inline virtual bool triggered() final {
+    inline virtual bool triggered() override final {
         return state;
     }
-    inline virtual bool implemented() final {
+    inline virtual bool implemented() override final {
         return true;
     }
-    inline virtual void setAttached(bool attach) final {
+    inline virtual void setAttached(bool attach) override final {
         e1->setAttached(attach);
         e2->setAttached(attach);
         e3->setAttached(attach);
         e4->setAttached(attach);
     }
-    inline virtual bool isAttached() final {
+    inline virtual bool isAttached() override final {
         return (e1->isAttached() && e2->isAttached() && e3->isAttached() && e4->isAttached());
     }
-    virtual void report() final {
+    virtual void report() override final {
+        bool attache = isAttached();
+        setAttached(true);
         Com::printF(update() ? Com::tHSpace : Com::tLSpace);
         Com::print('(');
         e1->report();
@@ -306,8 +355,9 @@ public:
         e3->report();
         e4->report();
         Com::print(')');
+        setAttached(attache);
     }
-    virtual void updateMaster() final {
+    virtual void updateMaster() override final {
         fast8_t oldState = state;
         update();
         if (state != oldState) {
@@ -315,5 +365,25 @@ public:
                 endstopTriggered(axis, dir);
             }
         }
+    }
+    virtual void resetHistory() override final {
+        e1->resetHistory();
+        e2->resetHistory();
+        e3->resetHistory();
+        e4->resetHistory();
+    }
+    virtual bool historyWasTriggered() override final {
+        e1->update();
+        e2->update();
+        e3->update();
+        e4->update();
+        return e1->historyWasTriggered() && e2->historyWasTriggered() && e3->historyWasTriggered() && e4->historyWasTriggered();
+    }
+    virtual bool historyWasUntriggered() override final {
+        e1->update();
+        e2->update();
+        e3->update();
+        e4->update();
+        return e1->historyWasUntriggered() && e2->historyWasUntriggered() && e3->historyWasUntriggered() && e4->historyWasUntriggered();
     }
 };
