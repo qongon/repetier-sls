@@ -113,33 +113,15 @@ typedef char prog_char;
 // Only really good for < 8000Hz
 #define MOTION2_USE_REALTIME_TIMER 1
 #if (DISABLED(MOTION2_USE_REALTIME_TIMER) || PREPARE_FREQUENCY > (PWM_CLOCK_FREQ / 2))
-#define MOTION2_TIMER TC0
-#define MOTION2_TIMER_CHANNEL 0
-#define MOTION2_TIMER_IRQ ID_TC0
-#define MOTION2_TIMER_VECTOR TC0_Handler
+#undef MOTION2_USE_REALTIME_TIMER
+#define MOTION2_USE_REALTIME_TIMER 0
+#define MOTION2_TIMER_VECTOR timerMotion2Handler
 #endif
 
-#define PWM_TIMER TC0
-#define PWM_TIMER_CHANNEL 1
-#define PWM_TIMER_IRQ ID_TC1
-#define PWM_TIMER_VECTOR TC1_Handler
-#define MOTION3_TIMER TC2
-#define MOTION3_TIMER_CHANNEL 2
-#define MOTION3_TIMER_IRQ ID_TC8
-#define MOTION3_TIMER_VECTOR TC8_Handler
-#define SERVO_TIMER TC2
-#define SERVO_TIMER_CHANNEL 0
-#define SERVO_TIMER_IRQ ID_TC6
-#define SERVO_TIMER_VECTOR TC6_Handler
-#define BEEPER_TIMER TC1
-#define BEEPER_TIMER_CHANNEL 0
-#define BEEPER_TIMER_IRQ ID_TC3
-#define BEEPER_TIMER_VECTOR TC3_Handler
-
-//#define SERIAL_BUFFER_SIZE      1024
-//#define SERIAL_PORT             UART
-//#define SERIAL_IRQ              ID_UART
-//#define SERIAL_PORT_VECTOR      UART_Handler
+#define PWM_TIMER_VECTOR timerPWMHandler
+#define MOTION3_TIMER_VECTOR timerMotion3Handler
+#define SERVO_TIMER_VECTOR timerServoHandler
+#define BEEPER_TIMER_VECTOR timerBeeperHandler
 
 // TWI1 if SDA pin = 20  TWI0 for pin = 70
 #define TWI_INTERFACE TWI1
