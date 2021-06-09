@@ -36,10 +36,10 @@
 */
 
 // The following variables are required early to decide on the right modules.
-#define NUM_TOOLS 2
-#define NUM_EXTRUDER 2
+#define NUM_TOOLS 1
+#define NUM_EXTRUDER 0
 #define NUM_SERVOS 1                  // Number of serves available
-#define MOTHERBOARD MOTHERBOARD_RADDS // 405
+#define MOTHERBOARD MOTHERBOARD_USER_DEFINED_DUE // user defined motherboard
 #define EEPROM_MODE 3
 #define RFSERIAL Serial
 //#define EXTERNALSERIAL  use Arduino serial library instead of build in. Requires more RAM, has only 63 byte input buffer.
@@ -52,23 +52,27 @@
 #define JSON_OUTPUT 1
 #define FEATURE_WATCHDOG 0
 #define FEATURE_RETRACTION 1
-#define NUM_AXES 4 // X,Y,Z and E for extruder A,B,C would be 5,6,7
+#define NUM_AXES 7 // X,Y,Z and E for extruder A,B,C would be 5,6,7
 // #define STEPPER_FREQUENCY 153000     // Maximum stepper frequency.
-#define STEPPER_FREQUENCY 100000     // Maximum stepper frequency.
-#define PREPARE_FREQUENCY 1000       // Update frequency for new blocks. Must be higher than PREPARE_FREQUENCY.
-#define BLOCK_FREQUENCY 500          // Number of blocks with constant stepper rate per second.
+#define STEPPER_FREQUENCY 50000     // Maximum stepper frequency.
+#define PREPARE_FREQUENCY 500       // Update frequency for new blocks. Must be higher than PREPARE_FREQUENCY.
+#define BLOCK_FREQUENCY 250          // Number of blocks with constant stepper rate per second.
 #define VELOCITY_PROFILE 2           // 0 = linear, 1 = cubic, 2 = quintic velocity shape
+#define SLOW_DIRECTION_CHANGE 1     // Set 1 when driver need some settle time when direction changes   
 #define Z_SPEED 10                   // Z positioning speed
 #define XY_SPEED 150                 // XY positioning speed for normal operations
+#define A_SPEED 150                 // XY positioning speed for normal operations
+#define B_SPEED 150                 // XY positioning speed for normal operations
+#define C_SPEED 150                 // XY positioning speed for normal operations
 #define E_SPEED 2                    // Extrusion speed
 #define G0_FEEDRATE 0                // Speed for G0 moves. Independent from set F value! Set 0 to use F value.
-#define MAX_ROOM_TEMPERATURE 25      // No heating below this temperature!
+#define MAX_ROOM_TEMPERATURE 400      // No heating below this temperature!
 #define TEMPERATURE_CONTROL_RANGE 20 // Start with controlling if temperature is +/- this value to target temperature
 #define HOST_RESCUE 1                // Enable host rescue help system
 //#define DEBUG_RESCUE                 // Uncomment to add power loss entry in debug menu while printing
 #define POWERLOSS_LEVEL 2       // How much time do we have on powerloss, 0 = no move, 1 = short just raise Z, 2 = long full park move
 #define POWERLOSS_UP 5          // How much to move up if mode 1 is active
-#define Z_PROBE_TYPE 2          // 0 = no z probe, 1 = default z probe, 2 = Nozzle as probe
+#define Z_PROBE_TYPE 0          // 0 = no z probe, 1 = default z probe, 2 = Nozzle as probe
 #define Z_PROBE_BORDER 2        // Safety border to ensure position is allowed
 #define Z_PROBE_TEMPERATURE 170 // Temperature for type 2
 
@@ -77,7 +81,7 @@
 
 
 // 0 = Cartesian, 1 = CoreXYZ, 2 = delta, 3 = Dual X-Axis
-#define PRINTER_TYPE 0
+#define PRINTER_TYPE 1
 // steps to include as babysteps per 1/BLOCK_FREQUENCY seconds. Must be lower than STEPPER_FREQUENCY/BLOCK_FREQUENCY and be low enough to not lose steps.
 #define BABYSTEPS_PER_BLOCK \
     { 10, 10, 10 }
@@ -190,7 +194,9 @@ CONFIG_VARIABLE_EQ(EndstopDriver, *ZProbe, &endstopZMin)
 #define X_HOME_PRIORITY 0
 #define Y_HOME_PRIORITY 1
 #define Z_HOME_PRIORITY 2
-
+#define A_HOME_PRIORITY 2
+#define B_HOME_PRIORITY -1
+#define C_HOME_PRIORITY -1
 // All fans in this list list become controllable with M106/M107
 // by selecteing the fan number with P0..P<NUM_FANS-1>
 #define NUM_FANS 1
@@ -208,7 +214,7 @@ CONFIG_VARIABLE_EQ(EndstopDriver, *ZProbe, &endstopZMin)
 #define SERVO_LIST \
     { &Servo1 }
 #define TOOLS \
-    { &ToolExtruder1, &ToolExtruder2 }
+    { &Laser3 }
 
 // Heaters enumerate all heaters, so we can loop over them
 // or call commands on a specific heater number.
@@ -219,11 +225,11 @@ CONFIG_VARIABLE_EQ(EndstopDriver, *ZProbe, &endstopZMin)
 
 // Array to call motor related commands like microstepping/current if supported.
 // Id's start at 0 and depend on position in this array.
-#define NUM_MOTORS 5
+#define NUM_MOTORS 6
 #define MOTORS \
-    { &XMotor, &YMotor, &ZMotor }
+    { &XMotor, &YMotor, &ZMotor, &AMotor, &BMotor, &CMotor }
 #define MOTOR_NAMES \
-    { PSTR("X"), PSTR("Y"), PSTR("Z") }
+    { PSTR("X"), PSTR("Y"), PSTR("Z"), PSTR("A"), PSTR("B"), PSTR("C") }
 
 // Some common settings for Trinamic driver settings
 /**
@@ -251,15 +257,24 @@ CONFIG_VARIABLE_EQ(EndstopDriver, *ZProbe, &endstopZMin)
 #define STORE_MOTOR_STEALTH 1
 #define STORE_MOTOR_STALL_SENSITIVITY 1
 
-#define X_HOME_DIR -1
+#define X_HOME_DIR 1
 #define Y_HOME_DIR 1
 #define Z_HOME_DIR -1
-#define X_MAX_LENGTH 235
-#define Y_MAX_LENGTH 240
-#define Z_MAX_LENGTH 225
+#define A_HOME_DIR -1
+#define B_HOME_DIR 0
+#define C_HOME_DIR 0
+#define X_MAX_LENGTH 150
+#define Y_MAX_LENGTH 150
+#define Z_MAX_LENGTH 150
+#define A_MAX_LENGTH 150
+#define B_MAX_LENGTH 150
+#define C_MAX_LENGTH 150
 #define X_MIN_POS 0
 #define Y_MIN_POS 0
 #define Z_MIN_POS 0
+#define A_MIN_POS 0
+#define B_MIN_POS 0
+#define C_MIN_POS 0
 #define BED_X_MIN X_MIN_POS
 #define BED_X_MAX (X_MIN_POS + X_MAX_LENGTH)
 #define BED_Y_MIN Y_MIN_POS
@@ -275,15 +290,24 @@ CONFIG_VARIABLE_EQ(EndstopDriver, *ZProbe, &endstopZMin)
 #endif
 #define PARK_POSITION_Z_RAISE 10
 
-#define MAX_ACCELERATION_UNITS_PER_SQ_SECOND_X 1100
-#define MAX_ACCELERATION_UNITS_PER_SQ_SECOND_Y 1100
+#define MAX_ACCELERATION_UNITS_PER_SQ_SECOND_X 1600
+#define MAX_ACCELERATION_UNITS_PER_SQ_SECOND_Y 1600
 #define MAX_ACCELERATION_UNITS_PER_SQ_SECOND_Z 100
-#define MAX_TRAVEL_ACCELERATION_UNITS_PER_SQ_SECOND_X 1100
-#define MAX_TRAVEL_ACCELERATION_UNITS_PER_SQ_SECOND_Y 1100
+#define MAX_ACCELERATION_UNITS_PER_SQ_SECOND_A 1600
+#define MAX_ACCELERATION_UNITS_PER_SQ_SECOND_B 1600
+#define MAX_ACCELERATION_UNITS_PER_SQ_SECOND_C 100
+#define MAX_TRAVEL_ACCELERATION_UNITS_PER_SQ_SECOND_X 1600
+#define MAX_TRAVEL_ACCELERATION_UNITS_PER_SQ_SECOND_Y 1600
 #define MAX_TRAVEL_ACCELERATION_UNITS_PER_SQ_SECOND_Z 100
-#define XAXIS_STEPS_PER_MM 610
-#define YAXIS_STEPS_PER_MM 610
-#define ZAXIS_STEPS_PER_MM 6400
+#define MAX_TRAVEL_ACCELERATION_UNITS_PER_SQ_SECOND_A 1600
+#define MAX_TRAVEL_ACCELERATION_UNITS_PER_SQ_SECOND_B 1600
+#define MAX_TRAVEL_ACCELERATION_UNITS_PER_SQ_SECOND_C 100
+#define XAXIS_STEPS_PER_MM 1600
+#define YAXIS_STEPS_PER_MM 1600
+#define ZAXIS_STEPS_PER_MM 2015.11
+#define AAXIS_STEPS_PER_MM 1600
+#define BAXIS_STEPS_PER_MM 1600
+#define CAXIS_STEPS_PER_MM 1600
 
 // ################## EDIT THESE SETTINGS MANUALLY ################
 // ################ END MANUAL SETTINGS ##########################
@@ -337,12 +361,21 @@ CONFIG_VARIABLE_EQ(EndstopDriver, *ZProbe, &endstopZMin)
 #define ENDSTOP_X_BACK_MOVE 3
 #define ENDSTOP_Y_BACK_MOVE 3
 #define ENDSTOP_Z_BACK_MOVE 1
+#define ENDSTOP_A_BACK_MOVE 3
+#define ENDSTOP_B_BACK_MOVE 3
+#define ENDSTOP_C_BACK_MOVE 3
 #define ENDSTOP_X_RETEST_REDUCTION_FACTOR 2
 #define ENDSTOP_Y_RETEST_REDUCTION_FACTOR 2
 #define ENDSTOP_Z_RETEST_REDUCTION_FACTOR 2
+#define ENDSTOP_A_RETEST_REDUCTION_FACTOR 2
+#define ENDSTOP_B_RETEST_REDUCTION_FACTOR 2
+#define ENDSTOP_C_RETEST_REDUCTION_FACTOR 2
 #define ENDSTOP_X_BACK_ON_HOME 0.5
 #define ENDSTOP_Y_BACK_ON_HOME 0.5
 #define ENDSTOP_Z_BACK_ON_HOME 0
+#define ENDSTOP_A_BACK_ON_HOME 0
+#define ENDSTOP_B_BACK_ON_HOME 0
+#define ENDSTOP_C_BACK_ON_HOME 0
 #define ALWAYS_CHECK_ENDSTOPS 1
 #define MOVE_X_WHEN_HOMED 0
 #define MOVE_Y_WHEN_HOMED 0
@@ -370,6 +403,12 @@ CONFIG_VARIABLE_EQ(EndstopDriver, *ZProbe, &endstopZMin)
 #define HOMING_FEEDRATE_X 80
 #define HOMING_FEEDRATE_Y 80
 #define HOMING_FEEDRATE_Z 10
+#define MAX_FEEDRATE_A 250
+#define MAX_FEEDRATE_B 250
+#define MAX_FEEDRATE_C 20
+#define HOMING_FEEDRATE_A 80
+#define HOMING_FEEDRATE_B 80
+#define HOMING_FEEDRATE_C 10
 // Raise z before homing (1)
 #define ZHOME_PRE_RAISE 1
 // How much mm should z raise before homing
@@ -390,6 +429,9 @@ CONFIG_VARIABLE_EQ(EndstopDriver, *ZProbe, &endstopZMin)
 #define Y_BACKLASH 0
 #define Z_BACKLASH 0
 #define MAX_JERK 5
+#define MAX_AJERK 5
+#define MAX_BJERK 5
+#define MAX_CJERK 5
 #define MAX_ZJERK 0.3
 #define PRINTLINE_CACHE_SIZE 32
 #define MOVE_CACHE_LOW 10

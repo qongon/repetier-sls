@@ -131,7 +131,60 @@
 
 #define BEEPER_PIN -1
 
+// Controller related default pins
 
+#ifndef CUSTOM_CONTROLLER_PINS
+#if FEATURE_CONTROLLER == CONTROLLER_SPARKLCD
+
+#define UI_DISPLAY_RS_PIN -1
+#define UI_DISPLAY_RW_PIN -1
+#define UI_DISPLAY_ENABLE_PIN -1
+#define UI_DISPLAY_D4_PIN -1
+#define UI_DISPLAY_D5_PIN -1
+#define UI_ENCODER_A -1
+#define UI_ENCODER_B -1
+#define UI_ENCODER_CLICK -1
+#define UI_RESET_PIN -1
+#define UI_BACK_PIN -1
+
+#elif FEATURE_CONTROLLER == CONTROLLER_SPARKLCD_ADAPTER || FEATURE_CONTROLLER == CONTROLLER_ORCABOTXXLPRO2
+
+#define UI_DISPLAY_RS_PIN 44
+#define UI_DISPLAY_RW_PIN -1
+#define UI_DISPLAY_ENABLE_PIN 45
+#define UI_DISPLAY_D4_PIN 46
+#define UI_DISPLAY_D5_PIN -1
+#define UI_ENCODER_A 50
+#define UI_ENCODER_B 52
+#define UI_ENCODER_CLICK 48
+#define UI_RESET_PIN -1
+#define UI_BACK_PIN -1
+
+#else
+
+// This is for official display port usage
+
+#undef BEEPER_PIN
+#define BEEPER_PIN 41
+#define UI_DISPLAY_RS_PIN 42
+#define UI_DISPLAY_RW_PIN -1
+#define UI_DISPLAY_ENABLE_PIN 43
+#define UI_DISPLAY_D0_PIN 44
+#define UI_DISPLAY_D1_PIN 45
+#define UI_DISPLAY_D2_PIN 46
+#define UI_DISPLAY_D3_PIN 47
+#define UI_DISPLAY_D4_PIN 44
+#define UI_DISPLAY_D5_PIN 45
+#define UI_DISPLAY_D6_PIN 46
+#define UI_DISPLAY_D7_PIN 47
+#define UI_ENCODER_A 50
+#define UI_ENCODER_B 52
+#define UI_ENCODER_CLICK 48
+#define UI_RESET_PIN -1
+#define UI_BACK_PIN 71
+
+#endif
+#endif
 
 // Servo pins: 5,6 und 39
 

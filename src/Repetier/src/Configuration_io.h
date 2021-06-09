@@ -27,19 +27,37 @@ IO_OUTPUT_FAKE(fakeOut)
 
 IO_OUTPUT(IOX1Step, ORIG_X_STEP_PIN)
 IO_OUTPUT_INVERTED(IOX1Dir, ORIG_X_DIR_PIN)
-IO_OUTPUT(IOX1Enable, ORIG_X_ENABLE_PIN)
+IO_OUTPUT_INVERTED(IOX1Enable, ORIG_X_ENABLE_PIN)
 
 // Y Motor
 
 IO_OUTPUT(IOY1Step, ORIG_Y_STEP_PIN)
-IO_OUTPUT(IOY1Dir, ORIG_Y_DIR_PIN)
-IO_OUTPUT(IOY1Enable, ORIG_Y_ENABLE_PIN)
+IO_OUTPUT_INVERTED(IOY1Dir, ORIG_Y_DIR_PIN)
+IO_OUTPUT_INVERTED(IOY1Enable, ORIG_Y_ENABLE_PIN)
 
 // Z Motor
 
 IO_OUTPUT(IOZ1Step, ORIG_Z_STEP_PIN)
-IO_OUTPUT_INVERTED(IOZ1Dir, ORIG_Z_DIR_PIN)
-IO_OUTPUT(IOZ1Enable, ORIG_Z_ENABLE_PIN)
+IO_OUTPUT(IOZ1Dir, ORIG_Z_DIR_PIN)
+IO_OUTPUT_INVERTED(IOZ1Enable, ORIG_Z_ENABLE_PIN)
+
+// A Motor
+
+IO_OUTPUT(IOA1Step, ORIG_A_STEP_PIN)
+IO_OUTPUT(IOA1Dir, ORIG_A_DIR_PIN)
+IO_OUTPUT(IOA1Enable, ORIG_A_ENABLE_PIN)
+
+// B Motor
+
+IO_OUTPUT(IOB1Step, ORIG_B_STEP_PIN)
+IO_OUTPUT(IOB1Dir, ORIG_B_DIR_PIN)
+IO_OUTPUT(IOB1Enable, ORIG_B_ENABLE_PIN)
+
+// C Motor
+
+IO_OUTPUT(IOC1Step, ORIG_C_STEP_PIN)
+IO_OUTPUT(IOC1Dir, ORIG_C_DIR_PIN)
+IO_OUTPUT(IOC1Enable, ORIG_C_ENABLE_PIN)
 
 // E0 Motor
 
@@ -47,11 +65,7 @@ IO_OUTPUT(IOE1Step, ORIG_E0_STEP_PIN)
 IO_OUTPUT_INVERTED(IOE1Dir, ORIG_E0_DIR_PIN)
 IO_OUTPUT_INVERTED(IOE1Enable, ORIG_E0_ENABLE_PIN)
 
-// E1 Motor
 
-IO_OUTPUT(IOE2Step, ORIG_E1_STEP_PIN)
-IO_OUTPUT(IOE2Dir, ORIG_E1_DIR_PIN)
-IO_OUTPUT_INVERTED(IOE2Enable, ORIG_E1_ENABLE_PIN)
 
 // Autolevel Motor 1
 
@@ -71,11 +85,11 @@ IO_OUTPUT(Servo1Pin, 5)
 
 // Define your endstops inputs
 
-IO_INPUT(IOEndstopXMin, ORIG_X_MIN_PIN)
+IO_INPUT(IOEndstopXMax, ORIG_X_MAX_PIN)
 // IO_INPUT_INVERTED(IOEndstopXMin, ORIG_X_MIN_PIN)
 IO_INPUT(IOEndstopYMax, ORIG_Y_MAX_PIN)
 IO_INPUT_PULLUP(IOEndstopZMin, ORIG_Z_MIN_PIN)
-
+IO_INPUT(IOEndstopAMax, ORIG_A_MAX_PIN)
 IO_INPUT(IOJam1, 35)
 IO_INPUT(IOJam2, 33)
 
@@ -111,12 +125,19 @@ IO_INPUT_DUMMY(ControllerReset, false)
 // You need to define all min and max endstops for all
 // axes except E even if you have none!
 
-ENDSTOP_SWITCH_HW(endstopXMin, IOEndstopXMin, X_AXIS, false)
-ENDSTOP_NONE(endstopXMax)
+ENDSTOP_NONE(endstopXMin)
+ENDSTOP_SWITCH_HW(endstopXMax, IOEndstopXMax, X_AXIS, false)
 ENDSTOP_NONE(endstopYMin)
 ENDSTOP_SWITCH_HW(endstopYMax, IOEndstopYMax, Y_AXIS, true)
 ENDSTOP_SWITCH_HW(endstopZMin, IOEndstopZMin, Z_AXIS, false)
 ENDSTOP_NONE(endstopZMax)
+ENDSTOP_NONE(endstopAMin)
+ENDSTOP_SWITCH_HW(endstopAMax, IOEndstopAMax, A_AXIS, false)
+ENDSTOP_NONE(endstopBMin)
+ENDSTOP_NONE(endstopBMax)
+ENDSTOP_NONE(endstopCMin)
+ENDSTOP_NONE(endstopCMax)
+
 
 // Define fans
 
@@ -168,10 +189,11 @@ IO_PWM_SOFTWARE(PWMBed1, IOBed1, 1)
 STEPPER_SIMPLE(XMotor, IOX1Step, IOX1Dir, IOX1Enable, endstopNone, endstopNone)
 STEPPER_SIMPLE(YMotor, IOY1Step, IOY1Dir, IOY1Enable, endstopNone, endstopNone)
 STEPPER_SIMPLE(ZMotor, IOZ1Step, IOZ1Dir, IOZ1Enable, endstopNone, endstopNone)
+STEPPER_SIMPLE(AMotor, IOA1Step, IOA1Dir, IOA1Enable, endstopNone, endstopNone)
+STEPPER_SIMPLE(BMotor, IOB1Step, IOB1Dir, IOB1Enable, endstopNone, endstopNone)
+STEPPER_SIMPLE(CMotor, IOC1Step, IOC1Dir, IOC1Enable, endstopNone, endstopNone)
 STEPPER_SIMPLE(E1MotorBase, IOE1Step, IOE1Dir, IOE1Enable, endstopNone, endstopNone)
 STEPPER_OBSERVEABLE(E1Motor, E1MotorBase)
-STEPPER_SIMPLE(E2MotorBase, IOE2Step, IOE2Dir, IOE2Enable, endstopNone, endstopNone)
-STEPPER_OBSERVEABLE(E2Motor, E2MotorBase)
 STEPPER_SIMPLE(AL1Motor, IOAL1Step, IOAL1Dir, IOAL1Enable, endstopNone, endstopNone)
 STEPPER_SIMPLE(AL2Motor, IOAL2Step, IOAL2Dir, IOAL2Enable, endstopNone, endstopNone)
 
@@ -210,13 +232,12 @@ HEAT_MANAGER_PID(HeaterExtruder2, 'E', 1, TempExt2, PWMExtruder2, 260, 255, 1000
 // TOOL_EXTRUDER(name, offx, offy, offz, heater, stepper, resolution, yank, maxSpeed, acceleration, advance, startScript, endScript)
 
 TOOL_EXTRUDER(ToolExtruder1, 0, 0, 0, HeaterExtruder1, /*AL1Motor */ E1Motor, 1.75, 147.0, 5, 30, 5000, 40, "M117 Extruder 1", "", &Fan1PWM)
-TOOL_EXTRUDER(ToolExtruder2, 16.775, 0.615, -0.97, HeaterExtruder2, /*AL2Motor */ E2Motor, 1.75, 147.0, 5, 30, 5000, 40, "M117 Extruder 2\nM400\nM340 P0 S1500 R600\nG4 P300", "M340 P0 S800 R600\nG4 P300", &Fan1PWM)
 TOOL_LASER(Laser3, 0, 0, 0, Fan1NoKSPWM, fakeOut, fakeOut, 3000, 1, 100, 150.0, 1.5, "", "")
 TOOL_CNC(CNC4, 0, 0, 0, Fan1NoKSPWM, fakeOut, fakeOut, fakeOut, 7000, 3000, "", "")
 
 // Use a signal that changes while extruder moves
 JAM_DETECTOR_HW(JamExtruder1, E1Motor, IOJam1, ToolExtruder1, 220, 10, 500)
-JAM_DETECTOR_HW(JamExtruder2, E2Motor, IOJam2, ToolExtruder2, 220, 10, 500)
+
 
 // Use a signal that is high, when filament is loaded
 //FILAMENT_DETECTOR(FilamentDetector1, IOJam1, ToolExtruder1)
